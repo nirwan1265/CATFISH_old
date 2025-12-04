@@ -1,0 +1,28 @@
+# R stuff
+.Rhistory
+.RData
+.Ruserdata
+.Rproj.user/
+.Rproj.user/*
+.Rproj.user
+
+# RStudio project
+*.Rproj
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.tar.gz
+*.Rcheck/
+.Rcheck/
+
+# pkgdown / docs
+docs/
+*_cache/
+cache/
+
+# Temp & logs
+*.log
+*.tmp
