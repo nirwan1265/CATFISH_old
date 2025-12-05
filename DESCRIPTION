@@ -2,11 +2,11 @@ Package: MAGCAT
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: 
-    person("First", "Last", , "first.last@example.com", role = c("aut", "cre"),
-           comment = c(ORCID = "YOUR-ORCID-ID"))
-Description: What the package does (one paragraph).
+    person("Nirwan", "Tandukar", , "tandukar.nirwan@gmail.com", role = c("aut", "cre"),
+           comment = c(ORCID = "ORCID-ID"))
+Description: MAGCAT is an R interface to the MAGMA (Multi-marker Analysis of Genomic Annotation) software with ACAT (Aggregated Cauchy Association Test) for pathway level analysis. It streamlines SNP-to-gene analysis using MAGMA, imports gene-level results into R, and provides flexible ACAT-based gene-set and pathway aggregation, making it easy to build reproducible post-GWAS enrichment pipelines.
 License: `use_mit_license()`, `use_gpl3_license()` or friends to pick a
     license
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.1
+RoxygenNote: 7.3.2
