@@ -7,12 +7,18 @@
 magma_gene(
   bfile,
   gene_annot,
-  pval_file,
+  pval_file = NULL,
+  stats_file = NULL,
   n_total,
   snp_col = "SNP",
   p_col = "P",
+  rename_columns = NULL,
   out_prefix,
-  gene_model = "snp-wise=top"
+  out_dir = NULL,
+  gene_model = "snp-wise=top",
+  chroms = NULL,
+  n_threads = 1,
+  chr_keep = NULL
 )
 }
 \arguments{
@@ -20,19 +26,72 @@ magma_gene(
 
 \item{gene_annot}{MAGMA gene annotation file (.genes.annot).}
 
-\item{pval_file}{SNP p-value file.}
+\item{pval_file}{Optional; SNP p-value file for MAGMA's --pval.
+If NULL, \code{stats_file} must be provided.}
 
-\item{n_total}{Total sample size (N=... in MAGMA).}
+\item{stats_file}{Optional; GWAS summary statistics file containing
+at least SNP ID and p-value columns. If provided, \code{pval_file}
+is ignored and a MAGMA p-value file is generated internally.}
 
-\item{snp_col}{Column name in pval_file containing SNP IDs.}
+\item{n_total}{Total sample size (N=... in MAGMA) when using a
+constant N or computing per-SNP N from NMISS. Not required if
+\code{rename_columns} supplies an \code{N} column.}
 
-\item{p_col}{Column name in pval_file containing p-values.}
+\item{snp_col}{Column name containing SNP IDs (used only when
+\code{pval_file} is given and \code{rename_columns} is NULL).}
 
-\item{out_prefix}{Base output prefix. A suffix per gene model will be added.}
+\item{p_col}{Column name containing p-values (used only when
+\code{pval_file} is given and \code{rename_columns} is NULL).}
+
+\item{rename_columns}{Optional named character vector mapping standard
+names to the column names in \code{stats_file}, e.g.
+\code{c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p_wald", NMISS = "n_miss")} or \code{c(..., N = "N_eff")}.
+For \code{magma_gene()}, only \code{CHR}, \code{SNP}, \code{PVALUE}, \code{N}, and \code{NMISS} are used.}
+
+\item{out_prefix}{Base output prefix (file name without directory).}
+
+\item{out_dir}{Optional output directory. If not NULL, the final prefix
+will be file.path(out_dir, out_prefix). The directory is created
+if it does not exist. For \code{stats_file} mode, the internal p-value
+file is also written into this directory.}
 
 \item{gene_model}{Character vector of one or more MAGMA gene models,
 e.g. "snp-wise=top", "snp-wise=mean", "multi".}
+
+\item{chroms}{Optional vector of chromosomes to analyse separately
+(e.g. 1:10). Only used in \code{stats_file} mode. If non-NULL and
+\code{n_threads > 1}, analysis is run in parallel, one job per chromosome.}
+
+\item{n_threads}{Number of parallel workers to use when \code{chroms}
+is provided. Defaults to 1 (no parallelism). Will be clamped to
+\code{min(length(chroms), detectCores() - 1)}.}
 }
 \description{
-Run MAGMA gene analysis on SNP p-values
+You can either:
+\itemize{
+\item supply a MAGMA-ready p-value file via \code{pval_file}, with columns
+specified by \code{snp_col} and \code{p_col}, OR
+\item supply a GWAS summary statistics file via \code{stats_file}, in which case
+a MAGMA p-value file is created internally using the mapping given
+by \code{rename_columns}.
+}
+}
+\details{
+Per-SNP N handling:
+\itemize{
+\item If \code{rename_columns} contains \code{N}, that column in \code{stats_file} is used
+as per-SNP N via \code{ncol=N} in MAGMA.
+\item Else if \code{rename_columns} contains \code{NMISS} and \code{n_total} is provided,
+per-SNP N is computed as \code{N = n_total - NMISS} and used via \code{ncol=N}.
+\item Otherwise, a constant sample size \code{n_total} is required and passed as
+\code{N=n_total}.
+}
+
+Parallelisation by chromosome (stats_file mode only):
+\itemize{
+\item If \code{chroms} is non-NULL and \code{n_threads > 1}, MAGMA is run separately
+for each chromosome in \code{chroms}, in parallel, using \code{n_threads}
+workers. Each run gets a suffix \verb{_chr<k>} in \code{out_prefix}.
+\item This requires \code{stats_file} + \code{rename_columns['CHR']}.
+}
 }

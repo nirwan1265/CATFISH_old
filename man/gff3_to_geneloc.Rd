@@ -9,7 +9,8 @@ gff3_to_geneloc(
   out,
   feature_type = "gene",
   id_fields = c("gene_id", "ID", "Name"),
-  drop_scaffolds = TRUE
+  drop_scaffolds = TRUE,
+  chr_prefix = "chr"
 )
 }
 \arguments{
@@ -24,6 +25,10 @@ gff3_to_geneloc(
 
 \item{drop_scaffolds}{Logical; if TRUE (default), drop seqids that look
 like scaffolds (seqid starting with "scaf", case-insensitive).}
+
+\item{chr_prefix}{Optional string to strip from the start of chromosome
+names (seqid) when generating the CHR column, e.g. "chr" will turn
+"chr1" into "1", "chr10" into "10". Use NULL to keep seqids as-is.}
 }
 \value{
 Invisibly returns a data.frame with columns GENE, CHR, START, STOP.

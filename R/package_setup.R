@@ -7,4 +7,5 @@ library(devtools)
 
 
 # Create the functions - One time
-# usethis::use_r("magma_wrappers") # creates R/magma_wrappers.R
+usethis::use_r("magma_wrappers") # creates R/magma_wrappers.R
+

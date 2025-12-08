@@ -7,14 +7,18 @@
 #'   (searched in order), e.g. "gene_id", "ID", "Name".
 #' @param drop_scaffolds Logical; if TRUE (default), drop seqids that look
 #'   like scaffolds (seqid starting with "scaf", case-insensitive).
+#' @param chr_prefix Optional string to strip from the start of chromosome
+#'   names (seqid) when generating the CHR column, e.g. "chr" will turn
+#'   "chr1" into "1", "chr10" into "10". Use NULL to keep seqids as-is.
 #'
 #' @return Invisibly returns a data.frame with columns GENE, CHR, START, STOP.
 #' @export
 gff3_to_geneloc <- function(gff,
                             out,
-                            feature_type = "gene",
-                            id_fields = c("gene_id", "ID", "Name"),
-                            drop_scaffolds = TRUE) {
+                            feature_type   = "gene",
+                            id_fields      = c("gene_id", "ID", "Name"),
+                            drop_scaffolds = TRUE,
+                            chr_prefix     = "chr") {
 
   # read GFF3, skipping comment lines starting with '#'
   x <- utils::read.delim(
@@ -39,7 +43,7 @@ gff3_to_geneloc <- function(gff,
   x <- x[keep, , drop = FALSE]
 
   if (!nrow(x)) {
-    stop("No rows with type %s found in GFF3.", feature_type)
+    stop(sprintf("No rows with type %s found in GFF3.", feature_type))
   }
 
   # optionally drop scaffold seqids
@@ -91,12 +95,15 @@ gff3_to_geneloc <- function(gff,
          paste(id_fields, collapse = ", "))
   }
 
-  ## ----- NEW: order by CHR, START -----
-  # if CHR looks like "chr1", "chr2", ..., sort numerically by that
-  chr_pattern <- grepl("^chr[0-9]+$", res$CHR, ignore.case = TRUE)
+  # strip chromosome prefix if asked (e.g. "chr1" -> "1")
+  if (!is.null(chr_prefix)) {
+    pattern <- paste0("^", chr_prefix)
+    res$CHR <- sub(pattern, "", res$CHR, ignore.case = TRUE)
+  }
 
-  if (all(chr_pattern)) {
-    chr_num <- as.integer(sub("^chr", "", tolower(res$CHR)))
+  ## ----- order by CHR (numeric if possible), then START -----
+  chr_num <- suppressWarnings(as.integer(res$CHR))
+  if (all(!is.na(chr_num))) {
     o <- order(chr_num, res$START)
   } else {
     # fallback: alphabetical CHR, then START
@@ -104,7 +111,7 @@ gff3_to_geneloc <- function(gff,
   }
 
   res <- res[o, , drop = FALSE]
-  ## ------------------------------------
+  ## ---------------------------------------------------------
 
   # write MAGMA gene-loc file
   utils::write.table(

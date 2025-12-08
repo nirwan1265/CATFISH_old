@@ -2,20 +2,43 @@
 % Please edit documentation in R/magma_wrappers.R
 \name{magma_annotate}
 \alias{magma_annotate}
-\title{Run MAGMA annotation}
+\title{Run MAGMA annotation starting from GWAS summary stats}
 \usage{
-magma_annotate(snp_loc, gene_loc, out_prefix, window = NULL)
+magma_annotate(
+  stats_file,
+  rename_columns,
+  gene_loc = NULL,
+  out_prefix,
+  out_dir = NULL,
+  window = NULL,
+  species = NULL
+)
 }
 \arguments{
-\item{snp_loc}{Path to SNP location file.}
+\item{stats_file}{GWAS summary statistics file containing at least
+chromosome, SNP ID, and base-pair position columns.}
 
-\item{gene_loc}{Path to gene location file.}
+\item{rename_columns}{Named character vector mapping standard names to
+column names in \code{stats_file}, e.g.
+\code{c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p_wald")}.
+For annotation, only \code{CHR}, \code{SNP}, and \code{POS} are used.}
 
-\item{out_prefix}{Output prefix for MAGMA.}
+\item{gene_loc}{Path to gene location file (MAGMA gene-loc format),
+or NULL if using \code{species}.}
+
+\item{out_prefix}{Output prefix for MAGMA (file name, without directory).}
+
+\item{out_dir}{Optional output directory. If not NULL, the final prefix
+will be \code{file.path(out_dir, out_prefix)}. The directory will be created
+if it does not exist.}
 
 \item{window}{Optional length-2 numeric vector (kb upstream, kb downstream).
-For example, window = c(25, 25) gives "window=25,25".}
+For example, \code{window = c(25, 25)} gives "window=25,25".}
+
+\item{species}{Optional; one of "maize", "sorghum", "arabidopsis"
+to use a built-in gene-loc file stored in the package.}
 }
 \description{
-Run MAGMA annotation
+This function takes a GWAS summary statistics file, builds a SNP location
+file (SNP, CHR, BP) internally, and runs MAGMA annotation.
 }
