@@ -29,16 +29,12 @@ A data.frame with columns:
 \item{pathway_name}{Human-readable pathway name}
 \item{gene_id}{Gene identifier from \code{gene_col}}
 }
-
-A data.frame with columns:
-\describe{
-\item{pathway_id}{PMN pathway ID (e.g., "PWY-7634")}
-\item{pathway_name}{Human-readable pathway name}
-\item{gene_id}{Gene identifier from \code{gene_col}}
-}
 }
 \description{
-Reads a Plant Metabolic Network (PMN) pathways file from
+Load PMN pathways as a long data.frame
+}
+\details{
+Reads a Plant Metabolic Network (PMN) pathway file from
 \code{inst/extdata/pathway} and returns a long table of
 (pathway, gene) membership.
 }

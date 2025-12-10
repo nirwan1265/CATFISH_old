@@ -38,6 +38,7 @@ builtin_geneloc_path <- function(species) {
 #' @param rename_columns Named character vector mapping standard names to
 #'   column names in `stats_file`, e.g.
 #'   `c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p_wald")`.
+#'    NMISS = "n_miss")` or `c(..., NOBS = "Nobs")`
 #'   For annotation, only `CHR`, `SNP`, and `POS` are used.
 #' @param gene_loc Path to gene location file (MAGMA gene-loc format),
 #'   or NULL if using `species`.
@@ -167,7 +168,6 @@ magma_annotate <- function(stats_file,
 
 
 
-
 #' Run MAGMA gene analysis on SNP p-values
 #'
 #' You can either:
@@ -180,6 +180,8 @@ magma_annotate <- function(stats_file,
 #' Per-SNP N handling:
 #' * If `rename_columns` contains `N`, that column in `stats_file` is used
 #'   as per-SNP N via `ncol=N` in MAGMA.
+#' * Else if `rename_columns` contains `NOBS`, that column in `stats_file`
+#'   is used as per-SNP N via `ncol=N`.
 #' * Else if `rename_columns` contains `NMISS` and `n_total` is provided,
 #'   per-SNP N is computed as `N = n_total - NMISS` and used via `ncol=N`.
 #' * Otherwise, a constant sample size `n_total` is required and passed as
@@ -200,7 +202,7 @@ magma_annotate <- function(stats_file,
 #'   is ignored and a MAGMA p-value file is generated internally.
 #' @param n_total Total sample size (N=... in MAGMA) when using a
 #'   constant N or computing per-SNP N from NMISS. Not required if
-#'   `rename_columns` supplies an `N` column.
+#'   `rename_columns` supplies an `N` or `NOBS` column.
 #' @param snp_col Column name containing SNP IDs (used only when
 #'   `pval_file` is given and `rename_columns` is NULL).
 #' @param p_col Column name containing p-values (used only when
@@ -208,8 +210,8 @@ magma_annotate <- function(stats_file,
 #' @param rename_columns Optional named character vector mapping standard
 #'   names to the column names in `stats_file`, e.g.
 #'   `c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p_wald",
-#'      NMISS = "n_miss")` or `c(..., N = "N_eff")`.
-#'   For `magma_gene()`, only `CHR`, `SNP`, `PVALUE`, `N`, and `NMISS` are used.
+#'      NMISS = "n_miss")` or `c(..., N = "N_eff")` or `c(..., NOBS = "Nobs")`.
+#'   For `magma_gene()`, only `CHR`, `SNP`, `PVALUE`, `N`, `NOBS`, and `NMISS` are used.
 #' @param out_prefix Base output prefix (file name without directory).
 #' @param out_dir Optional output directory. If not NULL, the final prefix
 #'   will be file.path(out_dir, out_prefix). The directory is created
@@ -323,7 +325,7 @@ magma_gene <- function(bfile,
       check.names = FALSE
     )
 
-    # Which columns are SNP, PVALUE (and optionally CHR, N, NMISS)?
+    # Which columns are SNP, PVALUE (and optionally CHR, N, NOBS, NMISS)?
     if (!is.null(rename_columns)) {
       actual_snp <- unname(rename_columns["SNP"])
       actual_p   <- unname(rename_columns["PVALUE"])
@@ -341,9 +343,15 @@ magma_gene <- function(bfile,
         NA_character_
       }
 
-      # optional N and NMISS
+      # optional N, NOBS and NMISS
       n_col_name <- if ("N" %in% names(rename_columns)) {
         unname(rename_columns["N"])
+      } else {
+        NA_character_
+      }
+
+      nobs_col_name <- if ("NOBS" %in% names(rename_columns)) {
+        unname(rename_columns["NOBS"])
       } else {
         NA_character_
       }
@@ -355,11 +363,12 @@ magma_gene <- function(bfile,
       }
 
     } else {
-      actual_snp    <- snp_col
-      actual_p      <- p_col
-      actual_chr    <- NA_character_
-      n_col_name    <- NA_character_
-      nmiss_col_raw <- NA_character_
+      actual_snp     <- snp_col
+      actual_p       <- p_col
+      actual_chr     <- NA_character_
+      n_col_name     <- NA_character_
+      nobs_col_name  <- NA_character_
+      nmiss_col_raw  <- NA_character_
     }
 
     # basic SNP / P checks
@@ -395,14 +404,21 @@ magma_gene <- function(bfile,
       }
     }
 
-    # Case 1: per-SNP N column already present
-    if (!is.na(n_col_name)) {
-      if (!n_col_name %in% colnames(dat)) {
-        stop("rename_columns['N'] = '", n_col_name,
-             "' but that column is not found in stats_file.", call. = FALSE)
+    ## ---- Per-SNP N logic: N / NOBS / NMISS / constant ----
+
+    # Case 1: per-SNP N column already present (N or NOBS)
+    if (!is.na(n_col_name) || !is.na(nobs_col_name)) {
+
+      # prefer explicit N over NOBS if both are present
+      n_col_use <- if (!is.na(n_col_name)) n_col_name else nobs_col_name
+
+      if (!n_col_use %in% colnames(dat)) {
+        stop("Per-SNP N column '", n_col_use,
+             "' (from rename_columns['N' or 'NOBS']) not found in stats_file.",
+             call. = FALSE)
       }
 
-      pval_df <- dat[, c(actual_snp, actual_p, n_col_name)]
+      pval_df <- dat[, c(actual_snp, actual_p, n_col_use)]
       colnames(pval_df) <- c("SNP", "P", "N")
       N_arg   <- "ncol=N"
       use_snp <- "SNP"
@@ -439,7 +455,7 @@ magma_gene <- function(bfile,
     } else {
       # Case 3: no per-SNP info, use constant n_total
       if (missing(n_total) || is.null(n_total)) {
-        stop("n_total must be provided when no per-SNP N (N or NMISS) is given.",
+        stop("n_total must be provided when no per-SNP N (N, NOBS or NMISS) is given.",
              call. = FALSE)
       }
 
@@ -526,4 +542,3 @@ magma_gene <- function(bfile,
 
   invisible(out_files)
 }
-

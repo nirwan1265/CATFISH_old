@@ -34,25 +34,9 @@ magcat_pmn_file <- function(
 
 #' Load PMN pathways as a long data.frame
 #'
-#' Reads a Plant Metabolic Network (PMN) pathways file from
-#' \code{inst/extdata/pathway} and returns a long table of
-#' (pathway, gene) membership.
-#'
-#' @param species One of "maize", "sorghum", "arabidopsis", "plant".
-#' @param gene_col Which column from the PMN file to use for gene IDs:
-#'   "Gene-id" or "Gene-name".
-#' @param drop_unknown If TRUE, drop rows with missing/unknown gene IDs.
-#'
-#' @return A data.frame with columns:
-#'   \describe{
-#'     \item{pathway_id}{PMN pathway ID (e.g., "PWY-7634")}
-#'     \item{pathway_name}{Human-readable pathway name}
-#'     \item{gene_id}{Gene identifier from \code{gene_col}}
-#'   }
-#' @export
 #' Load PMN pathways as a long data.frame
 #'
-#' Reads a Plant Metabolic Network (PMN) pathways file from
+#' Reads a Plant Metabolic Network (PMN) pathway file from
 #' `inst/extdata/pathway` and returns a long table of
 #' (pathway, gene) membership.
 #'
@@ -71,6 +55,7 @@ magcat_pmn_file <- function(
 #'     \item{pathway_name}{Human-readable pathway name}
 #'     \item{gene_id}{Gene identifier from `gene_col`}
 #'   }
+#'
 #' @export
 magcat_load_pathways <- function(
   species      = c("maize", "sorghum", "arabidopsis", "plant"),
@@ -81,19 +66,19 @@ magcat_load_pathways <- function(
 
   fpath <- magcat_pmn_file(species)
 
-  x <- utils::read.delim(
-    fpath,
-    header           = TRUE,
-    stringsAsFactors = FALSE,
-    check.names      = FALSE
+  x <- suppressWarnings(
+    utils::read.delim(
+      fpath,
+      header           = TRUE,
+      stringsAsFactors = FALSE,
+      check.names      = FALSE
+    )
   )
 
-  # 1) If user supplied gene_col, use that (but check it exists)
-  # 2) Otherwise, prefer "Gene-name" if present, else "Gene-id"
+  # 1) pick gene_col
   if (is.null(gene_col)) {
     candidates <- c("Gene-name", "Gene-id")
     gene_col <- intersect(candidates, names(x))[1]
-
     if (is.na(gene_col)) {
       stop(
         "Pathway file ", basename(fpath),
@@ -101,14 +86,12 @@ magcat_load_pathways <- function(
         call. = FALSE
       )
     }
-  } else {
-    if (!gene_col %in% names(x)) {
-      stop(
-        "Requested gene_col = '", gene_col,
-        "' is not a column in ", basename(fpath), ".",
-        call. = FALSE
-      )
-    }
+  } else if (!gene_col %in% names(x)) {
+    stop(
+      "Requested gene_col = '", gene_col,
+      "' is not a column in ", basename(fpath), ".",
+      call. = FALSE
+    )
   }
 
   needed <- c("Pathway-id", "Pathway-name", gene_col)
@@ -134,6 +117,7 @@ magcat_load_pathways <- function(
 
   df
 }
+
 
 
 ## ---------- p-value cleaner -----------------------------------------
@@ -360,7 +344,8 @@ magcat_acat_pathways <- function(gene_results,
       perm_vals <- replicate(
         B,
         {
-          p_perm <- sample(pool_p, size = d, replace = FALSE)
+          idx <- sample(seq_along(pool_p), size = d, replace = FALSE)
+          p_perm <- pool_p[idx]
           ACAT::ACAT(Pvals = p_perm)
         }
       )

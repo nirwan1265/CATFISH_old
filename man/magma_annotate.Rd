@@ -21,7 +21,7 @@ chromosome, SNP ID, and base-pair position columns.}
 \item{rename_columns}{Named character vector mapping standard names to
 column names in \code{stats_file}, e.g.
 \code{c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p_wald")}.
-For annotation, only \code{CHR}, \code{SNP}, and \code{POS} are used.}
+NMISS = "n_miss")\code{or}c(..., NOBS = "Nobs")\verb{For annotation, only}CHR\verb{, }SNP\verb{, and }POS` are used.}
 
 \item{gene_loc}{Path to gene location file (MAGMA gene-loc format),
 or NULL if using \code{species}.}

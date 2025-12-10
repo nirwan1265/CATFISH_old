@@ -35,7 +35,7 @@ is ignored and a MAGMA p-value file is generated internally.}
 
 \item{n_total}{Total sample size (N=... in MAGMA) when using a
 constant N or computing per-SNP N from NMISS. Not required if
-\code{rename_columns} supplies an \code{N} column.}
+\code{rename_columns} supplies an \code{N} or \code{NOBS} column.}
 
 \item{snp_col}{Column name containing SNP IDs (used only when
 \code{pval_file} is given and \code{rename_columns} is NULL).}
@@ -45,8 +45,8 @@ constant N or computing per-SNP N from NMISS. Not required if
 
 \item{rename_columns}{Optional named character vector mapping standard
 names to the column names in \code{stats_file}, e.g.
-\code{c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p_wald", NMISS = "n_miss")} or \code{c(..., N = "N_eff")}.
-For \code{magma_gene()}, only \code{CHR}, \code{SNP}, \code{PVALUE}, \code{N}, and \code{NMISS} are used.}
+\code{c(CHR = "chr", SNP = "rs", POS = "ps", PVALUE = "p_wald", NMISS = "n_miss")} or \code{c(..., N = "N_eff")} or \code{c(..., NOBS = "Nobs")}.
+For \code{magma_gene()}, only \code{CHR}, \code{SNP}, \code{PVALUE}, \code{N}, \code{NOBS}, and \code{NMISS} are used.}
 
 \item{out_prefix}{Base output prefix (file name without directory).}
 
@@ -81,6 +81,8 @@ Per-SNP N handling:
 \itemize{
 \item If \code{rename_columns} contains \code{N}, that column in \code{stats_file} is used
 as per-SNP N via \code{ncol=N} in MAGMA.
+\item Else if \code{rename_columns} contains \code{NOBS}, that column in \code{stats_file}
+is used as per-SNP N via \code{ncol=N}.
 \item Else if \code{rename_columns} contains \code{NMISS} and \code{n_total} is provided,
 per-SNP N is computed as \code{N = n_total - NMISS} and used via \code{ncol=N}.
 \item Otherwise, a constant sample size \code{n_total} is required and passed as
