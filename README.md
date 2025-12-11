@@ -11,7 +11,7 @@ MAGCAT streamlines post-GWAS analysis by:
   * ACAT (Aggregated Cauchy Association Test),
   * Fisher’s method (unweighted),
   * soft truncated Fisher (TFisher),
-* combining them with an **ACAT-O–style omnibus ACAT**, and
+* combining them with an **minP**, and
 * controlling FDR across pathways with BH and/or q-values.
 
 It’s designed for reproducible, **tail-aware** pathway analysis on top of MAGMA.
@@ -32,10 +32,8 @@ Make sure the `magma` executable is on your `PATH`, or note its full path.
 
 ```r
 # install.packages("devtools")  # if needed
-devtools::install_github("YOUR_GITHUB_USERNAME/MAGCAT")
+devtools::install_github("nirwan1265/MAGCAT")
 ```
-
-Replace `YOUR_GITHUB_USERNAME` with your GitHub username or org.
 
 Then:
 
