@@ -1,118 +1,482 @@
-# MAGCAT
+# CATFISH : pathway analysis pipeline + signal archetypes
 
-**MAGCAT**: R interface to **MAGMA** with **ACAT / Fisher / TFisher**–based gene and pathway aggregation.
+This Markdown is structured into:
 
-MAGCAT streamlines post-GWAS analysis by:
+- **INTRODUCTION** — what the pipeline is and why multiple tests are needed  
+- **METHODS** — paper‑ready subsections with explicit equations and assumptions  
+- **USAGE** — installation + reproducible example commands and R snippets  
 
-* running **MAGMA** (Multi-marker Analysis of Genomic Annotation) for SNP → gene,
-* importing gene-level results into R,
-* adjusting gene Z / p for **gene length** and **#SNPs per gene**,
-* performing multiple **gene → pathway** combination tests:
-  * ACAT (Aggregated Cauchy Association Test),
-  * Fisher’s method (unweighted),
-  * soft truncated Fisher (TFisher),
-* combining them with an **minP**, and
-* controlling FDR across pathways with BH and/or q-values.
+---
 
-It’s designed for reproducible, **tail-aware** pathway analysis on top of MAGMA.
+## INTRODUCTION
+
+### What CATFISH is
+
+**CATFISH** is a gene‑set (pathway) analysis workflow that starts from SNP‑level association results and produces **pathway‑level significance** *plus* a **mechanistic interpretation** of *why* each pathway is significant.
+
+CATFISH uses:
+
+1. **MAGMA** for LD‑aware **SNP → gene** inference (gene-level p-values).
+2. **Multiple gene → pathway combination tests** (ACAT, Fisher / wFisher, truncation/TFisher).
+3. A **correlation‑robust omnibus test** that aggregates these correlated component tests.
+4. A **signal archetype** framework to interpret pathway significance by its gene‑level p‑value rank profile.
+
+### Why multiple tests are needed
+
+Pathways can be significant for qualitatively different reasons:
+
+- one **driver** gene dominates,
+- many genes show **coordinated moderate** enrichment,
+- or there is a **diffuse polygenic** shift.
+
+No single gene‑set statistic is uniformly most powerful across these regimes. CATFISH therefore treats pathway detection as a **model‑averaging** problem over latent “signal architectures,” rather than a single one‑size‑fits‑all test.
+
+### Bias warning
+
+When calculating over‑representation or enrichment, pathway‑based analysis is subject to multiple biases; **gene size**, **pathway size**, **density of SNP coverage**, and **linkage disequilibrium (LD)** patterns are all factors that must be considered and appropriately addressed (White et al., 2020; PMC6391732), which we have tried to address in our pipeline.  
+Link: https://pmc.ncbi.nlm.nih.gov/articles/PMC6391732/
+
+---
+
+## METHODS
+
+### Notation
+
+Let a pathway (gene set) be denoted by $S$, containing $G = |S|$ genes indexed by $g = 1,\dots,G$.
+
+Let the (adjusted) gene-level p-values be:
+
+$$
+\mathbf{p}_S = (p_1, p_2, \dots, p_G).
+$$
+
+Let the ordered p-values be:
+
+$$
+p_{(1)} \le p_{(2)} \le \dots \le p_{(G)}.
+$$
+
+---
+
+## 1) Gene-level association statistics (SNP → gene)
+
+For each gene $g$, MAGMA produces a gene‑level association p‑value $p_g$ by aggregating SNP‑level signals within/near the gene while accounting for local LD using a reference panel.
+
+Conceptually:
+
+- SNPs are mapped to genes (gene boundaries with optional windows).
+- A multi‑marker gene model accounts for LD among SNPs in the gene region.
+- MAGMA outputs gene statistics (e.g., $Z_g$ and $p_g$).
+
+> In CATFISH, these MAGMA gene p-values are treated as the primitive inputs to all pathway tests.
+
+---
+
+## 2) Competitive enrichment framing (pathway vs background)
+
+Pathway interpretation is most stable under **competitive** enrichment logic: a pathway is significant if its member genes are *more associated* than genes outside the pathway (i.e., relative enrichment), rather than simply showing absolute polygenicity.
+
+Practical implications:
+
+- Prefer competitive gene‑set testing frameworks (e.g., MAGMA competitive gene‑set regression) when available.
+- When using gene‑p combination tests (ACAT/Fisher/TFisher) as pathway detectors, interpret them as **enrichment summaries** and retain covariate controls / calibrations (below) to mitigate confounding.
+
+---
+
+## 3) Optional gene-level adjustment for gene size and SNP density
+
+Even with LD-aware gene testing, gene‑level signals can exhibit residual dependence on gene size and SNP density. CATFISH optionally performs a post‑hoc adjustment at the gene level.
+
+Let:
+
+- $Z_g$ be the MAGMA gene Z‑statistic,
+- $L_g$ be gene length (bp),
+- $S_g$ be number of SNPs mapped to the gene (e.g., `NSNPS`).
+
+Fit:
+
+$$
+Z_g = \beta_0 + \beta_1 \log(L_g) + \beta_2 \log(S_g) + \varepsilon_g.
+$$
+
+Define adjusted residual Z:
+
+$$
+Z^{\mathrm{adj}}_g = Z_g - \widehat{Z}_g,
+\quad \widehat{Z}_g = \widehat{\beta}_0 + \widehat{\beta}_1 \log(L_g) + \widehat{\beta}_2 \log(S_g).
+$$
+
+Convert to a two‑sided adjusted p-value:
+
+$$
+p^{\mathrm{adj}}_g = 2\Phi\left(-|Z^{\mathrm{adj}}_g|\right),
+$$
+
+where $\Phi(\cdot)$ is the standard normal CDF.
+
+---
+
+## 4) Pathway-level test statistics (gene → pathway)
+
+CATFISH computes multiple pathway statistics from $\{p_g\}_{g \in S}$.
+
+### 4.1 ACAT (Aggregated Cauchy Association Test)
+
+Define the Cauchy‑transformed score for each gene:
+
+$$
+t_g = \tan\left(\pi\left(\tfrac{1}{2} - p_g\right)\right).
+$$
+
+Define non‑negative weights $w_g \ge 0$ with $\sum_{g \in S} w_g = 1$ (default $w_g = 1/G$).
+
+The ACAT statistic is:
+
+$$
+T_{\mathrm{ACAT}}(S) = \sum_{g \in S} w_g\, t_g
+= \sum_{g \in S} w_g \tan\left(\pi\left(\tfrac{1}{2} - p_g\right)\right).
+$$
+
+The combined p-value is:
+
+$$
+p_{\mathrm{ACAT}}(S) = \tfrac{1}{2} - \frac{1}{\pi}\arctan\left(T_{\mathrm{ACAT}}(S)\right).
+$$
+
+**Key property (interpretation):** ACAT is asymptotically dominated by the smallest p-values, and is therefore sensitive to **sparse driver** architectures.
+
+---
+
+### 4.2 Fisher’s method (coordinated enrichment)
+
+Fisher’s statistic is:
+
+$$
+T_{\mathrm{Fisher}}(S) = -2\sum_{g \in S} \log(p_g).
+$$
+
+Under independence,
+
+$$
+T_{\mathrm{Fisher}}(S) \sim \chi^2_{2G},
+\quad
+p_{\mathrm{Fisher}}(S) = 1 - F_{\chi^2_{2G}}\left(T_{\mathrm{Fisher}}(S)\right),
+$$
+
+where $F_{\chi^2_{2G}}(\cdot)$ is the $\chi^2$ CDF with $2G$ degrees of freedom.
+
+**Key property (interpretation):** Fisher is sensitive to **coordinated moderate enrichment** (many moderately small p-values).
+
+---
+
+### 4.3 Weighted Fisher (optional)
+
+A common weighted variant is:
+
+$$
+T_{\mathrm{wFisher}}(S) = -2\sum_{g \in S} w_g \log(p_g),
+$$
+
+with weights $w_g$ reflecting, for example, gene importance, expression specificity, or QC confidence (must be pre‑specified to avoid circularity).
+
+---
+
+### 4.4 Truncation / TFisher (tail-focused enrichment)
+
+To emphasize only the lower tail (top genes), define a truncation threshold $\tau \in (0,1)$ and consider:
+
+#### (A) Hard truncated Fisher (conceptual)
+
+$$
+T_{\mathrm{TF}}(S;\tau) = -2\sum_{g \in S: p_g \le \tau} \log(p_g).
+$$
+
+This interpolates between minP‑like behavior (very small $\tau$) and Fisher (large $\tau$).
+
+#### (B) Soft TFisher (recommended)
+
+Soft‑truncation uses a continuous tail‑weighting scheme that downweights large p-values without an abrupt cutoff. In practice, CATFISH/MAGCAT can compute **soft TFisher** using an analytic null CDF (and optionally permutation calibration).
+
+**Key property (interpretation):** truncation/TFisher is powerful for **hybrid driver–support** architectures (a few strong genes + several moderate ones).
+
+---
+
+## 5) Correlation among pathway tests
+
+All pathway statistics above are functions of the **same** gene-level p-values $\{p_g\}$, and are therefore intrinsically correlated:
+
+$$
+\left(T_{\mathrm{ACAT}},\,T_{\mathrm{Fisher}},\,T_{\mathrm{TF}}(\tau)\right)
+\text{ are dependent}.
+$$
+
+Examples of why:
+
+- Fisher and TFisher share overlapping subsets of $\{p_g\}$.
+- ACAT and TFisher are both strongly influenced by the extreme left tail (smallest $p_g$).
+- LD and shared biology induce correlation among gene-level signals, further increasing dependence.
+
+**Implication:** naïve combination rules assuming independence between component pathway tests would be invalid (often anti‑conservative).
+
+---
+
+## 6) Omnibus pathway testing (correlation-robust model averaging)
+
+Because no single test is uniformly optimal across latent pathway architectures, we compute multiple component p-values:
+
+$$
+\mathcal{P}(S) = \left\{ p_{\mathrm{ACAT}}(S),\, p_{\mathrm{Fisher}}(S),\, p_{\mathrm{TF}}(S;\tau) \right\}.
+$$
+
+We then combine them into a single omnibus p-value using ACAT again:
+
+### 6.1 Omnibus ACAT statistic
+
+Let $p_1, p_2, p_3$ denote the three component p-values and $v_j \ge 0$ be weights with $\sum_j v_j = 1$ (default $v_j = 1/3$).
+
+Define:
+
+$$
+T_{\mathrm{omni}}(S) = \sum_{j=1}^{3} v_j \tan\left(\pi\left(\tfrac{1}{2} - p_j\right)\right).
+$$
+
+Then:
+
+$$
+p_{\mathrm{omni}}(S) =
+\tfrac{1}{2} - \frac{1}{\pi}\arctan\left(T_{\mathrm{omni}}(S)\right).
+$$
+
+### 6.2 Why this is valid under dependence
+
+ACAT is designed to be robust to **arbitrary dependence** among inputs in many practical settings because the Cauchy tail behavior yields stable combined p-values without needing an explicit covariance estimate.
+
+**Interpretation:** omnibus significance indicates that *at least one plausible signal architecture* is supported by the data. It does **not** imply uniform enrichment across all genes.
+
+---
+
+## 7) Optional permutation calibration (when you want empirical p-values)
+
+Permutation can be used to calibrate pathway p-values (especially truncation-based statistics) under complex dependence and finite-sample quirks.
+
+A generic permutation p-value is:
+
+$$
+p_{\mathrm{perm}} = \frac{1 + \sum_{b=1}^{B} \mathbf{1}\left(T^{(b)} \ge T^{\mathrm{obs}}\right)}{B + 1}.
+$$
+
+**Note:** the minimum achievable permutation p-value is $1/(B+1)$; increasing $B$ increases resolution but should not be interpreted as “making results more significant” unless the observed statistic truly lies in the extreme tail.
+
+---
+
+## 8) Multiple testing correction
+
+Across all pathways, omnibus p-values $\{p_{\mathrm{omni}}(S)\}$ are adjusted using Benjamini–Hochberg FDR:
+
+$$
+q_{\mathrm{BH}}(S) = \mathrm{BH}\left(p_{\mathrm{omni}}(S)\right).
+$$
+
+Because each pathway yields a **single** omnibus p-value, no additional penalty is required for the number of component tests.
+
+---
+
+# Pathway signal archetypes (interpretation layer)
+
+CATFISH interprets each significant pathway by classifying the **rank profile** of its gene-level p-values into one of several archetypes and reporting which component test drove significance.
+
+## Archetype I — Sparse Driver Architecture (SDA)
+
+**Signature:** one or a few genes are extremely significant; most genes are null.
+
+$$
+p_{(1)} \ll \alpha,
+\quad
+p_{(k)} \sim \mathrm{Uniform}(0,1)\ \ \forall k > K.
+$$
+
+**Best detectors:** ACAT, minP-like behavior, hard truncation.  
+**Interpretation:** pathway is significant due to **driver gene dominance**, not broad engagement.
+
+---
+
+## Archetype II — Coordinated Moderate Enrichment (CME)
+
+**Signature:** many genes show moderate association; no single extreme driver.
+
+$$
+\exists\ \text{non-trivial fraction of } g \text{ with } p_g \in [10^{-3},\,0.05],
+\quad
+\text{and } p_{(1)} \text{ not overwhelmingly dominant}.
+$$
+
+**Best detectors:** Fisher / wFisher / mean‑Z aggregation.  
+**Interpretation:** **collective functional engagement**.
+
+---
+
+## Archetype III — Diffuse Polygenic Shift (DPS)
+
+**Signature:** weak but consistent deviation from null; few (if any) cross 0.05.
+
+$$
+\mathbb{E}[Z_g] > 0
+\quad \text{but} \quad
+p_g \not\ll 0.05 \text{ for most } g.
+$$
+
+**Best detectors:** regression / distributional‑shift competitive models (e.g., MAGMA competitive).  
+**Interpretation:** **global pathway bias** consistent with polygenicity.
+
+---
+
+## Archetype IV — Hybrid Driver–Support (HDS)
+
+**Signature:** a few strong genes + several moderately associated genes.
+
+$$
+p_{(1)} \ll 10^{-4},
+\quad
+p_{(2..K)} \in [10^{-3},\,0.05].
+$$
+
+**Best detectors:** truncation/TFisher + Fisher + omnibus.  
+**Interpretation:** **hierarchical pathway organization** (drivers + supporting machinery).
+
+---
+
+## Archetype V — Single-Gene Proxy Pathway (SGP)
+
+**Signature:** pathway signal disappears after removing/conditioning on top gene(s).
+
+Operationally:
+
+- recompute pathway p-value after removing $g^\*$ (top gene),
+- or perform conditional gene‑set analysis if available.
+
+**Best detectors (but potentially misleading):** minP, uncorrected ACAT.  
+**Interpretation:** pathway is a **proxy** for a gene‑level association (annotation reuse / overlap).
+
+---
+
+## Archetype VI — Heterogeneous / Antagonistic (HAA)
+
+**Signature:** heterogeneous submodules, mixed directions, or context dependence; mean-based tests can cancel.
+
+**Best detectors:** stratified/signed models; sub‑pathway or network‑aware analyses.  
+**Interpretation:** requires **substructure-aware** modeling; global enrichment may be misleading.
+
+---
+
+## Recommended reporting checklist (per significant pathway)
+
+- **Archetype call:** SDA / CME / DPS / HDS / SGP / HAA  
+- **Driver test:** which component (ACAT vs Fisher vs TFisher) primarily drove $p_{\mathrm{omni}}$  
+- **Robustness:** persistence after conditioning/removing top gene(s) (flags SGP)  
+- **Bias controls:** gene size, SNP density/gene density, pathway size, LD panel choice  
+- **Calibration:** analytic vs permutation p-values (and $B$ used if permutation)
+
+---
+
+## USAGE
+
+# MAGCAT (R package wrapper)
+
+**MAGCAT** is the R interface implementation used to run CATFISH‑style workflows on top of MAGMA, and to compute ACAT/Fisher/TFisher + omnibus pathway statistics.
 
 ---
 
 ## Installation
 
-### 1. Install MAGMA (external dependency)
+### 1) Install MAGMA (external dependency)
 
-Download and install MAGMA from the official site:
+Download MAGMA from the official site and make the `magma` executable available on your `PATH`:
 
-* https://ctg.cncr.nl/software/magma
+- https://ctg.cncr.nl/software/magma
 
-Make sure the `magma` executable is on your `PATH`, or note its full path.
-
-### 2. Install MAGCAT in R
+### 2) Install MAGCAT in R
 
 ```r
 # install.packages("devtools")  # if needed
 devtools::install_github("nirwan1265/MAGCAT")
-```
-
-Then:
-
-```r
 library(MAGCAT)
 ```
 
-### 3. Optional: set MAGMA path
-
-If `magma` is not on your system `PATH`, configure it:
+### 3) Optional: set MAGMA path
 
 ```r
 MAGCAT::magma_set_path("/full/path/to/magma")
-# see ?magma_path / ?magma_set_path for details
 ```
 
 ---
 
-## Conceptual workflow
+## Conceptual workflow (end-to-end)
 
-MAGCAT wraps MAGMA for SNP → gene analysis and then does flexible, R-based gene → pathway aggregation:
+1. **SNP → gene (MAGMA)**
+   - Prepare SNP locations (`*.snp.loc`) and gene locations (`*.genes.loc`).
+   - Run MAGMA annotation and gene analysis to get gene Z and p.
 
-1. **SNP → gene (MAGMA)**  
-   - Annotate SNPs to genes using GFF3-derived gene locations.  
-   - Run MAGMA with `--gene-model multi=snp-wise` to get gene-level Z and p.
+2. **Gene-level adjustment (optional)**
+   - Regress $Z_g$ on `log(gene_length)` and `log(NSNPS)`; derive $p^{adj}_g$.
 
-2. **Gene-level adjustment**  
-   - Merge in **gene length** and **#SNPs per gene**.  
-   - Regress raw MAGMA Z-scores on `log(gene_length)` and `log(NSNPS)`.  
-   - Use residuals as **size/SNP-adjusted Z**, convert to adjusted p-values.
+3. **Gene → pathway tests**
+   - Compute pathway p-values from adjusted gene p-values using:
+     - ACAT,
+     - Fisher,
+     - soft TFisher (tail-focused).
 
-3. **Gene → pathway tests**  
-   For each pathway, combine gene-level adjusted p-values (`P_adj`) using:
-   - **ACAT** – sensitive to a few very small p’s,  
-   - **Fisher’s method** – sensitive to many modest p’s,  
-   - **Soft TFisher** – truncated/weighted Fisher, focusing on the tail.
+4. **Omnibus**
+   - Combine pathway p-values using ACAT to produce $p_{\mathrm{omni}}$.
 
-4. **Omnibus combination (ACAT-O style)**  
-   - Combine the three pathway p-values with ACAT again → **one omnibus p**.
-
-5. **Multiple testing correction**  
-   - Apply BH FDR and optional Storey q-values across pathways.
+5. **Multiple testing**
+   - BH FDR (and optional Storey q-values).
 
 ---
 
-## Quick example
+## MAGMA commands (typical)
 
-Minimal end-to-end example using bundled maize files in `inst/extdata/`:
+```bash
+# 1) Annotate SNPs to genes
+magma \
+  --annotate \
+  --snp-loc  <snp.loc> \
+  --gene-loc <genes.loc> \
+  --out      <prefix>
+
+# 2) Gene analysis (LD-aware)
+magma \
+  --bfile      <LD_reference_panel_prefix> \
+  --pval       <gwas.pval.txt> N=<N> \
+  --gene-annot <prefix>.genes.annot \
+  --gene-model multi=snp-wise \
+  --out        <prefix>
+```
+
+---
+
+## Quick R example (MAGCAT-style)
+
+> **Note:** function names below follow the style of your MAGCAT wrapper. If your package uses slightly different names/arguments, keep the structure and edit names to match your exported API.
 
 ```r
 library(MAGCAT)
 
-## 1. Load example MAGMA gene results -----------------------------
-
+# 1) Read MAGMA gene results (.genes.out)
 genes_file <- system.file(
   "magma_genes",
   "N_maize_MLM.snp_wise_top.genes.out",
   package = "MAGCAT"
 )
-
 genes_all <- read_magma_genes(genes_file)
 
-
-## 2. Load gene lengths from GFF3-derived table -------------------
-
-gene_len_file <- system.file(
-  "extdata",
-  "Zea_mays_gene_lengths.tsv",
-  package = "MAGCAT"
-)
-
+# 2) Load gene lengths (from GFF3-derived table)
+gene_len_file <- system.file("extdata", "Zea_mays_gene_lengths.tsv", package = "MAGCAT")
 maize_gene_len <- readr::read_tsv(gene_len_file, show_col_types = FALSE)
 
-
-## 3. Adjust MAGMA gene p-values for gene length + NSNPS ----------
-
+# 3) Adjust gene p-values for gene length + NSNPS
 adj_out <- magcat_adjust_gene_p(
-  gene_results = genes_all,      # MAGMA .genes.out
-  gene_lengths = maize_gene_len, # from GFF3
+  gene_results = genes_all,
+  gene_lengths = maize_gene_len,
   gene_col     = "GENE",
   nsnp_col     = "NSNPS",
   p_col        = "P",
@@ -120,28 +484,20 @@ adj_out <- magcat_adjust_gene_p(
   len_gene_col = "gene_id",
   len_col      = "length"
 )
+genes_adj <- adj_out$genes
 
-genes_adj <- adj_out$genes   # Z_raw, Z_adj, P_adj, gene_length, log covariates, etc.
-
-
-## 4. Load pathways (e.g. PMN maize pathways) ---------------------
-
+# 4) Load pathways (built-in or user-supplied)
 pathways_maize <- magcat_load_pathways(species = "maize")
-# or supply your own (data.frame with pathway_id, gene_id, pathway_name)
 
-
-## 5. Pathway tests: ACAT, Fisher, soft TFisher -------------------
-
-# (a) ACAT on adjusted gene p-values
+# 5) Pathway tests
 res_acat <- magcat_acat_pathways(
   gene_results = genes_adj,
   pathways     = pathways_maize,
   gene_col     = "GENE",
   p_col        = "P_adj",
-  B_perm       = 0L  # set >0 for permutation-calibrated ACAT
+  B_perm       = 0L
 )
 
-# (b) Fisher's method (unweighted) on adjusted gene p-values
 res_fisher <- magcat_fisher_pathways(
   gene_results = genes_adj,
   pathways     = pathways_maize,
@@ -149,20 +505,17 @@ res_fisher <- magcat_fisher_pathways(
   p_col        = "P_adj"
 )
 
-# (c) soft TFisher on adjusted gene p-values
 res_tfsoft <- magcat_soft_tfisher_pathways(
   gene_results     = genes_adj,
   pathways         = pathways_maize,
   gene_col         = "GENE",
   p_col            = "P_adj",
-  tau1             = 0.05,   # truncation / normalization parameter
-  B_perm           = 1000L,  # gene-set permutations
+  tau1             = 0.05,
+  B_perm           = 1000L,
   analytic_logical = TRUE
 )
 
-
-## 6. Omnibus ACAT across methods --------------------------------
-
+# 6) Omnibus ACAT across component tests
 res_omni <- magcat_omni_acat_pathways(
   res_acat    = res_acat,
   res_fisher  = res_fisher,
@@ -172,372 +525,36 @@ res_omni <- magcat_omni_acat_pathways(
   tfisher_col = "tfisher_p_analytic"
 )
 
-# Multiple testing (BH and qvalue)
+# 7) Multiple testing (BH)
 res_omni$omni_p_BH <- p.adjust(res_omni$omni_p, method = "BH")
 
-if (requireNamespace("qvalue", quietly = TRUE)) {
-  res_omni$omni_p_q <- qvalue::qvalue(res_omni$omni_p)$qvalues
-}
-
-# Top pathways by omnibus p
+# Top pathways
 head(res_omni[order(res_omni$omni_p), ], 10)
 ```
 
-This gives, for each pathway:
+---
 
-* `acat_p` – ACAT p (gene → pathway),
-* `fisher_p` – Fisher p,
-* `tfisher_p_analytic` – soft TFisher p,
-* `omni_p` – omnibus ACAT over the three,
-* `omni_p_BH` – BH-adjusted FDR,
-* `omni_p_q` – optional q-value.
+## Suggested output columns (pathway-level)
+
+For each pathway, CATFISH/MAGCAT should report at minimum:
+
+- `pathway_id`, `pathway_name`, `n_genes`
+- `acat_p`
+- `fisher_p` (and optionally `wfisher_p`)
+- `tfisher_p_analytic` (and optionally `tfisher_p_perm`)
+- `omni_p`
+- `omni_p_BH` (and optional `omni_p_q`)
+- `driver_component` (which test drove the omnibus)
+- `archetype` (SDA/CME/DPS/HDS/SGP/HAA)
 
 ---
 
-## Detailed workflow and models
+## References
 
-### 1. SNP → gene with MAGMA
+- White MJ et al. *Strategies for Pathway Analysis using GWAS and WGS Data*. (PMC6391732)  
+  https://pmc.ncbi.nlm.nih.gov/articles/PMC6391732/
+- de Leeuw CA et al. *MAGMA: Generalized Gene‑Set Analysis of GWAS Data*. PLoS Comput Biol (2015).
+- Liu Y et al. *ACAT / Cauchy combination test* (2019).
+- TFisher / truncated Fisher family: Zaykin et al.; Sheng & Yang; Zhang & Wu (depending on implementation).
 
-MAGCAT doesn’t reimplement MAGMA; it wraps it and organizes the inputs/outputs.
 
-#### 1.1 Gene locations from GFF3
-
-Using `gff3_to_geneloc.R` and `gene_length_wrappers.R`, MAGCAT:
-
-* Parses species GFF3 and creates a gene coordinate table:
-
-  ```text
-  gene_id   chr   start   end   length   strand
-  ```
-
-* Writes MAGMA-style gene location files `*.genes.loc`:
-
-  ```text
-  GENE   CHR   START   END
-  ```
-
-These live under `inst/extdata/` (e.g. `maize.genes.loc`, `sorghum.genes.loc`).
-
-#### 1.2 MAGMA annotation and gene analysis
-
-You supply:
-
-* SNP location file `*.snp.loc`:
-
-  ```text
-  SNP_ID  CHR  BP
-  ```
-
-* GWAS p-value file `*.pval.txt`:
-
-  ```text
-  SNP_ID  P   [optional: BETA, SE, ...]
-  ```
-
-Then MAGCAT (via wrappers) runs, conceptually:
-
-```bash
-magma   --annotate   --snp-loc   <snp.loc>   --gene-loc  <genes.loc>   --out       <prefix>
-
-magma   --bfile       <reference_panel>   --pval        <gwas.pval.txt> N=<N>   --gene-annot  <prefix>.genes.annot   --gene-model  multi=snp-wise   --out         <prefix>
-```
-
-Key points:
-
-* `multi = snp-wise` combines:
-  * snp-wise mean: sensitive to many small SNP effects,
-  * snp-wise top: sensitive to a single strong SNP,
-* while accounting for LD and #SNPs per gene.
-
-Output: `<prefix>.genes.out` with columns like:
-
-* `GENE`, `CHR`, `NSNPS`, `ZSTAT`, `P`, …
-
-MAGCAT reads this via `read_magma_genes()` into a tidy `data.frame`.
-
----
-
-### 2. Adjusting gene p-values for gene length and #SNPs
-
-MAGMA already accounts for NSNPS/LD in its null, but gene-level Z and p can still show residual dependence on gene size and SNP density. MAGMA’s own gene-set test corrects for this using covariates; MAGCAT pushes that idea down one level by adjusting the gene Z-scores themselves.
-
-#### 2.1 Gene length table
-
-Using `gene_length_wrappers.R`, MAGCAT builds a gene length table (from GFF3):
-
-```text
-gene_id   chr   start   end   length   strand
-```
-
-For maize, this is stored e.g. as `Zea_mays_gene_lengths.tsv` in `inst/extdata/`.
-
-#### 2.2 Regression model: `magcat_adjust_gene_p()`
-
-Let:
-
-* `Z_i` = MAGMA gene Z-stat for gene i,
-* `L_i` = gene length (bp),
-* `S_i` = number of SNPs in gene i (`NSNPS`).
-
-MAGCAT fits the linear model:
-
-```text
-Z_i = β0 + β1 * log(L_i) + β2 * log(S_i) + ε_i
-```
-
-using all genes with valid data.
-
-Then it defines adjusted Z and adjusted p as:
-
-```text
-Z_hat_i = β0 + β1 * log(L_i) + β2 * log(S_i)
-Z_adj_i = Z_i - Z_hat_i
-P_adj_i = 2 * Φ( -|Z_adj_i| )
-```
-
-where `Φ` is the CDF of N(0,1).
-
-Interpretation:
-
-* `P_adj_i` is the size- and SNP-adjusted gene p-value,
-* removing linear dependence on log gene length and log #SNPs.
-
-`magcat_adjust_gene_p()` returns:
-
-* `genes`: original gene table augmented with:
-  * `gene_length`, `log_gene_length`, `log_nsnp`,
-  * `Z_raw`, `Z_adj`, `P_adj`,
-* `fit`: the `lm` object (inspect coefficients, R², diagnostics, etc.).
-
----
-
-### 3. Gene → pathway: combination tests
-
-Given a pathway `g` containing genes `i ∈ g`, and adjusted gene p-values `p_i = P_adj_i`, MAGCAT provides three main pathway tests.
-
-Let `k = |g|` be the number of genes in the pathway.
-
-#### 3.1 ACAT: `magcat_acat_pathways()`
-
-Aggregated Cauchy Association Test (ACAT) combines p-values using a Cauchy transform:
-
-```text
-T_ACAT = sum_{i=1}^k w_i * tan( π * (0.5 - p_i) )
-```
-
-where `w_i >= 0` and `sum w_i = 1`. In MAGCAT’s default, all weights are equal:
-
-```text
-w_i = 1 / k
-```
-
-Under the null (for independent or moderately dependent p-values), `T_ACAT` is approximately standard Cauchy:
-
-```text
-p_ACAT ≈ 0.5 - (1 / π) * atan(T_ACAT)
-```
-
-Properties:
-
-* Very sensitive to a few very small p’s,
-* Robust to dependence,
-* Extremely fast (no permutations required).
-
-MAGCAT also supports an optional permutation-calibrated ACAT:
-
-* Permute gene labels across pathways (or within strata),
-* Recompute ACAT for each permuted set,
-* Empirical p:
-
-```text
-p_perm = (1 + # { b : p_ACAT^(b) <= p_ACAT_obs }) / (B + 1)
-```
-
-Output columns include `acat_p` and (if requested) `acat_p_perm`.
-
-#### 3.2 Fisher’s method (unweighted): `magcat_fisher_pathways()`
-
-Classic Fisher combination:
-
-```text
-T_F = -2 * sum_{i=1}^k log(p_i)
-```
-
-Under the null (independent p’s):
-
-```text
-T_F ~ chi-square with 2k degrees of freedom
-p_Fisher = 1 - F_chisq_2k( T_F )
-```
-
-where `F_chisq_2k` is the chi-square CDF with `2k` degrees of freedom.
-
-Properties:
-
-* Sensitive to many modest p-values (polygenic signals within a pathway),
-* Less dominated by a single tiny p than ACAT,
-* Easy and deterministic.
-
-`magcat_fisher_pathways()` computes `fisher_p` for each pathway using adjusted gene p-values.
-
-#### 3.3 Soft TFisher (soft truncated Fisher): `magcat_soft_tfisher_pathways()`
-
-TFisher generalizes Fisher’s method by truncating and/or weighting p-values, focusing on the lower tail (most significant genes). MAGCAT uses the soft-threshold version implemented in the `TFisher` R package.
-
-Given a truncation/normalization parameter `tau1` (e.g. 0.05), soft TFisher emphasizes p-values below `tau1` and effectively downweights or nullifies very large p-values.
-
-For pathway p-values `p_i`, MAGCAT computes:
-
-1. The soft TFisher statistic:
-
-   ```r
-   stat <- TFisher::stat.soft(p = p_i, tau1 = tau1)
-   ```
-
-2. The null CDF (left-tail) via:
-
-   ```r
-   Fq <- TFisher::p.soft(q = stat, n = length(p_i), tau1 = tau1, M = NULL)
-   ```
-
-3. The right-tail (test) p-value:
-
-   ```text
-   p_TFisher = 1 - Fq
-   ```
-
-MAGCAT reports:
-
-* `tfisher_stat` – the soft TFisher statistic,
-* `tfisher_p_analytic` – analytic soft TFisher p-value (`1 - p.soft(...)`),
-* optional `tfisher_p_perm` – permutation-calibrated p from gene-set permutations:
-
-   ```text
-   p_TFisher_perm = (1 + # { b : T_TFisher^(b) >= T_TFisher_obs }) / (B + 1)
-   ```
-
-Properties:
-
-* Bridges Fisher and minP:
-  * Good when there are a few strong genes among many nulls,
-  * Retains power when there are multiple moderate signals.
-* `tau1` tunes how tail-focused the test is.
-
----
-
-### 4. Omnibus ACAT (ACAT-O style): `magcat_omni_acat_pathways()`
-
-Different combination tests favor different signal architectures:
-
-* ACAT: few very small p’s,
-* Fisher: many modestly small p’s,
-* TFisher: a few good genes while ignoring many nulls.
-
-To avoid betting on a single model, MAGCAT constructs a pathway-level omnibus p by combining the three tests with ACAT again (ACAT-O style).
-
-For each pathway, let:
-
-* `p1 = p_ACAT`,
-* `p2 = p_Fisher`,
-* `p3 = p_TFisher`.
-
-Define:
-
-```text
-T_omni = sum_{j=1}^3 w_j * tan( π * (0.5 - p_j) )
-```
-
-with equal weights `w_j = 1/3` by default, and
-
-```text
-p_omni = 0.5 - (1 / π) * atan(T_omni)
-```
-
-This `omni_p` is:
-
-* small if any of the component tests is strongly significant,
-* robust to unknown signal pattern (sparse vs polygenic vs tail-truncated).
-
-`magcat_omni_acat_pathways()` returns a table with:
-
-* `pathway_id`, `pathway_name`,
-* input p’s (`acat_p`, `fisher_p`, `tfisher_p_analytic`),
-* `omni_p` – omnibus ACAT p.
-
----
-
-### 5. Multiple testing: BH and q-values
-
-Across all pathways, MAGCAT allows standard multiple-testing correction:
-
-1. Benjamini–Hochberg FDR:
-
-   ```r
-   res_omni$omni_p_BH <- p.adjust(res_omni$omni_p, method = "BH")
-   ```
-
-   Pathways with `omni_p_BH <= 0.05` (or 0.10) are often considered significant.
-
-2. Storey q-values (if the `qvalue` package is installed):
-
-   ```r
-   res_omni$omni_p_q <- qvalue::qvalue(res_omni$omni_p)$qvalues
-   ```
-
-   - `omni_p_q` directly estimates FDR at each pathway.
-   - You can distinguish:
-     - `q <= 0.05` → high-confidence pathways,
-     - `0.05 < q <= 0.10` → suggestive / discovery pathways.
-
----
-
-## Function reference (high-level map)
-
-### MAGMA integration
-
-* `magma_set_path()`, `magma_path()` – configure/query the MAGMA binary path.
-* `run_magma_annot()` – wrapper around `magma --annotate` to produce `.genes.annot` files.
-* `run_magma_gene()` – wrapper around `magma --gene-analysis` with `--gene-model multi=snp-wise`.
-* `read_magma_genes()` – read MAGMA `.genes.out` into a data.frame with `GENE`, `NSNPS`, `ZSTAT`, `P`, etc.
-
-### Gene location & length from GFF3
-
-* `get_gene_lengths_gff3()` – parse a GFF3 to a gene table: `gene_id`, `chr`, `start`, `end`, `length`, `strand`.
-* `write_genes_loc()` – export GFF3-derived gene coordinates to MAGMA `*.genes.loc` format.
-
-Example resources are stored under `inst/extdata/GFF3/` and `inst/extdata/Zea_mays_gene_lengths.tsv`.
-
-### Gene-level p-value adjustment
-
-* `magcat_adjust_gene_p()` (in `Adjust_pvalues.R`)
-  * Fits: `Z_i ~ log(L_i) + log(S_i)`
-  * Creates `Z_adj` and `P_adj`
-  * Returns augmented gene table + `lm` fit.
-
-### Pathway loading
-
-* `magcat_load_pathways(species)` – load built-in PMN pathways for `"maize"`, `"sorghum"`, `"arabidopsis"`, `"plant"`.
-
-Returns a data.frame or list mapping `pathway_id` → gene IDs. You can also pass your own pathways.
-
-### Pathway-level tests
-
-* `magcat_acat_pathways()` – ACAT-based gene → pathway test, plus optional permutation-calibrated ACAT.
-* `magcat_fisher_pathways()` – unweighted Fisher’s method across gene p-values in each pathway.
-* `magcat_soft_tfisher_pathways()` – soft TFisher (truncated/weighted Fisher) with analytic and/or permutation p-values.
-* `magcat_ordmeta_pathways()` (optional) – ordmeta-based pathway test (minimum marginal p in joint order distribution).
-
-### Omnibus
-
-* `magcat_omni_acat_pathways()` – ACAT-O style omnibus combination of multiple pathway p’s into a single `omni_p`.
-
----
-
-## Citation
-
-If you use MAGCAT in a publication, please cite:
-
-* MAGMA: de Leeuw et al., PLoS Comput Biol (2015).
-* ACAT: Liu et al., Am J Hum Genet (2019).
-* TFisher / truncated Fisher: Zaykin et al., Sheng & Yang, Zhang & Wu, etc.
-* And this package (GitHub / Zenodo DOI once available).
