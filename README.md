@@ -384,36 +384,67 @@ Examples of why:
 
 ## 6) Omnibus pathway testing (correlation-robust model averaging)
 
-Because no single test is uniformly optimal across latent pathway architectures, we compute multiple component p-values:
+Because no single test is uniformly optimal across latent pathway architectures, for each pathway `S` we compute a small panel of component p-values:
 
-$$
-\mathcal{P}(S) = \left\{ p_{\mathrm{ACAT}}(S),\, p_{\mathrm{Fisher}}(S),\, p_{\mathrm{TF}}(S;\tau) \right\}.
-$$
+- `p_ACAT(S)`       – ACAT on gene-level p-values
+- `p_Fisher(S)`     – Fisher’s sum-of-logs combination
+- `p_TF(S; tau)`    – soft truncated Fisher (TFisher) at threshold `tau`
+- `p_Stouffer(S)`   – (optionally weighted) Stouffer / mean-Z combination
+- `p_minP(S)`       – within-pathway minP (Tippett) across genes
 
-We then combine them into a single omnibus p-value using ACAT again:
+We then summarize these into *two* omnibus statistics:
+(i) an analytic **ACAT-O** combination across methods, and  
+(ii) a permutation-calibrated **minimum-p (minP)** across methods.
 
-### 6.1 Omnibus ACAT statistic
+---
 
-Let $p_1, p_2, p_3$ denote the three component p-values and $v_j \ge 0$ be weights with $\sum_j v_j = 1$ (default $v_j = 1/3$).
+### 6.1 Omnibus ACAT (ACAT-O across methods)
 
-Define:
+Let `p1, p2, p3, p4, p5` denote the five component p-values for pathway `S`, and let weights `v_j >= 0` satisfy `sum_j v_j = 1` (default `v_j = 1/5`).
 
-$$
-T_{\mathrm{omni}}(S) = \sum_{j=1}^{3} v_j \tan\left(\pi\left(\tfrac{1}{2} - p_j\right)\right).
-$$
+Define the ACAT-O Cauchy statistic:
 
-Then:
+- `T_omni_ACAT(S) = sum_{j=1..5} v_j * tan( pi * (0.5 - p_j) )`
 
-$$
-p_{\mathrm{omni}}(S) =
-\tfrac{1}{2} - \frac{1}{\pi}\arctan\left(T_{\mathrm{omni}}(S)\right).
-$$
+Under the global null, `T_omni_ACAT(S)` is approximately standard Cauchy, giving the analytic omnibus p-value:
 
-### 6.2 Why this is valid under dependence
+- `p_omni_ACAT(S) = 0.5 - (1/pi) * atan( T_omni_ACAT(S) )`
 
-ACAT is designed to be robust to **arbitrary dependence** among inputs in many practical settings because the Cauchy tail behavior yields stable combined p-values without needing an explicit covariance estimate.
+This ACAT-O layer is most sensitive when **at least one** component test (e.g., ACAT for sparse drivers, Fisher / Stouffer for coordinated enrichment, TFisher for hybrid patterns, or minP for hard single-gene hits) is strongly significant, even if the others are not.
 
-**Interpretation:** omnibus significance indicates that *at least one plausible signal architecture* is supported by the data. It does **not** imply uniform enrichment across all genes.
+---
+
+### 6.2 Omnibus minP across methods with permutation
+
+To obtain a complementary, more conservative summary that explicitly accounts for correlation between component tests, we also compute a minimum-p omnibus statistic across methods:
+
+- `T_omni_min(S) = min_{j in {1,2,3,4,5}} p_j`
+
+equivalently:
+
+- `T_omni_min(S) = min( p_ACAT(S), p_Fisher(S), p_TF(S; tau), p_Stouffer(S), p_minP(S) )`
+
+Because the `p_j` are correlated (all are computed from the same set of gene-level p-values), we calibrate `T_omni_min(S)` by permutation.
+
+For each of `B` permutations:
+
+- randomize gene labels across pathways (preserving the empirical distribution of gene-level p-values),
+- recompute all five component tests for each pathway,
+- record, for permutation `b = 1..B`:
+
+  - `T_omni_min^(b)(S) = min_j p_j^(b)(S)`
+
+The permutation-based omnibus p-value is:
+
+- `p_omni_min_hat(S) = (1 + #{ b : T_omni_min^(b)(S) <= T_omni_min(S) }) / (B + 1)`
+
+We use `p_omni_min_hat(S)` as the **primary omnibus p-value** in the main analyses because it:
+
+1. protects nominal type-I error under *arbitrary* dependence between component tests, and  
+2. explicitly targets the “best” component test for each pathway while accounting for the fact that the best test is chosen post hoc (via the min across methods).
+
+The analytic ACAT-O p-value `p_omni_ACAT(S)` is reported alongside as a **higher-power, model-based sensitivity analysis**, highlighting pathways that are consistently strong across methods or dominated by a single very informative test.
+
 
 ---
 
@@ -907,8 +938,10 @@ omni_minp <- omni_pathways(
 ##   and get a full panel of pathway p-values (plus permutation-calibrated
 ##   omnibus) with plant-aware defaults and parallel MAGMA integration.
 
+```
 
 ---
+
 
 ## References
 
