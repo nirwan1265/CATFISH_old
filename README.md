@@ -37,94 +37,120 @@ CATFISH interprets each significant pathway by classifying the **rank profile** 
 
 ## Archetype I — Sparse Driver Architecture (SDA)
 
-**Signature:** one or a few genes are extremely significant; most genes are null.
+**Signature:** one or a few genes are extremely significant; most genes look null.
 
-$$
-p_{(1)} \ll \alpha,
-\quad
-p_{(k)} \sim \mathrm{Uniform}(0,1)\ \ \forall k > K.
-$$
+- The top gene p-value `p_(1)` is much smaller than alpha (e.g. 1e-6),
+- The rest of the genes in the pathway have p-values that look roughly uniform.
 
-**Best detectors:** ACAT, minP-like behavior, hard truncation.  
-**Interpretation:** pathway is significant due to **driver gene dominance**, not broad engagement.
+**Best detectors in CATFISH:**
+
+- **ACAT** (loves a few very small p’s)
+- **minP / Tippett** (minimum p-value)
+- **Hard / heavy truncation** (e.g. TFisher with small tau)
+
+**Interpretation:**  
+The pathway is significant because of **driver gene dominance**, not broad engagement. Biologically, this could be a core “bottleneck” gene whose annotation pulls in a whole pathway.
 
 ---
 
 ## Archetype II — Coordinated Moderate Enrichment (CME)
 
-**Signature:** many genes show moderate association; no single extreme driver.
+**Signature:** many genes show moderate association; no single gene is insanely extreme.
 
-$$
-\exists\ \text{non-trivial fraction of } g \text{ with } p_g \in [10^{-3},\,0.05],
-\quad
-\text{and } p_{(1)} \text{ not overwhelmingly dominant}.
-$$
+- A non-trivial fraction of genes have p in, say, `[1e-3, 0.05]`,
+- The top p-value is not massively more extreme than the rest.
 
-**Best detectors:** Fisher / wFisher / mean‑Z aggregation.  
-**Interpretation:** **collective functional engagement**.
+**Best detectors in CATFISH:**
+
+- **Fisher’s method** (sum of log p’s)
+- Optionally **wFisher / mean-Z** if you ever add weights
+
+**Interpretation:**  
+This reflects **collective functional engagement**: the pathway as a whole is involved, even if no single gene is a monster hit.
 
 ---
 
 ## Archetype III — Diffuse Polygenic Shift (DPS)
 
-**Signature:** weak but consistent deviation from null; few (if any) cross 0.05.
+**Signature:** the pathway’s genes are, on average, slightly more associated than the genome-wide background, but almost none cross a conventional 0.05 threshold.
 
-$$
-\mathbb{E}[Z_g] > 0
-\quad \text{but} \quad
-p_g \not\ll 0.05 \text{ for most } g.
-$$
+- Most p-values are > 0.05,
+- But the **mean adjusted Z (`Z_adj`) is shifted** away from 0 in one direction.
 
-**Best detectors:** regression / distributional‑shift competitive models (e.g., MAGMA competitive).  
-**Interpretation:** **global pathway bias** consistent with polygenicity.
+**Best detectors in CATFISH:**
+
+- **Stouffer / mean-Z on `Z_adj`** (unweighted; permutation-calibrated)
+- Optionally **competitive regression models** (e.g. MAGMA competitive) if you include them
+
+**Interpretation:**  
+This is a **global pathway bias consistent with polygenicity** – lots of tiny pushes in the same direction, no obvious star gene. It’s the “many gnats, no dragon” scenario.
 
 ---
 
 ## Archetype IV — Hybrid Driver–Support (HDS)
 
-**Signature:** a few strong genes + several moderately associated genes.
+**Signature:** a few very strong genes plus a supporting cast of moderately associated genes.
 
-$$
-p_{(1)} \ll 10^{-4},
-\quad
-p_{(2..K)} \in [10^{-3},\,0.05].
-$$
+- The top one or few genes have very small p-values (e.g. < 1e-4),
+- Several additional genes have p in `[1e-3, 0.05]`.
 
-**Best detectors:** truncation/TFisher + Fisher + omnibus.  
-**Interpretation:** **hierarchical pathway organization** (drivers + supporting machinery).
+**Best detectors in CATFISH:**
+
+- **Soft TFisher** (truncated / tail-focused, but not as extreme as minP)
+- **Fisher** (picks up the moderate bulk)
+- **Omnibus combo** (ACAT over ACAT/Fisher/TFisher/Stouffer)
+
+**Interpretation:**  
+This fits a **hierarchical pathway organization**: a few “driver” genes plus **supporting machinery**. It’s often what you expect for key biosynthetic or signaling pathways.
 
 ---
 
 ## Archetype V — Single-Gene Proxy Pathway (SGP)
 
-**Signature:** pathway signal disappears after removing/conditioning on top gene(s).
+**Signature:** the entire pathway signal is explained by one gene; remove that gene and the pathway is no longer significant.
 
-Operationally:
+Operationally you can flag it by:
 
-- recompute pathway p-value after removing $g^\*$ (top gene),
-- or perform conditional gene‑set analysis if available.
+- Removing the top gene `g*` from the pathway and recomputing the pathway p-value,
+- Marking pathways where the p-value becomes non-significant after that removal.
 
-**Best detectors (but potentially misleading):** minP, uncorrected ACAT.  
-**Interpretation:** pathway is a **proxy** for a gene‑level association (annotation reuse / overlap).
+**Best detectors / diagnostics in CATFISH:**
 
----
+- **minP / Tippett** (will happily call these significant),
+- **ACAT** (also loves a single extreme gene),
+- **SGP check:** “recompute without top gene” as a *diagnostic*, not as another omnibus test.
 
-## Archetype VI — Heterogeneous / Antagonistic (HAA)
-
-**Signature:** heterogeneous submodules, mixed directions, or context dependence; mean-based tests can cancel.
-
-**Best detectors:** stratified/signed models; sub‑pathway or network‑aware analyses.  
-**Interpretation:** requires **substructure-aware** modeling; global enrichment may be misleading.
+**Interpretation:**  
+The pathway is essentially a **proxy for a single gene-level association** (often due to dense annotation or overlapping pathway definitions). Biologically, the pathway may still be relevant, but you should interpret it as “this gene is driving everything.”
 
 ---
 
 ## Recommended reporting checklist (per significant pathway)
 
-- **Archetype call:** SDA / CME / DPS / HDS / SGP / HAA  
-- **Driver test:** which component (ACAT vs Fisher vs TFisher) primarily drove $p_{\mathrm{omni}}$  
-- **Robustness:** persistence after conditioning/removing top gene(s) (flags SGP)  
-- **Bias controls:** gene size, SNP density/gene density, pathway size, LD panel choice  
-- **Calibration:** analytic vs permutation p-values (and $B$ used if permutation)
+For each pathway that passes your FDR / q-value threshold, CATFISH should report:
+
+- **Archetype call:**  
+  SDA (Sparse driver) / CME (Coordinated moderate) / DPS (Diffuse polygenic) / HDS (Hybrid driver–support) / SGP (Single-gene proxy)
+
+- **Driver test(s):**  
+  Which component test(s) gave the strongest evidence?
+  - ACAT vs Fisher vs soft TFisher vs Stouffer
+  - Optionally, whether minP across methods was the omnibus winner.
+
+- **SGP diagnostic:**  
+  Does the pathway remain significant after removing the top gene (and maybe the top 2)?
+  - If not → flag as **Single-Gene Proxy (SGP)**.
+
+- **Bias controls checked:**
+  - Gene size / gene length adjustment done (yes; via regression),
+  - SNP density / NSNPs adjustment done (yes; via regression),
+  - Pathway size (small vs huge),
+  - LD reference panel used.
+
+- **Calibration:**
+  - Analytic vs permutation p-values used for each test,
+  - Number of permutations `B` for each permutation-based p,
+  - Any evidence of inflation / deflation in null simulations or permuted data.
 
 ---
 
