@@ -34,7 +34,7 @@ No single gene-set statistic is uniformly most powerful across these various pos
 
 # Pathway signal archetypes
 
-We divide the pathway signals into a small set of archetypes that describe different ways a pathway can look enriched as explained above. We then use a panel of combination tests chosen to be sensitive to each of these behaviors and a real biological example. 
+We divide the pathway signals into a small set of archetypes that describe different ways a pathway can be enriched as explained above. We then use a combination of statistical tests chosen to be representative to each of these behaviors and a provide a biological example for each archetype.
 
 ## Archetype I — Sparse Driver Architecture (SDA)
 
@@ -196,35 +196,6 @@ The pathway is essentially a **proxy for a single gene-level association** (ofte
 Phenylalanine metabolism is dominated by a single bottleneck enzyme, phenylalanine hydroxylase (PAH), which converts phenylalanine to tyrosine. In humans, loss or severe reduction of PAH activity causes hyperphenylalaninemia and classic phenylketonuria (PKU) where phenylalanine accumulates to toxic levels, while downstream products are depleted. Most cases of elevated phenylalanine (HPA) are due to PAH deficiency, whereas only a minority are caused by defects in cofactor (BH₄) metabolism. Here, one gene (PAH) is the critical flux-controlling step;
 
 Other genes in the “phenylalanine metabolism” pathway (transporters, minor side-enzymes, cofactor recycling, etc.) generally have much weaker or rarer effects at the population level.
-
----
-
-## Recommended reporting checklist (per significant pathway)
-
-For each pathway that passes your FDR / q-value threshold, CATFISH should report:
-
-- **Archetype call:**  
-  SDA (Sparse driver) / CME (Coordinated moderate) / DPS (Diffuse polygenic) / HDS (Hybrid driver–support) / SGP (Single-gene proxy)
-
-- **Driver test(s):**  
-  Which component test(s) gave the strongest evidence?
-  - ACAT vs Fisher vs soft TFisher vs Stouffer
-  - Optionally, whether minP across methods was the omnibus winner.
-
-- **SGP diagnostic:**  
-  Does the pathway remain significant after removing the top gene (and maybe the top 2)?
-  - If not → flag as **Single-Gene Proxy (SGP)**.
-
-- **Bias controls checked:**
-  - Gene size / gene length adjustment done (yes; via regression),
-  - SNP density / NSNPs adjustment done (yes; via regression),
-  - Pathway size (small vs huge),
-  - LD reference panel used.
-
-- **Calibration:**
-  - Analytic vs permutation p-values used for each test,
-  - Number of permutations `B` for each permutation-based p,
-  - Any evidence of inflation / deflation in null simulations or permuted data.
 
 ---
 
