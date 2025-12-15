@@ -210,8 +210,8 @@ Phenylalanine metabolism in humans is dominated by a single bottleneck enzyme, p
 ---
 
 ### Bias warning
+When calculating over-representation or enrichment, pathway-based analysis is subject to multiple biases; gene size, pathway size, density of SNP coverage, and linkage disequilibrium (LD) patterns all need to be handled explicitly (White et al., 2020; PMC6391732). In CATFISH, we address these in three steps: (i) SNP → gene is performed with MAGMA’s LD-aware multi–SNP model, so gene-level Z/P already account for local LD structure and SNP density; (ii) we then regress MAGMA gene Z-scores on log(gene length) and log(number of SNPs) and use the residual-based `P_adj` for all downstream gene → pathway tests, thereby removing remaining dependence on gene size and SNP density; and (iii) at the pathway level, we avoid naive over-representation tests and instead calibrate our omnibus statistics with gene-label permutations that preserve each gene’s adjusted p-value and the observed distribution of pathway sizes, providing enrichment p-values that are robust to these known biases.
 
-When calculating over‑representation or enrichment, pathway‑based analysis is subject to multiple biases; **gene size**, **pathway size**, **density of SNP coverage**, and **linkage disequilibrium (LD)** patterns are all factors that must be considered and appropriately addressed (White et al., 2020; PMC6391732), which we have tried to address in our pipeline.  
 Link: https://pmc.ncbi.nlm.nih.gov/articles/PMC6391732/
 
 ---
@@ -219,72 +219,91 @@ Link: https://pmc.ncbi.nlm.nih.gov/articles/PMC6391732/
 ## METHODS
 
 ### Notation
+## Gene-level covariate adjustment (gene length & SNP density)
 
 Let a pathway (gene set) be denoted by $S$, containing $G = |S|$ genes indexed by $g = 1,\dots,G$.
 
-Let the (adjusted) gene-level p-values be:
+For each gene $g \in S$, let:
+- $Z_g$ denote the raw gene-level $Z$-statistic, and
+- $p_g$ denote the corresponding two-sided $p$-value.
+
+We collect these into vectors:
 
 $$
+\mathbf{Z}_S = (Z_1, Z_2, \dots, Z_G),
+\qquad
 \mathbf{p}_S = (p_1, p_2, \dots, p_G).
 $$
 
-Let the ordered p-values be:
+To remove residual dependence on gene length and SNP density, we fit a linear model:
 
 $$
-p_{(1)} \le p_{(2)} \le \dots \le p_{(G)}.
+Z_g = \beta_0 + \beta_1 \log(L_g) + \beta_2 \log(\mathrm{SNPs}_g) + \varepsilon_g.
 $$
+
+We define the adjusted $Z$-scores as the regression residuals:
+
+$$
+Z_{g,\mathrm{adj}} = \hat{\varepsilon}_g.
+$$
+
+The corresponding adjusted two-sided $p$-values are:
+
+$$
+p_{g,\mathrm{adj}} = 2\,\Phi\!\left(-\left|Z_{g,\mathrm{adj}}\right|\right),
+$$
+
+where $\Phi(\cdot)$ is the standard normal CDF.
+
+We denote the adjusted vectors by:
+
+$$
+\mathbf{Z}_{S,\mathrm{adj}} = (Z_{1,\mathrm{adj}}, \dots, Z_{G,\mathrm{adj}}),
+\qquad
+\mathbf{p}_{S,\mathrm{adj}} = (p_{1,\mathrm{adj}}, \dots, p_{G,\mathrm{adj}}).
+$$
+
 
 ---
 
 ## 1) Gene-level association statistics (SNP → gene)
 
-For each gene $g$, MAGMA produces a gene‑level association p‑value $p_g$ by aggregating SNP‑level signals within/near the gene while accounting for local LD using a reference panel.
+For each gene $g$, MAGMA produces a gene‑level association p‑value $p_g$ by aggregating SNP‑level signals within/near the gene while accounting for local LD using a reference panel. We used MAGMA’s `multi=snp-wise` model, which combines a SNP-wise mean test (good for many small effects) and a SNP-wise top test (good for a single strong SNP) into a single LD-aware omnibus statistic per gene, making the gene p-values robust to different within-gene causal architectures.
 
-Conceptually:
+The workflow includes:
 
 - SNPs are mapped to genes (gene boundaries with optional windows).
 - A multi‑marker gene model accounts for LD among SNPs in the gene region.
 - MAGMA outputs gene statistics (e.g., $Z_g$ and $p_g$).
 
-> In CATFISH, these MAGMA gene p-values are treated as the primitive inputs to all pathway tests.
+In CATFISH, these MAGMA gene p-values (or Z statistics) are treated as the inputs to all pathway tests.
 
 ---
 
-## 2) Competitive enrichment framing (pathway vs background)
+## 2) Gene-level adjustment for gene size and SNP density
 
-Pathway interpretation is most stable under **competitive** enrichment logic: a pathway is significant if its member genes are *more associated* than genes outside the pathway (i.e., relative enrichment), rather than simply showing absolute polygenicity.
-
-Practical implications:
-
-- Prefer competitive gene‑set testing frameworks (e.g., MAGMA competitive gene‑set regression) when available.
-- When using gene‑p combination tests (ACAT/Fisher/TFisher) as pathway detectors, interpret them as **enrichment summaries** and retain covariate controls / calibrations (below) to mitigate confounding.
-
----
-
-## 3) Optional gene-level adjustment for gene size and SNP density
-
-Even with LD-aware gene testing, gene‑level signals can exhibit residual dependence on gene size and SNP density. CATFISH optionally performs a post‑hoc adjustment at the gene level.
+Even with LD-aware gene testing, gene‑level signals can exhibit residual dependence on gene size and SNP density. CATFISH performs a post‑hoc adjustment at the gene level.
 
 Let:
 
 - $Z_g$ be the MAGMA gene Z‑statistic,
 - $L_g$ be gene length (bp),
-- $S_g$ be number of SNPs mapped to the gene (e.g., `NSNPS`).
+- $S_g$ be number of SNPs mapped to the gene (e.g., $$NSNPS$$).
 
-Fit:
+We fit a regression line as:
 
 $$
 Z_g = \beta_0 + \beta_1 \log(L_g) + \beta_2 \log(S_g) + \varepsilon_g.
 $$
 
-Define adjusted residual Z:
+We define adjusted residual Z as:
 
 $$
 Z^{\mathrm{adj}}_g = Z_g - \widehat{Z}_g,
 \quad \widehat{Z}_g = \widehat{\beta}_0 + \widehat{\beta}_1 \log(L_g) + \widehat{\beta}_2 \log(S_g).
 $$
 
-Convert to a two‑sided adjusted p-value:
+We then convert to a two‑sided adjusted p-value:
 
 $$
 p^{\mathrm{adj}}_g = 2\Phi\left(-|Z^{\mathrm{adj}}_g|\right),
@@ -294,11 +313,11 @@ where $\Phi(\cdot)$ is the standard normal CDF.
 
 ---
 
-## 4) Pathway-level test statistics (gene → pathway)
+## 3) Pathway-level test statistics (gene → pathway)
 
-CATFISH computes multiple pathway statistics from $\{p_g\}_{g \in S}$.
+CATFISH computes multiple pathway statistics from $\{p_g\}_{g \in S}$ $\{Z_g\}_{Z \in S}$.
 
-### 4.1 ACAT (Aggregated Cauchy Association Test)
+### 3.1 ACAT (Aggregated Cauchy Association Test)
 
 Define the Cauchy‑transformed score for each gene:
 
@@ -325,7 +344,7 @@ $$
 
 ---
 
-### 4.2 Fisher’s method (coordinated enrichment)
+### 3.2 Fisher’s method
 
 Fisher’s statistic is:
 
@@ -347,78 +366,107 @@ where $F_{\chi^2_{2G}}(\cdot)$ is the $\chi^2$ CDF with $2G$ degrees of freedom.
 
 ---
 
-### 4.3 Weighted Fisher (optional)
+### 3.3 Soft TFisher (tail-focused truncation and weighting)
 
-A common weighted variant is:
+To focus power on the lower tail of gene-level p-values while avoiding a hard cutoff, we use the **soft-thresholded TFisher** statistic of Zhang et al. (2020).
+
+Fix a truncation / weighting parameter $\tau \in (0,1]$. For a pathway $S$ with adjusted gene-level p-values $\{p_g\}_{g \in S}$, the soft TFisher statistic is:
 
 $$
-T_{\mathrm{wFisher}}(S) = -2\sum_{g \in S} w_g \log(p_g),
+T_{\mathrm{TF}}^{\mathrm{soft}}(S;\tau) = \sum_{g \in S} \left[ -2\log(p_g) + 2\log(\tau) \right]_{+}.
 $$
 
-with weights $w_g$ reflecting, for example, gene importance, expression specificity, or QC confidence (must be pre‑specified to avoid circularity).
+Here $(x)_{+} = \max(x,0)$.
+
+Equivalently, only genes with $p_g \le \tau$ contribute to the statistic, but their contribution is smoothly down-weighted as $p_g$ approaches $\tau$: very small $p_g$ behave like Fisher's $-2\log(p_g)$, $p_g$ near $\tau$ contribute little, and $p_g > \tau$ contribute exactly zero.
+
+This corresponds to the $\tau_1 = \tau_2 = \tau$ special case of the general TFisher family (Zhang et al., 2020, Eq. 2.1–2.2).
+
+Soft TFisher interpolates between:
+
+- **Fisher's method** when $\tau = 1$, and  
+- **hard truncated tests** (e.g. TPM / RTP) when $\tau < 1$, but with continuous, stable weighting instead of a sharp cutoff.
+
+In CATFISH, we apply:
+
+$$
+T_{\mathrm{TF}}^{\mathrm{soft}}(S;\tau)
+$$
+
+to adjusted gene-level p-values $p_{g,\mathrm{adj}}$, using the analytic null distribution for TFisher with $\tau_1 = \tau_2 = \tau$ (Zhang et al., 2020, Theorem 1).
+
+**Key property (interpretation):** Soft TFisher is especially sensitive to **Hybrid Driver–Support (HDS)** and **Coordinated Moderate Enrichment (CME)** architectures.
+
 
 ---
 
-### 4.4 Truncation / TFisher (tail-focused enrichment)
+### 3.4 Stouffer's method (mean-Z; diffuse polygenic shift)
 
-To emphasize only the lower tail (top genes), define a truncation threshold $\tau \in (0,1)$ and consider:
+Stouffer aggregates gene-level **Z** statistics (e.g., $$Z_{g,\mathrm{adj}}$$) rather than p-values.  
+For a pathway $$S$$ with $$G=|S|$$ genes, define:
 
-#### (A) Hard truncated Fisher (conceptual)
+**Unweighted Stouffer:**
 
 $$
-T_{\mathrm{TF}}(S;\tau) = -2\sum_{g \in S: p_g \le \tau} \log(p_g).
+Z_{\mathrm{stouffer}}(S) = \frac{1}{\sqrt{G}} \sum_{g \in S} Z_g
 $$
 
-This interpolates between minP‑like behavior (very small $\tau$) and Fisher (large $\tau$).
+$$
+p_{\mathrm{stouffer}}(S) = 2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}(S)\right|\right)
+$$
 
-#### (B) Soft TFisher (recommended)
+where $$\Phi(\cdot)$$ is the standard normal CDF.
 
-Soft‑truncation uses a continuous tail‑weighting scheme that downweights large p-values without an abrupt cutoff. In practice, CATFISH/MAGCAT can compute **soft TFisher** using an analytic null CDF (and optionally permutation calibration).
+**Weighted Stouffer (optional):** choose weights $$w_g \geq 0$$.
 
-**Key property (interpretation):** truncation/TFisher is powerful for **hybrid driver–support** architectures (a few strong genes + several moderate ones).
+$$
+Z_{\mathrm{stouffer}}^{(w)}(S) = \frac{\sum_{g \in S} w_g Z_g}{\sqrt{\sum_{g \in S} w_g^2}}
+$$
 
----
+$$
+p_{\mathrm{stouffer}}^{(w)}(S) = 2\,\Phi\!\left(-\left|Z_{\mathrm{stouffer}}^{(w)}(S)\right|\right)
+$$
 
-### 4.5 Stouffer’s method (mean-Z; diffuse polygenic shift)
-
-Stouffer aggregates gene-level **Z** statistics (e.g., `Z_adj`) rather than p-values. For a pathway with genes `g = 1..G`, define:
-
-- **Unweighted Stouffer:**
-  - `Z_stouffer = (1/sqrt(G)) * sum_g Z_g`
-  - Convert to p-value: `p_stouffer = 2 * Φ( -|Z_stouffer| )`
-
-- **Weighted Stouffer (optional):**
-  - Choose weights `w_g >= 0`
-  - `Z_stouffer = (sum_g w_g * Z_g) / sqrt( sum_g w_g^2 )`
-  - `p_stouffer = 2 * Φ( -|Z_stouffer| )`
-
-Notes:
-- Best for **Diffuse Polygenic Shift (DPS)** where the **average Z** is shifted but few genes pass 0.05.
-- If you calibrate by permutation, compute `Z_stouffer` on permuted gene labels and use an empirical p-value.
+**Notes:**
+- Best for **Diffuse Polygenic Shift (DPS)**: many small positive (or negative) shifts in $$Z_g$$ that may not yield many $$p_g<0.05$$ individually.
+- If calibrating by permutation, recompute $$Z_{\mathrm{stouffer}}$$ (or $$Z_{\mathrm{stouffer}}^{(w)}$$) under permuted gene labels and use an empirical p-value.
 
 ---
+### 3.5 minP / Tippett (single-gene proxy diagnostic)
 
-### 4.6 minP / Tippett (single-gene proxy diagnostic)
+Define the pathway's minimum gene p-value:
 
-Define the pathway’s minimum gene p-value:
+$$
+p_{\min} = \min_{g \in S} p_g
+$$
 
-- `p_min = min_g p_g`
+Under independence, Tippett's combined p-value is:
 
-Under independence, Tippett’s combined p-value is:
-
-- `p_tippett = 1 - (1 - p_min)^G`
+$$
+p_{\mathrm{tippett}} = 1 - (1 - p_{\min})^G
+$$
 
 But because gene p-values are correlated (LD, shared biology), CATFISH typically treats **minP as a diagnostic** and/or calibrates it by permutation:
 
-- `p_min_perm = (1 + #{b: p_min^(b) <= p_min_obs}) / (B + 1)`
+Let:
+- $$p_{\min}^{\mathrm{obs}}$$ be the observed minimum p-value
+- $$p_{\min}^{(b)}$$ be the minimum p-value in permutation $$b$$
+- $$B$$ be the total number of permutations
 
-Notes:
+Then the permutation p-value is:
+
+$$
+p_{\min}^{\mathrm{perm}} = \frac{1 + \text{count}(p_{\min}^{(b)} \leq p_{\min}^{\mathrm{obs}})}{B + 1}
+$$
+
+where $$\text{count}(\cdot)$$ counts the number of permutations satisfying the condition.
+
+**Notes:**
 - Highly sensitive to **single extreme genes**, so it flags **Sparse Driver (SDA)** and especially **Single-Gene Proxy (SGP)** pathways.
-- Use “remove top gene and recompute” as the practical SGP check.
-
+- Use "remove top gene and recompute" as the practical SGP check.
 ---
 
-## 5) Correlation among pathway tests
+## 4) Correlation among pathway tests
 
 All pathway statistics above are functions of the **same** gene-level p-values $\{p_g\}$, and are therefore intrinsically correlated:
 
@@ -437,7 +485,7 @@ Examples of why:
 
 ---
 
-## 6) Omnibus pathway testing (correlation-robust model averaging)
+## 5) Omnibus pathway testing (correlation-robust model averaging)
 
 Because no single test is uniformly optimal across latent pathway architectures, for each pathway `S` we compute a small panel of component p-values:
 
@@ -453,7 +501,7 @@ We then summarize these into *two* omnibus statistics:
 
 ---
 
-### 6.1 Omnibus ACAT (ACAT-O across methods)
+### 5.1 Omnibus ACAT (ACAT-O across methods)
 
 Let `p1, p2, p3, p4, p5` denote the five component p-values for pathway `S`, and let weights `v_j >= 0` satisfy `sum_j v_j = 1` (default `v_j = 1/5`).
 
@@ -469,7 +517,7 @@ This ACAT-O layer is most sensitive when **at least one** component test (e.g., 
 
 ---
 
-### 6.2 Omnibus minP across methods with permutation
+### 5.2 Omnibus minP across methods with permutation
 
 To obtain a complementary, more conservative summary that explicitly accounts for correlation between component tests, we also compute a minimum-p omnibus statistic across methods:
 
@@ -503,7 +551,7 @@ The analytic ACAT-O p-value `p_omni_ACAT(S)` is reported alongside as a **higher
 
 ---
 
-## 7) Optional permutation calibration (when you want empirical p-values)
+## 6) Optional permutation calibration (when you want empirical p-values)
 
 Permutation can be used to calibrate pathway p-values (especially truncation-based statistics) under complex dependence and finite-sample quirks.
 
@@ -517,7 +565,7 @@ $$
 
 ---
 
-## 8) Multiple testing correction
+## 7) Multiple testing correction
 
 Across all pathways, omnibus p-values $\{p_{\mathrm{omni}}(S)\}$ are adjusted using Benjamini–Hochberg FDR:
 
