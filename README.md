@@ -543,7 +543,7 @@ The analytic ACAT-O p-value $$p_{\mathrm{omni,ACAT}}(S)$$ is reported alongside 
 
 ---
 
-## 6) Optional permutation calibration (when you want empirical p-values)
+## 6) Permutation calibration (empirical p-values)
 
 Beyond the omnibus minP, permutation can also be used to calibrate individual pathway statistics (especially truncation-based ones) under complex dependence and finite-sample quirks. A generic permutation p-value for a test statistic $$T$$ is
 
