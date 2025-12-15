@@ -866,99 +866,15 @@ maize_pw <- magcat_load_pathways(
   gene_col = "Gene-name"  # column in the PMN gene-set file that matches MAGMA gene IDs
 )
 
-
 ############################################################
-## 7. Pathway-level tests (gene → pathway)
+## 7. Omnibus combining methods (ACAT or minP)
 ############################################################
 
 ## All tests use gene_results + species/pathways to:
 ##  - find genes per pathway,
 ##  - take their p-values (raw P or adjusted P_adj),
 ##  - compute a pathway-level p per method.
-## You can run each pathway individually or jointly.
 
-### 7A. ACAT per pathway
-
-pw_res_acat_adj <- magcat_acat_pathways(
-  gene_results = genes_adj,     # adjusted Pvalue
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  B            = 10000L,            # 10,000 is good enough
-  seed         = NULL,
-  output       = TRUE,
-  out_dir      = "acat_results"
-)
-
-### 7B. Fisher pathways
-
-wf_res_raw <- magcat_wfisher_pathways(
-  gene_results = genes_adj,   # raw P
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  effect_col   = "ZSTAT",
-  #weight_col   = NULL, # If you have any other weights. 
-  is_onetail   = FALSE
-)
-
-wf_res_adj <- magcat_wfisher_pathways(
-  gene_results = genes_adj,   # adjusted P
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  effect_col   = "ZSTAT",
-  is_onetail   = FALSE        # two-sided test with sign from ZSTAT
-)
-
-### 7C. Truncated Fisher (soft) / TFisher(soft)
-
-soft_tf_res_adj <- magcat_soft_tfisher_pathways(
-  gene_results     = genes_adj,
-  species          = "maize",
-  gene_col         = "GENE",
-  p_col            = "P_adj",
-  tau1             = 0.05,     # soft truncation threshold
-  B_perm           = 10000L,  # permutations for empirical pvalue
-  seed             = 123,
-  analytic_logical = TRUE,
-  output           = TRUE,
-  out_dir          = "magcat_tfisher_soft"
-)
-
-### 7D. Stouffer (sum of Z across genes)
-
-stouf_res <- magcat_stouffer_pathways(
-  gene_results = genes_adj,
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  weight_col   = NULL,    # equal weights for all genes
-  B_perm       = 10000L,    # permutations for empirical pvalue
-  seed         = 123,
-  output       = TRUE,
-  out_dir      = "magcat_stouffer"
-)
-
-### 7E. Gene-level minP per pathway
-
-minp_res <- magcat_minp_pathways(
-  gene_results = genes_adj,
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P_adj",
-  B_perm       = 10000L,      # permutations for empirical pvalue
-  min_p        = 1e-15,
-  do_fix       = TRUE,
-  output       = TRUE,
-  out_dir      = "magcat_minp_maize"
-)
-
-
-############################################################
-## 8. Omnibus combining methods (ACAT or minP)
-############################################################
-# Use all the algorithms together
 
 omni_minp <- omni_pathways(
   gene_results      = genes_adj,
@@ -990,6 +906,81 @@ omni_minp <- omni_pathways(
 ##   - BH FDR and q-values for omni_p and each component
 ##   - omni_perm_BH  : permutation-calibrated BH pvalues
 ##   - omni_perm_q  : permutation-calibrated q pvalues
+
+############################################################
+## 8. Pathway-level tests (gene → pathway)
+############################################################
+
+## You can run each pathway individually as well
+
+### 8A. ACAT per pathway
+
+pw_res_acat_adj <- magcat_acat_pathways(
+  gene_results = genes_adj,     # adjusted Pvalue
+  species      = "maize",
+  gene_col     = "GENE",
+  p_col        = "P_adj",
+  B            = 10000L,            # 10,000 is good enough
+  seed         = NULL,
+  output       = TRUE,
+  out_dir      = "acat_results"
+)
+
+### 8B. Fisher pathways
+
+wf_res_raw <- magcat_wfisher_pathways(
+  gene_results = genes_adj,   # raw P
+  species      = "maize",
+  gene_col     = "GENE",
+  p_col        = "P_adj",
+  effect_col   = "ZSTAT",
+  #weight_col   = NULL, # If you have any other weights. 
+  is_onetail   = FALSE
+)
+
+### 8C. Truncated Fisher (soft) / TFisher(soft)
+
+soft_tf_res_adj <- magcat_soft_tfisher_pathways(
+  gene_results     = genes_adj,
+  species          = "maize",
+  gene_col         = "GENE",
+  p_col            = "P_adj",
+  tau1             = 0.05,     # soft truncation threshold
+  B_perm           = 10000L,  # permutations for empirical pvalue
+  seed             = 123,
+  analytic_logical = TRUE,
+  output           = TRUE,
+  out_dir          = "magcat_tfisher_soft"
+)
+
+### 8D. Stouffer (sum of Z across genes)
+
+stouf_res <- magcat_stouffer_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  p_col        = "P_adj",
+  weight_col   = NULL,    # equal weights for all genes
+  B_perm       = 10000L,    # permutations for empirical pvalue
+  seed         = 123,
+  output       = TRUE,
+  out_dir      = "magcat_stouffer"
+)
+
+### 8E. Gene-level minP per pathway
+
+minp_res <- magcat_minp_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  p_col        = "P_adj",
+  B_perm       = 10000L,      # permutations for empirical pvalue
+  min_p        = 1e-15,
+  do_fix       = TRUE,
+  output       = TRUE,
+  out_dir      = "magcat_minp_maize"
+)
+
 ```
 
 ---
