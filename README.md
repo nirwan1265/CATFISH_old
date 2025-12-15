@@ -641,17 +641,17 @@ magma \
 
 ---
 
-## Quick R example (MAGCAT-style)
+## Quick R example (CATFISH)
 
 > **Note:** This is the exact end-to-end pipeline used (MAGMA → gene adjustment → pathway tests → omnibus). Paths, filenames, and column mappings should be edited to match your local files.
 
 ```r
 ############################################################
-## MAGCAT PIPELINE: MAGMA → SIZE-ADJUSTED GENE P → PATHWAYS
+## CATFISH PIPELINE: MAGMA → SIZE-ADJUSTED GENE P → PATHWAYS
 ## (with brief explanation of the key parameters)
 ############################################################
 
-## MAGCAT gives you:
+## CATFISH gives you:
 ##  - R wrappers around the MAGMA binary (magma_annotate, magma_gene)
 ##  - Parallel chromosome-wise runs (chroms, n_threads)
 ##  - Plant-ready GFF3 → gene loc helpers
@@ -675,19 +675,19 @@ gff3_to_geneloc(
   chr_prefix = "chr"  # strips "chr" prefix so MAGMA’s CHR matches PLINK CHR
 )
 
-## What this does / why:
-## - Parses the GFF3, extracts gene features, and writes a MAGMA-ready
-##   gene location file (GENE, CHR, START, STOP, STRAND…).
-## - When you later call species = "maize" in MAGCAT, it automatically
-##   uses inst/extdata/maize.genes.loc and you don’t have to think
-##   about coordinates again.
+## - You can call species = "maize" in CATFISH , it automatically
+##   uses inst/extdata/maize.genes.loc 
+
+## - You can also use any gff3 file for your organism of choice
+## - Parses the GFF3, extracts gene features,
+## and writes a MAGMA-ready-to-use gene location file (GENE, CHR, START, STOP, STRAND…).
 
 
 ############################################################
 ## 2. SNP → gene annotation with MAGMA (magma_annotate wrapper)
 ############################################################
 
-stats_file1 <- "/Users/.../nitrogen_0-5cm_maize_LMM.txt"
+stats_file <- "/Users/.../raw_GWAS_MLM_3PC_N.txt"
 
 magma_annotate(
   stats_file     = stats_file1,
@@ -703,23 +703,23 @@ magma_annotate(
   window     = c(25, 25)       # +/- 25 kb around each gene for SNP mapping
 )
 
-## Under the hood:
-## - MAGCAT builds the MAGMA command line and calls the MAGMA binary for you.
-## - You just supply stats_file and column rename map; no manual shell scripting.
+## - magma_annotate() builds the MAGMA command line and calls the MAGMA binary for you.
+## - You just supply stats_file and remember to rename your columns or do it here
 
 
 ############################################################
 ## 3. Gene-level MAGMA (multi = snp-wise) with R wrapper
 ############################################################
 
+# Plink based bed/bim.fam files
 bfile      <- "/Users/.../all_maize2"   # PLINK basename: .bed/.bim/.fam
-stats_file2 <- "/Users/.../raw_GWAS_MLM_3PC_N.txt"
 
 ## 3A. Chromosome-wise run using NMISS (per-SNP sample size)
+## NMISS is the number of missing genotypes
 magma_gene(
   bfile      = bfile,
   gene_annot = "annot/N_maize_MLM.genes.annot",
-  stats_file = stats_file2,
+  stats_file = stats_file,
   n_total    = 3539,             # optional global N if NOBS/NMISS absent
   rename_columns = c(
     CHR    = "Chr",
@@ -730,12 +730,13 @@ magma_gene(
   ),
   out_prefix = "N_maize_MLM",
   out_dir    = "magma_genes_by_chr",
-  gene_model = c("multi=snp-wise"),  # multi-parameter SNP-wise model
+  gene_model = c("multi=snp-wise"),  # multi-parameter SNP-wise model. This works best for CATFISH. Combines top and mean SNPs. 
   chroms     = 1:10,                 # run MAGMA separately for chr 1–10
   n_threads  = 10                    # run up to 10 MAGMA jobs in parallel
 )
 
 ## 3B. Chromosome-wise run using NOBS (per-SNP N)
+## NOBS is the total number of genotypes used
 magma_gene(
   bfile      = bfile,
   gene_annot = "annot/N_maize_MLM.genes.annot",
@@ -754,18 +755,18 @@ magma_gene(
   n_threads  = 10
 )
 
-## Selling point:
-## - magma_gene is a high-level R wrapper around the MAGMA binary:
+## - magma_gene() is a R wrapper around the MAGMA binary.
 ##   * Handles all flags, temp files, and error checking.
-##   * Accepts chroms + n_threads to run multiple chromosomes in parallel.
+##   * Additional can parallelize the analysis
+##   * chroms + n_threads to run multiple chromosomes in parallel.
 ##   * Only requires a minimal rename_columns spec instead of reformatting
-##     your GWAS files by hand.
 
 
 ############################################################
 ## 4. Combine per-chromosome MAGMA gene outputs
 ############################################################
 
+# Load the file
 files <- sprintf(
   "/Users/.../magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_chr%d.multi_snp_wise.genes.out",
   1:10
@@ -799,14 +800,11 @@ write.table(
   row.names = FALSE
 )
 
-## Why:
-## - This consolidates 10 per-chromosome MAGMA outputs into a single
-##   gene-level table with one row per gene, ready for downstream
-##   adjustment and pathway analysis.
+## - This combines 10 per-chromosome MAGMA outputs into a single file for ease of use
 
 
 ############################################################
-## 5. Gene length extraction + bias adjustment
+## 5. Gene length extraction + SNP density bias adjustment
 ############################################################
 
 ## 5A. Extract gene lengths from GFF3
@@ -825,15 +823,16 @@ maize_gene_len <- get_gene_lengths(
 
 ## Output includes:
 ##   gene_id, chr, start, end, length
-## and can be reused across traits.
+
 
 ## 5B. Adjust gene-level Z/P for gene length & #SNPs
 
 genes_all <- read.table(
-  "/Users/.../magma_N_maize.txt",
+  "/Users/.../magma_N_maize.txt", # from previous step
   header = TRUE, stringsAsFactors = FALSE
 )
 
+# Adjsut the pvalue based on gene length and number of snps
 adj_out <- magcat_adjust_gene_p(
   gene_results = genes_all,
   gene_lengths = maize_gene_len,
@@ -842,7 +841,7 @@ adj_out <- magcat_adjust_gene_p(
   z_col        = "ZSTAT",    # raw MAGMA Z
   len_gene_col = "gene_id",
   len_col      = "length"
-  # nsnp_col   = "NSNPS"     # optional: adjusts for #SNPs per gene as well
+  # nsnp_col   = "NSNPS"     # #SNPs per gene
 )
 
 genes_adj <- adj_out$genes    # includes Z_raw, Z_adj, P_adj, log_gene_length, log_nsnp
@@ -850,9 +849,8 @@ lm_fit    <- adj_out$fit      # lm(Z_raw ~ log_gene_length + log_nsnp)
 
 write.csv(genes_adj, "genes_adj.csv", row.names = FALSE)
 
-## Why:
-## - MAGMA gene p-values are known to correlate weakly with gene size
-##   and SNP density. magcat_adjust_gene_p:
+## - MAGMA gene p-values are known to correlate weakly with gene size and SNP density.
+## - magcat_adjust_gene_p():
 ##   * Fits a linear model: Z_raw ~ log(gene length) + log(#SNPs).
 ##   * Uses residuals (Z_adj) as “size/SNP-adjusted” Z-scores.
 ##   * Converts Z_adj back to P_adj = 2*pnorm(-|Z_adj|).
@@ -860,17 +858,13 @@ write.csv(genes_adj, "genes_adj.csv", row.names = FALSE)
 
 
 ############################################################
-## 6. Load pathway definitions from PMN/CornCyc
+## 6. Load pathway definitions from PMN/CornCyc or use saved files
 ############################################################
 
 maize_pw <- magcat_load_pathways(
   species  = "maize",
   gene_col = "Gene-name"  # column in the PMN gene-set file that matches MAGMA gene IDs
 )
-
-## Features:
-## - MAGCAT ships plant pathway collections (CornCyc, AraCyc, etc.)
-## - You can also pass a custom list/data.frame of pathways if you want.
 
 
 ############################################################
@@ -881,40 +875,30 @@ maize_pw <- magcat_load_pathways(
 ##  - find genes per pathway,
 ##  - take their p-values (raw P or adjusted P_adj),
 ##  - compute a pathway-level p per method.
+## You can run each pathway individually or jointly.
 
 ### 7A. ACAT per pathway
 
 pw_res_acat_adj <- magcat_acat_pathways(
-  gene_results = genes_adj,     # use size/SNP-adjusted P_adj
+  gene_results = genes_adj,     # adjusted Pvalue
   species      = "maize",
   gene_col     = "GENE",
   p_col        = "P_adj",
-  B            = 0L,            # B>0 → permutation-calibrated ACAT
+  B            = 10000L,            # 10,000 is good enough
   seed         = NULL,
   output       = TRUE,
   out_dir      = "acat_results"
 )
 
-### 7B. ordmeta (rank-based, minimum marginal p over gene rank)
+### 7B. Fisher pathways
 
-ord_res <- magcat_ordmeta_pathways(
-  gene_results = genes_adj,
+wf_res_raw <- magcat_wfisher_pathways(
+  gene_results = genes_adj,   # raw P
   species      = "maize",
   gene_col     = "GENE",
   p_col        = "P_adj",
-  effect_col   = "ZSTAT",   # needs signed effects for up/down
-  is_onetail   = FALSE
-)
-
-### 7C. Weighted Fisher (wFisher) pathways
-
-wf_res_raw <- magcat_wfisher_pathways(
-  gene_results = genes_all,   # raw P
-  species      = "maize",
-  gene_col     = "GENE",
-  p_col        = "P",
   effect_col   = "ZSTAT",
-  weight_col   = "NSNPS",     # weight genes by #SNPs
+  #weight_col   = NULL, # If you have any other weights. 
   is_onetail   = FALSE
 )
 
@@ -927,22 +911,7 @@ wf_res_adj <- magcat_wfisher_pathways(
   is_onetail   = FALSE        # two-sided test with sign from ZSTAT
 )
 
-### 7D. Truncated Fisher / TFisher
-
-tf_res_adj <- magcat_tfisher_pathways(
-  gene_results     = genes_adj,
-  species          = "maize",
-  gene_col         = "GENE",
-  p_col            = "P_adj",
-  ptrunc           = 0.05,     # only genes with p <= 0.05 contribute
-  B_perm           = 10000L,   # gene-set permutations for empirical p
-  seed             = 123,
-  analytic_logical = TRUE,     # also report chi-square approx p
-  output           = TRUE,
-  out_dir          = "magcat_tfisher"
-)
-
-### 7E. Soft TFisher (smooth truncation)
+### 7C. Truncated Fisher (soft) / TFisher(soft)
 
 soft_tf_res_adj <- magcat_soft_tfisher_pathways(
   gene_results     = genes_adj,
@@ -950,14 +919,14 @@ soft_tf_res_adj <- magcat_soft_tfisher_pathways(
   gene_col         = "GENE",
   p_col            = "P_adj",
   tau1             = 0.05,     # soft truncation threshold
-  B_perm           = 10000L,
+  B_perm           = 10000L,  # permutations for empirical pvalue
   seed             = 123,
   analytic_logical = TRUE,
   output           = TRUE,
   out_dir          = "magcat_tfisher_soft"
 )
 
-### 7F. Stouffer (sum of Z across genes)
+### 7D. Stouffer (sum of Z across genes)
 
 stouf_res <- magcat_stouffer_pathways(
   gene_results = genes_adj,
@@ -965,20 +934,20 @@ stouf_res <- magcat_stouffer_pathways(
   gene_col     = "GENE",
   p_col        = "P_adj",
   weight_col   = NULL,    # equal weights for all genes
-  B_perm       = 100L,    # permutations for empirical Stouffer p
+  B_perm       = 10000L,    # permutations for empirical pvalue
   seed         = 123,
   output       = TRUE,
   out_dir      = "magcat_stouffer"
 )
 
-### 7G. Gene-level minP per pathway
+### 7E. Gene-level minP per pathway
 
 minp_res <- magcat_minp_pathways(
   gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
   p_col        = "P_adj",
-  B_perm       = 0L,      # analytic only (can turn on permutations)
+  B_perm       = 10000L,      # permutations for empirical pvalue
   min_p        = 1e-15,
   do_fix       = TRUE,
   output       = TRUE,
@@ -987,8 +956,9 @@ minp_res <- magcat_minp_pathways(
 
 
 ############################################################
-## 8. Omnibus over methods (ACAT-O or method-level minP)
+## 8. Omnibus combining methods (ACAT or minP)
 ############################################################
+# Use all the algorithms together
 
 omni_minp <- omni_pathways(
   gene_results      = genes_adj,
@@ -1001,7 +971,7 @@ omni_minp <- omni_pathways(
   ptrunc            = 0.05,        # passed to internal TFisher component
   min_p             = 1e-15,       # floor for tiny p's (needed for ACAT stability)
   do_fix            = TRUE,
-  omnibus           = "minP",      # "ACAT" = ACAT-O across methods, "minP" = minP over methods
+  omnibus           = "minP",      # "minP" or "ACAT"
   B_perm            = 10000L,      # permutations at the *omnibus* level
   seed              = 123,
   remove_singletons = TRUE,        # drop pathways with n_genes < 2
@@ -1010,25 +980,16 @@ omni_minp <- omni_pathways(
 )
 
 ## In a single call omni_pathways gives you:
-##   - acat_p       : ACAT over gene p’s per pathway
-##   - wfisher_p    : wFisher per pathway
-##   - tpm_p        : truncated Fisher per pathway
-##   - stouffer_p   : Stouffer per pathway
-##   - minp_gene_p  : gene-level minP per pathway
-##   - omni_p       : combination of these methods (ACAT-O or method-level minP)
-##   - omni_perm_p  : permutation-calibrated omnibus p
+##   - acat_p       : ACAT pvalue per pathway
+##   - fisher_p    : Fisher pvalue per pathway
+##   - tpm_p        : truncated Fisher (soft) pvalue per pathway
+##   - stouffer_p   : Stouffer pvalue per pathway
+##   - minp_gene_p  : minP pvalue per pathway
+##   - omni_p       : combination of these methods (ACAT or minP) pvalue per pathway
+##   - omni_perm_p  : permutation-calibrated omnibus pvalues
 ##   - BH FDR and q-values for omni_p and each component
-##
-## Selling point:
-## - Users don’t have to orchestrate multiple scripts or re-run GWAS.
-##   They:
-##      (1) point MAGCAT to a GFF3 + PLINK + GWAS file,
-##      (2) call magma_annotate + magma_gene once,
-##      (3) call a single high-level pathway function (ACAT, TFisher, Stouffer,
-##          minP, or omni_pathways),
-##   and get a full panel of pathway p-values (plus permutation-calibrated
-##   omnibus) with plant-aware defaults and parallel MAGMA integration.
-
+##   - omni_perm_BH  : permutation-calibrated BH pvalues
+##   - omni_perm_q  : permutation-calibrated q pvalues
 ```
 
 ---
