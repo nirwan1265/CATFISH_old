@@ -2,10 +2,10 @@
 
 This Markdown is structured into:
 
-- **INTRODUCTION** — what the pipeline is and why multiple tests are needed  
-- **METHODS** — paper‑ready subsections with explicit equations and assumptions  
-- **USAGE** — installation + reproducible example commands and R snippets
-- **RESULTS** — an example analysis for soil Nitrogen GWAS
+- [**INTRODUCTION**](#introduction) — what the pipeline is and why multiple tests are needed  
+- [**METHODS**](#methods) — paper‑ready subsections with explicit equations and assumptions  
+- [**USAGE**](#usage) — installation + reproducible example commands and R snippets
+- [**RESULTS**](#results) — an example analysis for soil Nitrogen GWAS
 
 ---
 
@@ -554,7 +554,7 @@ Because each pathway yields a **single** omnibus p-value, no additional penalty 
 
 ## 7) Omnibus across methods with permutation (LD-aware upstream gene statistics)
 
-To obtain a complementary, conservative omnibus summary that explicitly accounts for dependence among component pathway tests, we compute a minimum-p statistic across the five component p-values for each pathway $$S$$.
+To obtain a complementary, conservative omnibus summary that explicitly accounts for dependence among component pathway tests, we compute a minimum-p statistic across the five component pathway $$S$$ p-values, and calibrate it using either pathway-specific or global gene-label resampling.
 Let
 
 $$\mathcal{P}(S)=\{p_{\mathrm{ACAT}}(S)\,p_{\mathrm{wFisher}}(S)\,p_{\mathrm{TPM}}(S;\tau)\,p_{\mathrm{Stouffer}}(S)\,p_{\mathrm{minP,gene}}(S)\}$$
@@ -587,7 +587,7 @@ These tests are deliberately correlated but have different power profiles across
 
 #### 7.3 Gene-label permutation calibration of the minP omnibus
 
-We calibrate $$T_{\mathrm{omni,min}}(S)$$ using gene-label permutation, which preserves (i) the empirical distribution of gene-level p-values and (ii) the observed pathway sizes, while breaking pathway membership.
+We calibrate $$T_{\mathrm{omni,min}}(S)$$ using gene-label permutation implemented either on a per-pathway basis or via a global resampling scheme, which preserves (i) the empirical distribution of gene-level p-values and (ii) the observed pathway sizes, while breaking pathway membership.
 
 For each permutation $$b = 1,\dots,B$$ and each pathway $$S$$ with $$|S|$$ genes:
 
@@ -628,6 +628,52 @@ The analytic ACAT-O omnibus $$p_{\mathrm{omni,ACAT}}(S)$$ is reported alongside 
 A key design choice is that LD-awareness is enforced upstream at the SNP-to-gene stage via MAGMA's LD-informed gene model. The omnibus permutation described above is a gene-label permutation and therefore does not explicitly resimulate LD structure. Instead, it leverages the fact that the gene-level p-values already represent LD-adjusted gene evidence; the permutation step is used to calibrate dependence *between pathway-level test statistics* and to control for post hoc selection across multiple correlated pathway tests.
 
 This tiered strategy allows computationally feasible, robust omnibus inference using only GWAS summary statistics and an LD reference panel, while retaining sensitivity to multiple plausible pathway architectures.
+
+### 7.6 Global gene-label resampling (`resample_global`)
+
+In addition to pathway-specific gene-label permutation, CATFISH optionally supports a **global resampling strategy** (`resample_global`) for calibrating the minP omnibus statistic.
+
+Under `resample_global`, a **single set of B gene-label permutations** is generated once and reused across *all* pathways. For each permutation `b = 1,…,B`, gene labels (or equivalently the vector of gene-level p-values) are permuted across the full gene pool. For each pathway `S`, the subset of permuted gene-level statistics corresponding to the genes in $$S$$ is extracted and all component pathway tests are recomputed.
+
+For permutation `b` and pathway `S`, we compute
+
+$$p_j^{(b)}(S),\quad j \in \{\mathrm{ACAT},\mathrm{Fisher},\mathrm{TPM},\mathrm{Stouffer},\mathrm{minP,gene}\},$$
+
+and record the global permutation min statistic
+
+$$T_{\mathrm{omni,min}}^{(b)}(S)=\min_j p_j^{(b)}(S)$$
+
+The permutation-calibrated omnibus p-value is then
+
+$$\hat p_{\mathrm{omni,min}}(S)=\frac{1 + \left|\{\,b : T_{\mathrm{omni,min}}^{(b)}(S)\le T_{\mathrm{omni,min}}(S)\,\}\right|}{B + 1}$$
+
+Unlike pathway-specific resampling, the same permuted gene-level realizations are shared across all pathways, rather than generating an independent null gene set for each pathway.
+
+#### 7.6.1 Rationale for global resampling
+
+The `resample_global` strategy has three practical advantages:
+
+1. **Computational efficiency**  
+   A single set of `B` permutations is reused across all pathways, substantially reducing runtime and memory usage.
+
+2. **Consistent null across pathways**  
+   All pathways are calibrated against the same empirical null distribution, improving comparability of omnibus p-values across pathways of different sizes.
+
+3. **Preservation of cross-pathway dependence**  
+   Because the same permuted gene-level realizations are used for all pathways, dependence induced by overlapping gene sets or shared pathway membership is naturally preserved under the null.
+
+#### 7.6.2 Relationship to LD-awareness
+
+As with pathway-specific permutation, `resample_global` operates on **LD-adjusted gene-level statistics** produced by MAGMA. The resampling step does not explicitly re-simulate SNP-level LD; instead, LD is handled upstream at the SNP-to-gene aggregation stage. Global resampling is used to calibrate dependence *between pathway-level test statistics* and to control for post hoc selection across multiple correlated pathway tests.
+
+#### 7.6.3 Practical guidance
+
+In CATFISH, pathway-specific permutation and `resample_global` typically yield similar results when pathway sizes are moderate and gene overlap is limited. We recommend:
+
+- **pathway-specific resampling** for small analyses or targeted pathway sets, and  
+- **`resample_global`** for large pathway collections, genome-wide scans, or when computational efficiency and cross-pathway consistency are priorities.
+
+Both approaches provide valid calibration of the minP omnibus under arbitrary dependence among component tests.
 
 
 ---
