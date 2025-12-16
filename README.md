@@ -82,17 +82,14 @@ CME reflects **collective functional engagement**: the pathway behaves like a co
 **Biological example:**  
 **Cytokine / immune signaling cascades**
 
-Cytokine and inflammatory signaling rarely operates through a single master switch. Instead, cascades such as **IL-6/JAK–STAT**, **TNF/NF-κB**, and **IL-1** function as multi-step circuits that sense damage or infection, propagate signals through adaptor/kinase layers, reprogram transcription, and then dampen the response through negative feedback. These modules contain many interacting parts that each tune inflammatory tone:
+In many immune pathways, output is not controlled by a single “master gene,” but by **distributed tuning across multiple layers** of a signaling circuit. A clear example is **TNFα / IL-1β → NF-κB**, where upstream receptor engagement ultimately activates **IKK complexes**, which phosphorylate **IκB inhibitors** and thereby permit nuclear accumulation of NF-κB family members; importantly, the **temporal dynamics** of NF-κB activation (rapid/transient vs slower/sustained) depend strongly on the **stimulus class** and receptor context (Zhao et al., 2018). These dynamics matter because transcriptional outputs differ by stimulus, NF-κB family composition, and cell type, and core feedback/marker targets include genes such as **NFKBIA (IκBα)** and **TNFAIP3 (A20)**, reinforcing the idea that pathway behavior is shaped by multiple regulatory nodes rather than one switch (Zhao et al., 2018).
 
-- **Cytokines** (e.g., *IL6*, *TNF*, *IL1B*) acting as soluble alarm signals.
-- **Cell-surface receptors** (e.g., *IL6R*, TNFRSF family) that detect alarms and set sensitivity.
-- **Intracellular adaptors and kinases** (e.g., JAKs, MAPKs, TRAFs, IKK complex) that relay signals through phosphorylation cascades.
-- **Transcription factors** (e.g., STATs, RELA/NF-κB) that shift downstream gene expression programs.
-- **Feedback and regulatory nodes** (inhibitors, suppressors, decoy receptors) that reshape, terminate, or localize responses.
+This “many-knobs” architecture is also evident one layer upstream in **TNFRSF signaling**: TNFRSF receptors bind trimeric TNFSF ligands, but there is growing evidence that **a single trimeric ligand–receptor complex is often insufficient** to achieve full signaling output; instead, for at least some TNFRSF programs (including the **classical NF-κB pathway**), effective activation can require **secondary interactions/clustering among multiple trimeric receptor complexes** (Medler et al., 2019). Mechanistically, that implies pathway output depends on coordinated effects across receptor assembly/avidity, adaptor recruitment, kinase activation thresholds, and negative feedback strength—exactly the kind of system where common genetic variation is expected to yield **many modest perturbations** rather than one overwhelmingly significant driver.
 
-Because pathway output emerges from **distributed tuning across many steps** (receptor abundance, kinase efficiency, adaptor binding, TF activation thresholds, and feedback strength), natural genetic variation tends to produce **many modest effects** rather than one overwhelming driver. This often appears as gene-level p-values clustered in a “pretty good” range across multiple pathway members, for example:
-$$(p_{(1)},p_{(2)},\ldots)\  \text{contains many values around }10^{-3}\text{--}10^{-2}\ \text{without an extreme like }10^{-12}.$$
-At the pathway level, the entire signaling circuit is slightly shifted, consistent with CME. In CATFISH, this pattern is best captured by tests that accumulate evidence across many genes, such as **Fisher** and **Stouffer/mean-Z** (and often **soft TFisher** with mild truncation)—because their power increases when many genes contribute moderate association rather than a single spike.
+In CATFISH terms, this produces a CME pattern: within a cytokine/immune pathway, gene-level p-values show an excess of “pretty good” signals (e.g., many genes around 10⁻³–10⁻²) without a single extreme outlier dominating:
+$$(p_{(1)}, p_{(2)}, \ldots)\ \text{contains many values around }10^{-3}\text{--}10^{-2}\ \text{without an extreme like }10^{-12}.$$
+Accordingly, CME pathways are best captured by **evidence-accumulating tests** (e.g., Fisher, Stouffer/mean-Z, and mild-truncation/soft-TFisher), whose power increases when *many* pathway members contribute moderate association, rather than relying on one spike.
+
 
 **Best detectors in CATFISH:**
 - **Fisher’s method** (aggregates evidence across many moderately small p-values) (RECOMMENDED).
