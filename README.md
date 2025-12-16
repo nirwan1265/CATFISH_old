@@ -637,9 +637,9 @@ This tiered strategy allows computationally feasible, robust omnibus inference u
 
 ## USAGE
 
-# MAGCAT (R package wrapper)
+# CATFISH (R package wrapper)
 
-**MAGCAT** is the R interface implementation used to run CATFISH‑style workflows on top of MAGMA, and to compute ACAT/Fisher/TFisher + omnibus pathway statistics.
+**CATFISH** is the R interface implementation used to run CATFISH‑style workflows on top of MAGMA, and to compute ACAT/Fisher/TFisher + omnibus pathway statistics.
 
 ---
 
@@ -651,7 +651,7 @@ Download MAGMA from the official site and make the `magma` executable available 
 
 - https://ctg.cncr.nl/software/magma
 
-### 2) Install MAGCAT in R
+### 2) Install CATFISH in R
 
 ```r
 # install.packages("devtools")  # if needed
