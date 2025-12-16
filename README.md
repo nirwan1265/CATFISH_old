@@ -952,18 +952,17 @@ omni_minp <- omni_pathways(
   species           = "maize",
   gene_col          = "GENE",
   p_col             = "P_adj",
-  effect_col        = "Z_adj",   # use adjusted Z for direction
-  #weight_col        = "NSNPS",
+  effect_col        = "Z_adj",
   is_onetail        = FALSE,
-  ptrunc            = 0.05,   # passed to internal TFisher component
-  min_p             = 1e-15,  # floor for tiny p's (needed for ACAT stability)
+  ptrunc            = 0.05,
+  min_p             = 1e-15,
   do_fix            = TRUE,
   omnibus           = "ACAT",      # minP or "ACAT"
-  B_perm            = 10000L,      # permutations at the *omnibus* level
+  B_perm            = 10000L,
   seed              = 123,
-  perm_mode    = "mvn",
+  perm_mode    = "mvn",       # mvn or 
   magma_genes_out = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
-  remove_singletons = TRUE,     # drop pathways with n_genes < 2
+  remove_singletons = TRUE,
   output            = TRUE,
   out_dir           = "magcat_omni_full"
 )
@@ -976,9 +975,8 @@ omni_minp <- omni_pathways(
 ##   - minp_gene_p  : minP pvalue per pathway
 ##   - omni_p       : combination of these methods (ACAT or minP) pvalue per pathway
 ##   - omni_perm_p  : permutation-calibrated omnibus pvalues
-##   - BH FDR and q-values for omni_p and each component
-##   - omni_perm_BH  : permutation-calibrated BH pvalues
-##   - omni_perm_q  : permutation-calibrated q pvalues
+##   - BH FDR for omni_p and each component
+##   - omni_perm_BH  : permutation-calibrated BH pvalues using perm pvalues
 
 ############################################################
 ## 8. Pathway-level tests (gene → pathway)
