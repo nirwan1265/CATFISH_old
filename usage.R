@@ -156,11 +156,7 @@ write.table(
 
 
 # Get gene length
-gff3_path <- system.file(
-  "extdata", "GFF3",
-  "Zea_mays.Zm-B73-REFERENCE-NAM-5.0.62.chr.gff3",
-  package = "MAGCAT"
-)
+gff3_path <- "/Users/nirwantandukar/Documents/Research/data/GFF3/Zea_mays.Zm-B73-REFERENCE-NAM-5.0.62.chr.gff3"
 
 maize_gene_len <- get_gene_lengths(
   gff3_file  = gff3_path,
@@ -168,8 +164,14 @@ maize_gene_len <- get_gene_lengths(
   output_dir = "inst/extdata",
   file_name  = "Zea_mays_gene_lengths.tsv"
 )
+
+
+
+# remove "gene:""
+maize_gene_len=read.delim("inst/extdata/Zea_mays_gene_lengths.tsv")
 head(maize_gene_len)
 
+head(genes_all)
 
 ### Adjust pvalues based on Gene length and NSPS
 adj_out <- magcat_adjust_gene_p(
@@ -182,8 +184,9 @@ adj_out <- magcat_adjust_gene_p(
   len_gene_col = "gene_id",
   len_col      = "length"
 )
+head(adj_out)
 
-genes_adj <- adj_out$genes
+genes_adj <- adj_out$gene_id
 head(genes_adj)
 genes_all
 
@@ -477,6 +480,20 @@ tf_adapt_res <- magcat_soft_tfisher_adaptive_pathways(
 head(tf_adapt_res)
 attr(tf_adapt_res, "file")
 args(MAGCAT::magcat_soft_tfisher_adaptive_pathways)
+
+
+### MAGMA-competitive
+out_pref <- magma_geneset_competitive(
+  gene_results_raw = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
+  set_annot        = "annot/N_maize_MLM.genes.annot",
+  out_prefix       = "N_maize_MLM_ALLCHR.PMN_COMP",
+  out_dir          = "magma_geneset"
+)
+
+out_pref
+
+
+
 
 # OMNI
 omni_minp <- omni_pathways(
