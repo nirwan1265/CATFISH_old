@@ -13,13 +13,13 @@ This Markdown is structured into:
 
 ### What CATFISH is
 
-**CATFISH** (<ins>**C**</ins>ombining <ins>**A**</ins>CAT, <ins>**T**</ins>Fisher (soft), <ins>**F**</ins>isher, m<ins>**I**</ins>n-P, and <ins>**S**</ins>touffer for <ins>**H**</ins>olistic pathway analysis) is a model-averaged pathway framework that combines ACAT, soft TFisher, Fisher, Stouffer, and minP on top of LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment p-value that is sensitive to both sparse and polygenic pathway patterns. In short, CATFISH casts a wide net across complementary tests and reels in a single pathway p-value.
+**CATFISH** (<ins>**C**</ins>ombining <ins>**A**</ins>CAT, <ins>**T**</ins>Fisher (soft), <ins>**F**</ins>isher, m<ins>**I**</ins>n-P, and <ins>**S**</ins>touffer for <ins>**H**</ins>olistic pathway analysis) is a multi-test pathway framework built on LD-aware MAGMA gene-level GWAS statistics adjusted for gene length and SNP density that combines ACAT, soft TFisher, Fisher, Stouffer and minP. It then uses an omnibus test based on permutation-calibrated minP or ACAT to collapse these multiple pathway tests into a single, correlation-robust enrichment p-value that is sensitive to both sparse and polygenic pathway patterns. In short, CATFISH casts a wide net across complementary tests and reels in a single pathway p-value.
 
 CATFISH uses:
 
 1. **MAGMA** for LD-aware **SNP → gene** inference (gene-level p-values).
 2. **Multiple gene → pathway combination tests** (ACAT, Fisher, soft TFisher, Stouffer, minP).
-3. A **correlation-robust omnibus test** (permutation-calibrated minP and ACAT-O) that aggregates these correlated component tests into a single pathway-level p-value.
+3. A **correlation-robust LD-aware omnibus test** (permutation-calibrated minP and ACAT-O) that aggregates these tests into a single pathway-level p-value.
 
 ### Why multiple tests are needed
 
@@ -34,24 +34,20 @@ No single gene-set statistic is uniformly most powerful across these various pos
 
 # Pathway signal archetypes
 
-We divide the pathway signals into a small set of archetypes that describe different ways a pathway can be enriched as explained above. We then use a combination of statistical tests chosen to be representative to each of these behaviors and a provide a biological example for each archetype.
+We divide the pathway signals into a set of archetypes that describe different ways a pathway can be important in a biological sense explained in detail below. We then use a combination of statistical tests chosen to be representative to each of these behaviors and a provide a biological example for each archetype.
 
 ## Archetype I — Sparse Driver Architecture (SDA)
 
-**Signature:** one or a few genes are extremely significant.
+**Signature:** A small number of genes are extremely significant; most genes look null.
 
 **Gene-level p-value pattern:**
 
-- The top gene(s) p-value is much smaller than the significance level α:
-  $$p_{(1)} \ll \alpha \;\;(\text{e.g. } p_{(1)} \approx 10^{-6}\text{ or smaller}).$$
-
-- The remaining gene p-values are approximately uniform:  
-  $$(p_{(2)},\,p_{(3)},\,\dots,\,p_{(m)}) \sim \mathrm{Uniform}(0,1).$$
-
-- A sharp “elbow” in the ranked p-values (one (or few) tiny hit, then a long flat tail).
+- There exists a small $K \ll G$ such that the top $K$ gene p-values are extremely small, $p_{(1)}, \dots, p_{(K)} \ll \alpha$ (e.g. $p_{(1)} \sim 10^{-7}$ or smaller),
+- The remaining genes are approximately null, $p_{(K+1)}, \dots, p_{(G)} \sim \mathrm{Uniform}(0,1)$.
+- This produces a sharp “elbow” in the ranked p-values (a few tiny hits followed by a long flat tail).
 
 **Interpretation:**  
-An SDA pathway is significant because of **driver gene(s) dominance**, not broad engagement. One gene can carry the pathway signal when it sits at a mechanistic bottleneck (committed step, rate-limiting enzyme, key regulator, or essential transporter). Pathway annotations bundle a few true control points with many supporting enzymes and housekeeping genes; under SDA, trait-relevant variation concentrates in the control point(s) while the rest remain near-null. Statistically, this produces a tiny $p_{(1)}$ and a long tail of near-uniform values.
+An SDA pathway is significant because **a small set of driver genes dominates the signal**, rather than broad involvement of most pathway members. This can occur when the trait-relevant biology passes through a **bottleneck** (committed step, rate-limiting enzyme, key regulator, or essential transporter) so that genetic variation concentrates its effect at a few control points. In contrast, pathway annotations typically include many additional enzymes, modifiers, and general “support” genes that may be necessary for pathway operation but do not carry strong association for the trait. Under SDA, association is therefore concentrated in the top $K$ genes, yielding very small ordered p-values $p\_(1), …, p_(K)$ followed by a long tail $p_(K+1), …, p_(G)$ that is close to uniform.
 
 **Biological example:**  
 **Aspartokinase in the aspartate-derived amino acid pathway**
