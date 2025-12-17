@@ -1,4 +1,4 @@
-devtools::document()   
+devtools::document()
 devtools::load_all()
 
 
@@ -6,14 +6,14 @@ library(MAGCAT)
 library(metapro)
 library(sumFREGAT)
 library(metap)
-
+library(rtracklayer)
+library(ggplot2)
+library(TFisher)
 # 1. See where it's installed
 .libPaths()
 
-install.packages("TFisher", type = "source")
 
-# 2. Remove TFisher from your main library
-remove.packages("TFisher", lib = .libPaths()[1])
+
 
 
 
@@ -31,14 +31,14 @@ gff3_to_geneloc(
 # Gene-loc function
 # If it has
 magma_annotate(
-  stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/nitrogen/GWAS_results/nitrogen_0-5cm_maize_LMM.txt",
+  stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
   rename_columns = c(
-    CHR    = "chr",
-    SNP    = "rs",
-    POS    = "ps",
-    PVALUE = "p_wald"   # not used here but keeps things consistent
+    CHR    = "Chr",
+    SNP    = "SNP",
+    POS    = "Pos",
+    PVALUE = "P.value"   # not used here but keeps things consistent
   ),
-  species    = "maize",        # uses the built-in maize.genes.loc
+  species    = "maize",        # uses the built-in maize.genes.loc  
   out_prefix = "N_maize_MLM",
   out_dir    = "annot",
   window     = c(25, 25)
@@ -50,13 +50,13 @@ magma_gene(
   bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
   gene_annot = "annot/N_maize_MLM.genes.annot",
   stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/nitrogen/GWAS_results/nitrogen_0-5cm_maize_LMM.txt",
-  n_total    = 3539,
+  n_total    = 3107,
   rename_columns = c(
     CHR    = "chr",
     SNP    = "rs",
     POS    = "ps",
     PVALUE = "p_wald",
-    NMISS  = "n_miss" 
+    NMISS  = "n_miss"
   ),
   out_prefix = "N_maize_MLM",
   out_dir    = "magma_genes",
@@ -68,7 +68,7 @@ magma_gene(
   bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
   gene_annot = "annot/N_maize_MLM.genes.annot",
   stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
-  n_total    = 3539,
+  n_total    = 3107,
   rename_columns = c(
     CHR    = "Chr",
     SNP    = "SNP",
@@ -90,13 +90,13 @@ magma_gene(
   bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
   gene_annot = "annot/N_maize_MLM.genes.annot",
   stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
-  # n_total    = 3539, this is ignored. 
+  # n_total    = 3107, this is ignored.
   rename_columns = c(
     CHR    = "Chr",
     SNP    = "SNP",
     POS    = "Pos",
     PVALUE = "P.value",
-    NOBS   = "nobs" 
+    NOBS   = "nobs"
   ),
   out_prefix = "N_maize_MLM",
   out_dir    = "magma_multi_snp_wise_genes_by_chr_N_maize",
@@ -128,6 +128,9 @@ if (!"GENE" %in% names(genes_all_raw) || !"P" %in% names(genes_all_raw)) {
   stop("Combined MAGMA file must have columns 'GENE' and 'P'.")
 }
 
+head(genes_all_raw)
+colnames(genes_all_raw)[9] = "P"
+
 # Order by p-value, then drop duplicates so we keep the best P per gene
 o <- order(genes_all_raw$GENE, genes_all_raw$P)
 genes_all <- genes_all_raw[o, ]
@@ -141,6 +144,7 @@ if (all(c("CHR", "START") %in% names(genes_all))) {
 # Inspect
 head(genes_all)
 nrow(genes_all)
+
 length(unique(genes_all$GENE))
 write.table(
   genes_all,
@@ -148,8 +152,147 @@ write.table(
   sep       = "\t",      # tab-separated
   quote     = FALSE,     # don't quote strings
   row.names = FALSE      # don't write row numbers
-  # col.names = TRUE     # default; can be explicit if you want
 )
+
+
+# Get gene length
+gff3_path <- system.file(
+  "extdata", "GFF3",
+  "Zea_mays.Zm-B73-REFERENCE-NAM-5.0.62.chr.gff3",
+  package = "MAGCAT"
+)
+
+maize_gene_len <- get_gene_lengths(
+  gff3_file  = gff3_path,
+  output     = TRUE,
+  output_dir = "inst/extdata",
+  file_name  = "Zea_mays_gene_lengths.tsv"
+)
+head(maize_gene_len)
+
+
+### Adjust pvalues based on Gene length and NSPS
+adj_out <- magcat_adjust_gene_p(
+  gene_results = genes_all,
+  gene_lengths = maize_gene_len,
+  gene_col     = "GENE",
+  nsnp_col     = "NSNPS",
+  p_col        = "P",
+  z_col        = "ZSTAT",       # or NULL to reconstruct from P
+  len_gene_col = "gene_id",
+  len_col      = "length"
+)
+
+genes_adj <- adj_out$genes
+head(genes_adj)
+genes_all
+
+write.csv(genes_adj,"genes_adj.csv", row.names=F)
+
+lm_fit    <- adj_out$fit   # if you want to look at coefficients
+summary(lm_fit)
+
+df_diag <- cbind(
+  model.frame(lm_fit),                    # Z_raw, log_gene_length, log_nsnp
+  Z_fitted = fitted(lm_fit),              # predicted Z
+  Z_resid  = resid(lm_fit)                # residual Z (size-adjusted)
+)
+
+str(df_diag)
+head(df_diag)
+
+library(ggplot2)
+
+# Raw Z vs log gene length
+p1 <- ggplot(df_diag, aes(x = log_gene_length, y = Z_raw)) +
+  geom_hex(bins = 60) +                     # use geom_point if you want
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "log(gene length)",
+    y = "Raw MAGMA Z-score",
+    title = "Dependence of gene-level Z on gene length (raw)"
+  )
+
+# Residual Z vs log gene length
+p2 <- ggplot(df_diag, aes(x = log_gene_length, y = Z_resid)) +
+  geom_hex(bins = 60) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "log(gene length)",
+    y = "Size-adjusted Z-score (residual)",
+    title = "Dependence largely removed after adjustment"
+  )
+quartz()
+p1
+quartz()
+p2
+
+
+# Raw Z vs log(#SNPs)
+p3 <- ggplot(df_diag, aes(x = log_nsnp, y = Z_raw)) +
+  geom_hex(bins = 60) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "log(# SNPs per gene)",
+    y = "Raw MAGMA Z-score",
+    title = "Dependence of gene-level Z on SNP density (raw)"
+  )
+
+# Residual Z vs log(#SNPs)
+p4 <- ggplot(df_diag, aes(x = log_nsnp, y = Z_resid)) +
+  geom_hex(bins = 60) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(
+    x = "log(# SNPs per gene)",
+    y = "Size-adjusted Z-score",
+    title = "Dependence on SNP density removed"
+  )
+quartz()
+p3
+quartz()
+p4
+
+
+cor_before_len  <- cor(df_diag$Z_raw,  df_diag$log_gene_length, use = "complete.obs")
+cor_after_len   <- cor(df_diag$Z_resid, df_diag$log_gene_length, use = "complete.obs")
+
+cor_before_nsnp <- cor(df_diag$Z_raw,  df_diag$log_nsnp, use = "complete.obs")
+cor_after_nsnp  <- cor(df_diag$Z_resid, df_diag$log_nsnp, use = "complete.obs")
+
+c(
+  cor_before_len,  cor_after_len,
+  cor_before_nsnp, cor_after_nsnp
+)
+
+#“Raw gene Z-scores showed a weak but detectable correlation with log(gene length) and log(#SNPs) (r = 0.0X). After regression, correlations were reduced to ≈0, indicating effective removal of these biases.”
+
+
+cor_p <- cor(genes_adj$P, genes_adj$P_adj, use = "complete.obs")
+cor_logp <- cor(-log10(genes_adj$P), -log10(genes_adj$P_adj), use = "complete.obs")
+
+cor_p
+cor_logp
+
+library(ggplot2)
+quartz()
+ggplot(genes_adj, aes(x = -log10(P), y = -log10(P_adj))) +
+  geom_point(alpha = 0.2, size = 0.6) +
+  geom_abline(slope = 1, intercept = 0, colour = "red") +
+  labs(
+    x = expression(-log[10](italic(P)[raw])),
+    y = expression(-log[10](italic(P)[adj])),
+    title = "Gene-level p-values before vs after size/SNP adjustment"
+  )
+
+
+ggplot(genes_adj, aes(x = P, y = P_adj)) +
+  geom_point(alpha = 0.2, size = 0.6) +
+  geom_abline(slope = 1, intercept = 0, colour = "red") +
+  labs(
+    x = expression(-log[10](italic(P)[raw])),
+    y = expression(-log[10](italic(P)[adj])),
+    title = "Gene-level p-values before vs after size/SNP adjustment"
+  )
 
 
 # ACAT
@@ -157,16 +300,17 @@ write.table(
 genes_all <- read.table("/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
                         header = TRUE, stringsAsFactors = FALSE)
 head(genes_all)
+
 # 2) Load maize pathways from CornCyc (inst/extdata/pathway/corncyc_...)
 maize_pw <- magcat_load_pathways("maize", gene_col = "Gene-name")
 head(maize_pw)
 
 # 3) Run ACAT per pathway (no permutations first):
 pw_res <- magcat_acat_pathways(
-  gene_results = genes_all,
+  gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
-  p_col        = "P",
+  p_col        = "P_adj",
   output       = TRUE,
   out_dir      = "acat_results"
 )
@@ -192,10 +336,10 @@ attr(pw_res, "file")
 
 # 5.) ordmeta
 ord_res <- magcat_ordmeta_pathways(
-  gene_results = genes_all,
+  gene_results = genes_adj,
   species      = "maize",
   gene_col     = "GENE",
-  p_col        = "P",
+  p_col        = "P_adj",
   effect_col   = "ZSTAT",
   is_onetail   = FALSE
 )
@@ -214,6 +358,16 @@ wf_res <- magcat_wfisher_pathways(
 
 write.csv(wf_res,"weighted_fisher.csv")
 
+wf_res <- magcat_wfisher_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  p_col        = "P_adj",
+  effect_col   = "ZSTAT",
+  #weight_col   = "NSNPS",
+  is_onetail   = FALSE
+)
+write.csv(wf_res,"weighted_fisher_adj_gene_length.csv")
 
 # TFisher
 tf_res <- magcat_tfisher_pathways(
@@ -222,7 +376,7 @@ tf_res <- magcat_tfisher_pathways(
   gene_col        = "GENE",
   p_col           = "P",
   ptrunc          = 0.05,    # truncation threshold
-  B_perm          = 5000L,   # permutations for empirical p
+  B_perm          = 1000L,   # permutations for empirical p
   seed            = 123,
   analytic_logical= TRUE,    # chi-square approx (optional)
   output          = TRUE,
@@ -232,39 +386,187 @@ tf_res <- magcat_tfisher_pathways(
 head(tf_res)
 write.csv(tf_res,"tf_res2.csv")
 
-# OMNI
-# Full pipeline from MAGMA gene results
-omni_res <- magcat_omni_pathways(
-  gene_results = magma_genes,   
-  species      = "maize",       
-  is_onetail   = FALSE,
-  weight_col   = "NSNPS",
-  B_ordmeta    = 2000,
-  B_perm       = 1000,
-  seed         = 123,
+tf_res <- magcat_tfisher_pathways(
+  gene_results    = genes_adj,
+  species         = "maize",
+  gene_col        = "GENE",
+  p_col           = "P_adj",
+  ptrunc          = 0.05,    # truncation threshold
+  B_perm          = 10000L,   # permutations for empirical p
+  seed            = 123,
+  analytic_logical= TRUE,    # chi-square approx (optional)
+  output          = TRUE,
+  out_dir         = "magcat_tfisher"
+)
+
+write.csv(tf_res,"tf_res_adj.csv")
+
+
+# Soft Tfisher
+tf_res <- magcat_soft_tfisher_pathways(
+  gene_results    = genes_adj,
+  species         = "maize",
+  gene_col        = "GENE",
+  p_col           = "P_adj",
+  tau1            = 0.05,
+  B_perm          = 10000L,
+  seed            = 123,
+  analytic_logical= TRUE,
+  output          = TRUE,
+  out_dir         = "magcat_tfisher_soft"
+)
+
+tf_res
+write.csv(tf_res,"soft_tf_res_adj_gene_length.csv")
+
+
+# Stouffer
+stouf_res <- magcat_stoufferZ_pathways(
+  gene_results = genes_adj,
+  species      = "maize",
+  gene_col     = "GENE",
+  z_col        = "Z_adj",
+  weight_col   = NULL,   # equal weights
+  B_perm       = 0L,     # <- NO permutations
+  seed         = NULL,
   output       = TRUE,
-  out_dir      = "magcat_omni_full"
+  out_dir      = "magcat_stouffer"
 )
 
-pw_tab <- read.csv("my_pathway_methods.csv") 
-# columns: pathway_id, pathway_name, acat_p, wfisher_p, ordmeta_p, maybe others
+head(stouf_res)
+attr(stouf_res, "file")
 
-omni_from_pvals <- magcat_omni_pathways(
-  tab    = pw_tab,
-  id_col = "pathway_id",                     # optional, just for sanity
-  p_cols = c("acat_p", "wfisher_p", "ordmeta_p"),
-  output = TRUE,
-  out_dir = "magcat_omni_from_pvals"
+
+# MinP
+minp_res <- magcat_minp_pathways(
+  gene_results = genes_adj,  # your .genes.out as data.frame
+  species      = "maize",      # or "sorghum"/"arabidopsis"/"plant"
+  gene_col     = "GENE",
+  p_col        = "P_adj",
+  B_perm       = 0L,           # no permutations, analytic only
+  min_p        = 1e-15,
+  do_fix       = TRUE,
+  output       = TRUE,
+  out_dir      = "magcat_minp_maize"
 )
 
 
-args(magcat_omni_pathways)
 
-# Directly from a file:
-omni_from_pvals <- magcat_omni_pathways(
-  tab    = "all_test.csv",
-  id_col = "pathway_name",
-  p_cols = c("acat_p", "wfisher_p","tpm_p_analytic")
+############################################################
+## 2) Adaptive soft-TFisher (analytic only, NO permutations)
+##    (Assuming your adaptive function is named:
+##     magcat_soft_tfisher_adaptive_pathways)
+############################################################
+
+tf_adapt_res <- magcat_soft_tfisher_adaptive_pathways(
+  gene_results     = genes_adj,
+  species          = "maize",
+  gene_col         = "GENE",
+  p_col            = "P_adj",
+  tau_grid         = c(0.001, 0.005, 0.01, 0.02, 0.05, 0.1),
+  #min_p            = 1e-15,
+  do_fix           = TRUE,
+  B_perm           = 0L,        # <- NO permutations (must be integer)
+  perm_mode        = "resample_global",  # ignored when B_perm=0L
+  seed             = NULL,
+  analytic_logical = TRUE,
+  output           = TRUE,
+  out_dir          = "magcat_tfisher_adaptive"
 )
 
-write.csv(omni_from_pvals, "omni_from_pvals.csv")
+head(tf_adapt_res)
+attr(tf_adapt_res, "file")
+args(MAGCAT::magcat_soft_tfisher_adaptive_pathways)
+
+# OMNI
+omni_minp <- omni_pathways(
+  gene_results      = genes_adj,
+  species           = "maize",
+  gene_col          = "GENE",
+  p_col             = "P_adj",
+  effect_col        = "Z_adj",
+  #weight_col        = "NSNPS",
+  is_onetail        = FALSE,
+  ptrunc            = 0.05,
+  min_p             = 1e-15,
+  do_fix            = TRUE,
+  omnibus           = "ACAT",      # minP or "ACAT"
+  B_perm            = 10000L,
+  seed              = 123,
+  perm_mode    = "mvn",       # mvn or 
+  magma_genes_out = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
+  remove_singletons = TRUE,
+  output            = TRUE,
+  out_dir           = "magcat_omni_full"
+)
+
+
+omni_mvn <- omni_pathways(
+  gene_results      = genes_adj,
+  species           = "maize",
+  gene_col          = "GENE",
+  p_col             = "P_adj",
+  ptrunc            = 0.05,
+  min_p             = 1e-15,
+  do_fix            = TRUE,
+  omnibus           = "minP",
+  B_perm            = 10000L,
+  seed              = 123,
+  perm_mode         = "mvn",
+  magma_genes_out   = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
+  magma_cor_file    = NULL,
+  remove_singletons = TRUE,
+  output            = TRUE,
+  out_dir           = "magcat_omni_full"
+)
+
+
+
+args(MAGCAT::omni_pathways)
+
+m  <- sum(!is.na(omni_mvn$omni_perm_p))
+p1 <- min(omni_mvn$omni_perm_p, na.rm = TRUE)
+
+c(m = m, min_perm_p = p1, p1_times_m = p1 * m)
+head(sort(omni_mvn$omni_perm_p), 20)
+head(sort(omni_mvn$omni_perm_p_BH), 20)
+
+
+
+p <- genes_adj$P_adj
+c(n = length(p),
+  n_na = sum(is.na(p)),
+  n_eq1 = sum(!is.na(p) & p == 1),
+  frac_eq1 = mean(!is.na(p) & p == 1),
+  n_gt0_le1 = sum(!is.na(p) & p > 0 & p <= 1),
+  n_gt0_lt1 = sum(!is.na(p) & p > 0 & p < 1))
+
+
+
+old <- omni_pathways(
+  gene_results=genes_adj, species="maize",
+  gene_col="GENE", p_col="P_adj",
+  ptrunc=0.05, min_p=1e-15, do_fix=TRUE,
+  B_perm=100L, seed=123,
+  perm_mode="mvn",
+  magma_genes_out="/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
+  remove_singletons=TRUE
+)
+
+new <- omni_pathways(
+  gene_results=genes_adj, species="maize",
+  gene_col="GENE", p_col="P_adj",
+  ptrunc=0.05, min_p=1e-15, do_fix=TRUE,
+  B_perm=100L, seed=123,
+  perm_mode="mvn",
+  magma_genes_out="/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_N_maize.txt",
+  remove_singletons=TRUE
+)
+
+c(m_old = sum(!is.na(old$omni_perm_p)),
+  min_old = min(old$omni_perm_p, na.rm=TRUE),
+  m_new = sum(!is.na(new$omni_perm_p)),
+  min_new = min(new$omni_perm_p, na.rm=TRUE))
+
+quantile(old$omni_perm_p, c(.01,.05,.1,.2,.5), na.rm=TRUE)
+quantile(new$omni_perm_p, c(.01,.05,.1,.2,.5), na.rm=TRUE)

@@ -1326,71 +1326,187 @@ omni_pathways <- function(gene_results,
     if (perm_mode == "mvn") {
 
       if (is.null(magma_genes_out) || !file.exists(magma_genes_out)) {
-        stop("perm_mode='mvn' requires magma_genes_out = path to merged MAGMA *.genes.out",
-             call. = FALSE)
+        stop("perm_mode='mvn' requires magma_genes_out (used here to locate the *.genes.raw files).",
+            call. = FALSE)
       }
 
-      genes_out_tab <- magma_read_genes_out(magma_genes_out, gene_col = gene_col, chr_col = "CHR")
+      # infer where your per-chromosome *.genes.raw live
+      raw_dir <- dirname(magma_genes_out)
+      raw_files <- list.files(raw_dir, pattern = "genes\\.raw$", full.names = TRUE)
 
-      cor_pairs <- NULL
-      if (!is.null(magma_cor_file)) {
-        if (!file.exists(magma_cor_file)) stop("magma_cor_file does not exist: ", magma_cor_file, call. = FALSE)
-        cor_pairs <- magma_read_gene_cor_pairs(magma_cor_file, gene1_col = 1, gene2_col = 2, r_col = 3)
+      if (!length(raw_files)) {
+        stop("perm_mode='mvn' (GLOBAL) could not find any *.genes.raw files in: ", raw_dir,
+            "\nExpected files like: N_maize_MLM_chr1.multi_snp_wise.genes.raw", call. = FALSE)
       }
 
-      for (i in seq_len(nrow(res))) {
+      if (!requireNamespace("Matrix", quietly = TRUE)) {
+        stop("perm_mode='mvn' (GLOBAL) requires Matrix package (for nearPD).", call. = FALSE)
+      }
+      if (!requireNamespace("ACAT", quietly = TRUE)) {
+        stop("perm_mode='mvn' (GLOBAL) requires ACAT package.", call. = FALSE)
+      }
+      if (!requireNamespace("TFisher", quietly = TRUE)) {
+        stop("perm_mode='mvn' (GLOBAL) requires TFisher package.", call. = FALSE)
+      }
 
-        genes_S <- p_list[[i]]
-        if (is.null(genes_S) || length(genes_S) < 2L) next
-        if (is.na(res$omni_p[i])) next
+      # union of genes across ALL pathways we are testing (lowercase)
+      all_pw_genes <- unique(tolower(unlist(p_list, use.names = FALSE)))
+      all_pw_genes <- all_pw_genes[!is.na(all_pw_genes) & nzchar(all_pw_genes)]
 
-        R_S <- magma_build_R_for_pathway(
-          genes_S       = genes_S,
-          genes_out_tab = genes_out_tab,
-          cor_pairs     = cor_pairs,
-          gene_col      = gene_col,
-          chr_col       = "CHR",
-          make_PD       = make_PD
-        )
-        if (is.null(R_S)) next
+      # ---- helper: read one *.genes.raw and build R subset for target genes ----
+      .read_raw_R_subset <- function(genes_raw_file, target_genes_lower, make_PD = TRUE) {
 
-        sim <- magma_simulate_null_Zp(
-          genes_S       = rownames(R_S),
-          genes_out_tab = genes_out_tab,
-          R_S           = R_S,
-          B             = B_perm,
-          gene_col      = gene_col,
-          chr_col       = "CHR"
-        )
+        lines <- readLines(genes_raw_file, warn = FALSE)
+        lines <- lines[!grepl("^\\s*#", lines)]
+        lines <- lines[nzchar(trimws(lines))]
 
-        # weights fixed to pathway genes (in sim order)
-        genes_sim <- colnames(sim$P)
-        if (is.null(genes_sim)) genes_sim <- rownames(R_S)
-        w_i <- if (is.null(st_prep$w_norm)) rep(1, length(genes_sim)) else as.numeric(st_prep$w_norm[tolower(genes_sim)])
+        if (length(lines) < 2L) return(NULL)
 
-        omni_null <- numeric(B_perm)
+        # gene order in file = first token each line
+        genes <- sub("\\s.*$", "", lines)
+        genes_lower <- tolower(genes)
 
-        for (b in seq_len(B_perm)) {
+        keep_idx <- which(genes_lower %in% target_genes_lower)
+        if (length(keep_idx) < 2L) return(NULL)
 
-          p_i <- as.numeric(sim$P[b, ])
-          d   <- length(p_i)
+        map <- integer(length(genes))
+        map[keep_idx] <- seq_along(keep_idx)
+        m <- length(keep_idx)
 
+        R <- diag(1, m)
+        rownames(R) <- genes[keep_idx]
+        colnames(R) <- genes[keep_idx]
+
+        # Fill using "tail is correlations to previous genes" assumption:
+        # line i ends with (i-1) correlations corresponding to genes 1:(i-1)
+        for (i in keep_idx) {
+          if (i <= 1L) next
+
+          tok <- strsplit(lines[i], "\\s+")[[1]]
+          tail_len <- i - 1L
+          if (length(tok) < tail_len + 1L) next
+
+          cor_tail <- suppressWarnings(as.numeric(tail(tok, tail_len)))
+          if (all(is.na(cor_tail))) next
+
+          prev_keep <- which(map[seq_len(i - 1L)] > 0L)
+          if (!length(prev_keep)) next
+
+          jj <- map[prev_keep]
+          vals <- cor_tail[prev_keep]  # position j corresponds to gene j
+
+          # guard bad parses -> treat as 0 corr
+          vals[!is.finite(vals)] <- 0
+
+          ii <- map[i]
+          R[ii, jj] <- vals
+          R[jj, ii] <- vals
+        }
+
+        if (make_PD) {
+          npd <- Matrix::nearPD(R, corr = TRUE)
+          R <- as.matrix(npd$mat)
+        }
+        R
+      }
+
+      # ---- helper: prep per-chr chol for fast global simulation ----
+      .prep_chr_mvn <- function(raw_files, target_genes_lower, make_PD = TRUE) {
+        out <- list()
+        for (f in raw_files) {
+          R <- .read_raw_R_subset(f, target_genes_lower, make_PD = make_PD)
+          if (is.null(R)) next
+
+          # chol() returns upper-tri U with R = t(U) %*% U
+          U <- chol(R)
+
+          out[[f]] <- list(
+            U = U,
+            genes_lower = tolower(colnames(R))
+          )
+        }
+        out
+      }
+
+      # ---- helper: simulate one genome-wide correlated p-map ----
+      .simulate_global_pmap <- function(chr_mvn_list) {
+        p_map <- c()
+        for (nm in names(chr_mvn_list)) {
+          U <- chr_mvn_list[[nm]]$U
+          g <- chr_mvn_list[[nm]]$genes_lower
+          z <- as.numeric(crossprod(U, stats::rnorm(ncol(U))))
+          p <- 2 * stats::pnorm(-abs(z))
+          names(p) <- g
+          p_map <- c(p_map, p)
+        }
+        p_map
+      }
+
+      # prep once
+      chr_mvn <- .prep_chr_mvn(raw_files, all_pw_genes, make_PD = make_PD)
+      if (!length(chr_mvn)) {
+        stop("perm_mode='mvn' (GLOBAL): none of the *.genes.raw files contained >=2 genes from your pathway universe.",
+            call. = FALSE)
+      }
+
+      # weights map (lowercase names) if available
+      w_norm <- st_prep$w_norm
+      if (!is.null(w_norm)) {
+        names(w_norm) <- tolower(names(w_norm))
+      }
+
+      # permutation p-values via counts (fast; no huge null storage)
+      le_count <- integer(nrow(res))
+
+      for (b in seq_len(B_perm)) {
+
+        p_map <- .simulate_global_pmap(chr_mvn)
+
+        for (i in seq_len(nrow(res))) {
+
+          genes_S <- p_list[[i]]
+          if (is.null(genes_S) || length(genes_S) < 2L) next
+          if (is.na(res$omni_p[i])) next
+
+          genes_S <- tolower(as.character(genes_S))
+
+          p_i <- as.numeric(p_map[genes_S])
+          okp <- which(is.finite(p_i) & p_i > 0 & p_i < 1)
+          if (length(okp) < 2L) next
+          p_i <- p_i[okp]
+          d <- length(p_i)
+
+          # weights aligned to p_i (optional)
+          w_i <- NULL
+          if (!is.null(w_norm)) {
+            w_i <- as.numeric(w_norm[genes_S[okp]])
+          }
+
+          # component p’s (same as your current per-pathway MVN block)
           p_acat   <- ACAT::ACAT(Pvals = fix_p_for_acat(p_i, min_p = min_p))
-          p_fisher <- stats::pchisq(-2 * sum(log(fix_p_for_acat(p_i, min_p=min_p))),
-                                    df = 2 * d, lower.tail = FALSE)
 
-          stat_tf <- TFisher::stat.soft(p = fix_p_for_acat(p_i, min_p=min_p), tau1 = ptrunc)
+          p_fisher <- stats::pchisq(
+            -2 * sum(log(fix_p_for_acat(p_i, min_p = min_p))),
+            df = 2 * d,
+            lower.tail = FALSE
+          )
+
+          stat_tf <- TFisher::stat.soft(p = fix_p_for_acat(p_i, min_p = min_p), tau1 = ptrunc)
           p_tf    <- 1 - as.numeric(TFisher::p.soft(q = stat_tf, n = d, tau1 = ptrunc, M = NULL))
 
           p_st    <- .stouffer_p_from_p(p_i, w_i)
+
           p_min   <- .sidak_minp(p_i)
 
-          omni_null[b] <- .combine_omni(c(p_acat, p_fisher, p_tf, p_st, p_min))
-        }
+          omni_null <- .combine_omni(c(p_acat, p_fisher, p_tf, p_st, p_min))
 
-        omni_obs <- res$omni_p[i]
-        omni_perm_p[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_perm + 1)
+          if (is.finite(omni_null) && omni_null <= res$omni_p[i]) {
+            le_count[i] <- le_count[i] + 1L
+          }
+        }
       }
+
+      omni_perm_p <- (1 + le_count) / (B_perm + 1)
 
       res$omni_perm_p    <- omni_perm_p
       res$omni_perm_p_BH <- .p_adjust_BH(res$omni_perm_p)
