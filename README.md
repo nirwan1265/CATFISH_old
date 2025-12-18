@@ -404,41 +404,9 @@ where $F_{\chi^2_{2G}}(\cdot)$ is the $\chi^2$ CDF with $2G$ degrees of freedom.
 
 ---
 
-### 3.3 Soft TFisher (tail-focused truncation and weighting)
+### 3.3 Adaptive Soft TFisher (data-adaptive tail focusing via oTFisher)
 
-To focus power on the lower tail of gene-level p-values while avoiding a hard cutoff, we use the **soft-thresholded TFisher** statistic of Zhang et al. (2020).
-
-Fix a truncation / weighting parameter $\tau \in (0,1]$. For a pathway $S$ with adjusted gene-level p-values $\{p_g\}_{g \in S}$, the soft TFisher statistic is:
-
-$$
-T_{\mathrm{TF}}^{\mathrm{soft}}(S;\tau) = \sum_{g \in S} \left[ -2\log(p_g) + 2\log(\tau) \right]_{+}.
-$$
-
-Here $(x)_{+} = \max(x,0)$.
-
-Equivalently, only genes with $p_g \le \tau$ contribute to the statistic, but their contribution is smoothly down-weighted as $p_g$ approaches $\tau$: very small $p_g$ behave like Fisher's $-2\log(p_g)$, $p_g$ near $\tau$ contribute little, and $p_g > \tau$ contribute exactly zero.
-
-This corresponds to the $\tau_1 = \tau_2 = \tau$ special case of the general TFisher family (Zhang et al., 2020, Eq. 2.1–2.2).
-
-Soft TFisher interpolates between:
-
-- **Fisher's method** when $\tau = 1$, and  
-- **hard truncated tests** (e.g. TPM / RTP) when $\tau < 1$, but with continuous, stable weighting instead of a sharp cutoff.
-
-In CATFISH, we apply:
-
-$$
-T_{\mathrm{TF}}^{\mathrm{soft}}(S;\tau)
-$$
-
-to adjusted gene-level p-values $p_{g,\mathrm{adj}}$, using the analytic null distribution for TFisher with $\tau_1 = \tau_2 = \tau$ (Zhang et al., 2020, Theorem 1).
-
-**Key property (interpretation):** Soft TFisher is especially sensitive to **Hybrid Driver–Support (HDS)** and **Coordinated Moderate Enrichment (CME)** architectures.
-
-
-### 3.4 Adaptive Soft TFisher (data-adaptive tail focusing via oTFisher)
-
-A practical limitation of fixed-$\tau$ soft TFisher is that the “right” tail-focus depends on the *unknown* pathway architecture (dense vs sparse, weak vs strong). TFisher therefore proposes an **omnibus, data-adaptive** selection of truncation/weighting parameters, called **oTFisher**, which automatically chooses the most favorable setting for the observed p-value pattern. :contentReference[oaicite:0]{index=0}
+A practical limitation of fixed- $\tau$ soft TFisher is that the appropriate tail-focus is contingent upon the *unknown* pathway topology (dense versus sparse, weak versus strong). TFisher proposes a **omnibus, data-adaptive** selection of truncation and weighting parameters, termed **oTFisher**, which autonomously identifies the most advantageous configuration for the observed p-value distribution (ref).
 
 #### Soft TFisher family (recap)
 
@@ -446,9 +414,9 @@ For a pathway $S$ with adjusted gene-level p-values $\{p_g\}_{g\in S}$ and a sof
 
 $$W^{\mathrm{soft}}(S;\tau)=\sum_{g\in S}\left[-2\log(p_g)+2\log(\tau)\right]_{+},\qquad (x)_+=\max(x,0)$$
 
-This is the $\tau_1=\tau_2=\tau$ special case of the TFisher family and implements a *continuous* down-weighting near the cutoff (stable vs hard truncation). 
+This is the $\tau_1=\tau_2=\tau$ special case of the TFisher family and implements a *continuous* down-weighting near the cutoff (soft vs hard truncation). 
 
-#### Data-adaptive “pick-the-best-$\tau$” (oTFisher)
+#### Data-adaptive $\tau$ (oTFisher)
 
 Let $\mathcal{T}=\{\tau_1,\dots,\tau_m\}$ be a small grid of candidate thresholds (e.g. a few small/medium/large values; TFisher shows that a sparse grid is usually sufficient). 
 
@@ -463,32 +431,15 @@ Then define the **adaptive soft TFisher omnibus** as the minimum across the grid
 
 $$p_{\mathrm{aTF}}(S)=\min_{\tau\in\mathcal{T}} p_{\tau}(S)$$
 
-This is exactly the oTFisher principle (“take the most significant TFisher p-value among candidate $(\tau_1,\tau_2)$ settings”), specialized to the **soft-thresholding** line $\tau_1=\tau_2$. 
+This is precisely the oTFisher concept (“select the most substantial TFisher p-value among candidate $(\tau_1,\tau_2)$ configurations”), tailored to the **soft-thresholding** line $\tau_1=\tau_2$. Due to the dependence of the $p_{\tau_j}(S)$ (originating from the same ordered p-values), oTFisher offers an analytic calibration for the minimum across the grid by employing a multivariate normal approximation of the vector comprising component TFisher statistics (calculated through multivariate normal probabilities). In the soft scenario when $\tau_1=\tau_2=\tau$, the mean and covariance are simplified, allowing for efficient computation of the multivariate normal (MVN) probability, such as by Genz-style MVN cumulative distribution function (CDF). 
 
-#### How do we calibrate the minimum over $\tau$?
-
-Because the $p_{\tau_j}(S)$ are **dependent** (they come from the same ordered p-values), oTFisher provides an **analytic calibration** for the minimum over the grid using a multivariate normal approximation over the vector of component TFisher statistics (computed via multivariate normal probabilities). In the soft case $\tau_1=\tau_2=\tau$, the mean/covariance simplify and the MVN probability can be computed efficiently (e.g., Genz-style MVN CDF). 
-
-In CATFISH terms: this gives you an *adaptive tail sensor* without hard-coding a single $\tau$ and without requiring heavy permutation for the *within-method* calibration (you can still layer your MVN/perm framework on top for the final omnibus across methods, if you want).
-
-#### Interpretation: what archetypes does adaptive soft TFisher “like”?
-
-Adaptive soft TFisher is designed to be strong in **both** regimes:
-
-- **Dense-but-weak / coordinated moderate enrichment (CME/DPS-like):** larger $\tau$ values behave closer to Fisher (broader evidence accumulation).
-- **Moderately sparse multi-hit / hybrid driver–support (MSM/HDS-like):** smaller $\tau$ values focus power on the lower tail, but still “soft” enough to avoid the instability of hard truncation.
-
-This is the same “adapt to dense vs sparse” motivation emphasized in adaptive-combination literature (e.g., Adaptive Fisher / weighted Adaptive Fisher aims to keep power across dense and sparse signal proportions). 
-
-#### Practical CATFISH defaults (good starting point)
+In CATFISH terminology, this provides a *adaptive tail sensor* without the necessity of hard-coding a single $\tau$ and without the need for extensive permutation for the *within-method* calibration (we still overlay our MVN/perm framework for the final omnibus across methods).
 
 A minimal grid that usually works well in practice is something like:
 
-$$
-\mathcal{T}=\{0.01,\,0.05,\,0.5,\,1\},
-$$
+$$\mathcal{T}=(\{0.01\,0.05\,0.5\,1\})$$
 
-which TFisher explicitly uses in its soft-thresholding omnibus examples, and which covers “rare-ish hits”, “moderate tail”, and “nearly Fisher”. :contentReference[oaicite:7]{index=7}
+which oTFisher explicitly uses in its soft-thresholding omnibus examples, and which covers “rare-ish hits”, “moderate tail”, and “nearly Fisher”.
 
 
 ---
