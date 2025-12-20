@@ -751,7 +751,7 @@ $$
 so that the null gene-level Z-scores have the same correlation structure as in the observed data.
 
 **Step 3 – Derive null p-values from the same simulated $$Z^{(b)}$$.**  
-To ensure that Stouffer and the p-based tests are coherent, both use the *same simulated draw* $$Z^{(b)}$$.  
+To ensure that Stouffer and the p-based tests are coherent, both utilize the *same simulated draw* $$Z^{(b)}$$.  
 We transform $$Z^{(b)}$$ into gene-level null p-values using a Gaussian copula:
 
 - **Uniform marginals (default)**  
@@ -768,9 +768,8 @@ We transform $$Z^{(b)}$$ into gene-level null p-values using a Gaussian copula:
 
 **Step 4 – Recompute component tests under MVN null.**  
 Using the simulated p-values $$P^{(b)}$$ and the same Z-scores $$Z^{(b)}$$, CATFISH recomputes the full component panel:
-- ACAT, Fisher, TFisher (with the same `tau_grid`), and gene-minP from $$P^{(b)}$$;
-- Stouffer from $$Z^{(b)}$$, using the same weights and one-sided alternative;
-- and combines them using the selected omnibus rule (ACAT-O or minP-O) to obtain $$p_{\mathrm{omni}}^{(b)}(S)$$.
+- ACAT, Fisher, TFisher (utilizing the identical `tau_grid`), and gene-minP derived from $$P^{(b)}$$;
+- Stouffer from $$Z^{(b)}$$, employing consistent weights and a one-sided alternative and integrates them via the chosen omnibus rule (ACAT-O or minP-O) to yield $$p_{\mathrm{omni}}^{(b)}(S)$$.
 
 **Step 5 – Empirical calibration.**  
 As in global resampling, the MVN-calibrated omnibus p-value is:
@@ -783,7 +782,7 @@ $$
 This calibration explicitly accounts for the local LD structure encoded in $$R_S$$ and reproduces the multivariate dependence between genes under the null.
 
 **Interpretation.**  
-The MVN approach provides a fully LD-aware permutation layer: it propagates MAGMA’s gene–gene correlations into a multivariate normal framework and re-evaluates all five component tests coherently. By driving both Z- and p-based methods from a single correlated Gaussian draw, MVN resampling captures realistic gene-level dependence and cross-test correlation simultaneously. It is computationally heavier than global resampling but statistically closer to the true null in LD-rich regions.
+The MVN methodology offers a comprehensive LD-aware permutation layer: it transmits MAGMA’s gene–gene correlations into a multivariate normal framework and systematically reassesses all five component tests. By deriving both Z- and p-based methodologies from a singular correlated Gaussian sample, MVN resampling concurrently captures authentic gene-level dependence and cross-test correlation. It is more computationally intensive than global resampling but statistically more accurate to the true null in LD-rich areas.
 
 ---
 
@@ -813,14 +812,8 @@ $$q_{\mathrm{omni,final}}(S)$$, reported as `omni_p_final_BH`.
 
 ### 5.6 Treatment of MAGMA competitive in the omnibus (explicit)
 
-We additionally compute (and report) the MAGMA competitive gene-set p-value (`magma_pvalue`) as a separate summary.
-However, by default it is **not included** in the resampling-calibrated omnibus (`include_magma_in_perm=FALSE`)
-because the resampling schemes above generate null realizations only for **within-pathway** gene evidence
-($$\{P_g\}_{g\in S}$$ and $$\{Z_g\}_{g\in S}$$). A principled null for the MAGMA competitive statistic would require
-rerunning a competitive regression (or MAGMA itself) under each replicate on an appropriate genome-wide null,
-which is not performed here. Consequently, the resampling-calibrated omnibus is computed over the **five
-gene-derived component tests only**, and MAGMA competitive is interpreted alongside the omnibus rather than embedded
-within it.
+We also calculate and present the MAGMA competitive gene-set p-value (`magma_pvalue`) as an independent summary.
+By default, it is **excluded** from the resampling-calibrated omnibus (`include_magma_in_perm=FALSE`) because the aforementioned resampling strategies provide null realizations just for **within-pathway** gene evidence ($$\{P_g\}_{g\in S}$$ and $$\{Z_g\}_{g\in S}$$). A principled null for the MAGMA competitive statistic necessitates rerunning a competitive regression (or MAGMA itself) for each duplicate on a suitable genome-wide null, which is not executed in this context. Thus, the resampling-calibrated omnibus is calculated exclusively for the five gene-derived component tests, and MAGMA competitive is analyzed in conjunction with the omnibus rather than being integrated into it.
 
 ---
 
@@ -830,12 +823,10 @@ Across all pathways, the final omnibus p-values $$\{p_{\mathrm{omni,final}}(S)\}
 Benjamini–Hochberg FDR procedure:
 
 $$
-q_{\mathrm{BH}}(S)=\mathrm{BH}\big(p_{\mathrm{omni,final}}(S)\big).
+q_{\mathrm{BH}}(S)=\mathrm{BH}\big(p_{\mathrm{omni,final}}(S)\big)
 $$
 
-Because each pathway yields a **single** final omnibus p-value, no additional penalty is required for the number of
-component tests; the post hoc “best-of-tests” selection is already accounted for by the resampling calibration when
-enabled.
+Since each pathway produces a single final omnibus p-value, no supplementary penalty is necessary for the quantity of component tests. The post hoc "best-of-tests" selection is inherently addressed by the resampling calibration when activated.
 
 ---
 
