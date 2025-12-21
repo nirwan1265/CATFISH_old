@@ -683,10 +683,7 @@ For each pathway $$S$$ of size $$|S| = d$$, and each permutation $$b = 1, \dots,
 2. **Construct paired null evidence**  
    The resampled gene-level evidence is  
 
-   $$
-   P^{(b)} = (P_{i_1}, \dots, P_{i_d}), \quad
-   Z^{(b)} = (Z_{i_1}, \dots, Z_{i_d}) \text{ (if Stouffer enabled)}.
-   $$
+   $$P^{(b)} = (P_{i_1}, \dots, P_{i_d}), \quad Z^{(b)} = (Z_{i_1}, \dots, Z_{i_d}) \text{ (if Stouffer enabled)}$$
 
    This "paired resampling" ensures that each gene contributes its observed correlation between $$P_g$$ and $$Z_g$$ to the identical replicate, and that all component tests in replicate $$b$$ utilize the same foundational gene selection.
    
@@ -703,19 +700,14 @@ The Stouffer null is typically regarded as unweighted for numerical stability; h
 **Step 4 – Combine resampled components into omnibus.**  
 The set of replicate component p-values $$\{p_j^{(b)}(S)\}$$ are combined using the same omnibus rule (ACAT-O or minP-O) applied to the observed data:
 
-$$
-p_{\mathrm{omni}}^{(b)}(S) = f_{\mathrm{omni}}\!\left(\{p_j^{(b)}(S)\}\right),
-$$
+$$p_{\mathrm{omni}}^{(b)}(S) = f_{\mathrm{omni}}\!\left(\{p_j^{(b)}(S)\}\right),$$
 
 where $$f_{\mathrm{omni}}$$ denotes either the ACAT or minP operator.
 
 **Step 5 – Empirical calibration.**  
 The permutation-calibrated omnibus p-value is obtained as
 
-$$
-\hat p_{\mathrm{omni,global}}(S)
-  = \frac{1 + \left|\{\,b : p_{\mathrm{omni}}^{(b)}(S) \le p_{\mathrm{omni}}(S)\,\}\right|}{B + 1}.
-$$
+$$\hat p_{\mathrm{omni,global}}(S) = \frac{1 + \left|\{\,b : p_{\mathrm{omni}}^{(b)}(S) \le p_{\mathrm{omni}}(S)\,\}\right|}{B + 1}$$
 
 The "+1 correction" eliminates zero p-values and produces unbiased estimates, even with modest $$B$$ values.  
 The cross-method correlation is inherently preserved because all five component statistics are recalculated on the identical resampled gene sets.
@@ -744,9 +736,7 @@ This ensures that $$R_S$$ is numerically stable and reflects LD and gene overlap
 **Step 2 – Simulate correlated null Z-scores.**  
 For each replicate $$b = 1, \dots, B$$:
 
-$$
-Z^{(b)} \sim \mathcal{N}(0, R_S),
-$$
+$$Z^{(b)} \sim \mathcal{N}(0, R_S),$$
 
 so that the null gene-level Z-scores have the same correlation structure as in the observed data.
 
@@ -756,10 +746,7 @@ We transform $$Z^{(b)}$$ into gene-level null p-values using a Gaussian copula:
 
 - **Uniform marginals (default)**  
 
-  $$
-  U^{(b)} = \Phi(Z^{(b)}), \quad
-  P^{(b)} = 2\min(U^{(b)},\,1-U^{(b)}),
-  $$
+  $$U^{(b)} = \Phi(Z^{(b)}), \quad P^{(b)} = 2\min(U^{(b)},\,1-U^{(b)}),$$
 
   producing Uniform$$(0,1)$$ marginals while maintaining correlation via $$R_S$$.
 
@@ -774,10 +761,7 @@ Using the simulated p-values $$P^{(b)}$$ and the same Z-scores $$Z^{(b)}$$, CATF
 **Step 5 – Empirical calibration.**  
 As in global resampling, the MVN-calibrated omnibus p-value is:
 
-$$
-\hat p_{\mathrm{omni,mvn}}(S)
-  = \frac{1 + \left|\{\,b : p_{\mathrm{omni}}^{(b)}(S) \le p_{\mathrm{omni}}(S)\,\}\right|}{B + 1}.
-$$
+$$\hat p_{\mathrm{omni,mvn}}(S) = \frac{1 + \left|\{\,b : p_{\mathrm{omni}}^{(b)}(S) \le p_{\mathrm{omni}}(S)\,\}\right|}{B + 1}$$
 
 This calibration explicitly accounts for the local LD structure encoded in $$R_S$$ and reproduces the multivariate dependence between genes under the null.
 
@@ -813,7 +797,7 @@ $$q_{\mathrm{omni,final}}(S)$$, reported as `omni_p_final_BH`.
 ### 5.6 Treatment of MAGMA competitive in the omnibus (explicit)
 
 We also calculate and present the MAGMA competitive gene-set p-value (`magma_pvalue`) as an independent summary.
-By default, it is **excluded** from the resampling-calibrated omnibus (`include_magma_in_perm=FALSE`) because the aforementioned resampling strategies provide null realizations just for **within-pathway** gene evidence ($$\{P_g\}_{g\in S}$$ and $$\{Z_g\}_{g\in S}$$). A principled null for the MAGMA competitive statistic necessitates rerunning a competitive regression (or MAGMA itself) for each duplicate on a suitable genome-wide null, which is not executed in this context. Thus, the resampling-calibrated omnibus is calculated exclusively for the five gene-derived component tests, and MAGMA competitive is analyzed in conjunction with the omnibus rather than being integrated into it.
+By default, it is **excluded** from the resampling-calibrated omnibus (`include_magma_in_perm=FALSE`) because the aforementioned resampling strategies provide null realizations just for **within-pathway** gene evidence ($$P_g$$ and $$Z_g$$ for genes $$g\in S$$). A principled null for the MAGMA competitive statistic necessitates rerunning a competitive regression (or MAGMA itself) for each duplicate on a suitable genome-wide null, which is not executed in this context. Thus, the resampling-calibrated omnibus is calculated exclusively for the five gene-derived component tests, and MAGMA competitive is analyzed in conjunction with the omnibus rather than being integrated into it.
 
 ---
 
