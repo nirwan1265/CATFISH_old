@@ -19,21 +19,47 @@ library(data.table)
 
 
 # gff3_to_geneloc
+# Maize
 gff_path <- "/Users/nirwantandukar/Downloads/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3"
+# Fly
+gff_path <- "/Users/nirwantandukar/Documents/Research/data/Pathway/Drosophila_melanogaster.BDGP6.54.115.gff3"
 
+
+# Maize
 gene_loc_out <- "/Users/nirwantandukar/Downloads/maize.genes.loc"
+# Fly
+gene_loc_out <- "/Users/nirwantandukar/Downloads/fly.genes.loc"
 
-gff3_to_geneloc(
-  gff        = "/Users/nirwantandukar/Downloads/Zm-B73-REFERENCE-NAM-5.0_Zm00001eb.1.gff3",
-  out        = "inst/extdata/maize.genes.loc",
-  chr_prefix = "chr"   # default; strips "chr"
+# Old
+# gff3_to_geneloc(
+#   gff        = "/Users/nirwantandukar/Documents/Research/data/Pathway/Drosophila_melanogaster.BDGP6.54.115.gff3",
+#   #out        = "inst/extdata/maize.genes.loc",
+#   out        = "inst/extdata/fly.genes.loc",
+#   chr_prefix = "chr"   # default; strips "chr"
+# )
+
+# New
+loc <- gff3_to_geneloc(
+  gff        = "/Users/nirwantandukar/Documents/Research/data/Pathway/Drosophila_melanogaster.BDGP6.54.115.gff3",
+  out        = "inst/extdata/fly.genes.loc",
+  recode_chr = "order",
+  chr_order  = c("2L","2R","3L","3R","4","X","Y","mitochondrion_genome"),
+  strict_chr = FALSE
 )
+
+
+# This writes:
+# - inst/extdata/fly.genes.loc          (CHR is 1..K)
+# - inst/extdata/fly.genes.loc.chr_map.tsv (original -> numeric)
+
 
 # Remove duplicate genes from inst/extdata/maize.genes.loc
 # Keeps the first occurrence of each GENE (stable), writes a cleaned file.
 
-remove_duplicate_genes_loc <- function(in_file  = "inst/extdata/maize.genes.loc",
-                                      out_file = "inst/extdata/maize.genes.loc",
+remove_duplicate_genes_loc <- function(#in_file  = "inst/extdata/maize.genes.loc",
+                                      #out_file = "inst/extdata/maize.genes.loc",
+                                      in_file  = "inst/extdata/fly.genes.loc",
+                                      out_file = "inst/extdata/fly.genes.loc",
                                       keep     = c("first","best_span")) {
   keep <- match.arg(keep)
 
@@ -94,96 +120,181 @@ remove_duplicate_genes_loc <- function(in_file  = "inst/extdata/maize.genes.loc"
 
 # ---- run it (in-place overwrite) ----
 res <- remove_duplicate_genes_loc(
-  in_file  = "inst/extdata/maize.genes.loc",
-  out_file = "inst/extdata/maize.genes.loc",
+  #in_file  = "inst/extdata/maize.genes.loc",
+  #out_file = "inst/extdata/maize.genes.loc",
+  in_file  = "inst/extdata/fly.genes.loc",
+  out_file = "inst/extdata/fly.genes.loc",
   keep     = "first"      # or "best_span"
 )
 
 print(res)
 
-
-
 # Gene-loc function
 # If it has
-magma_annotate(
-  #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
-  stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GLM/nitrogen/gwas_raw/GLM_maize_nitrogen_0_5_stat2.txt",
+# # magma_annotate(
+#   # Maize
+#   #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
+#   #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GLM/nitrogen/gwas_raw/GLM_maize_nitrogen_0_5_stat2.txt",
+#   # Fly
+#   stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
+#   rename_columns = c(
+#     CHR    = "CHR",
+#     SNP    = "SNP",
+#     POS    = "Positions",
+#     PVALUE = "P-Value"   # not used here but keeps things consistent
+#   ),
+#   #species    = "maize",        # uses the built-in maize.genes.loc  
+#   gene_loc     = "inst/extdata/fly.genes.loc",
+#   out_prefix = "Female_starvation_fly",
+#   out_dir    = "annot",
+#   window     = c(10, 10), # in kb
+#   sep       = ",",
+#   nonhuman   = TRUE
+# )
+
+# NEW
+ann <- magma_annotate(
+  stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_male_DGRP.csv",
   rename_columns = c(
-    CHR    = "Chr",
-    SNP    = "Marker",
-    POS    = "Pos",
-    PVALUE = "p"   # not used here but keeps things consistent
+    CHR = "CHR",
+    SNP = "SNP",
+    POS = "Positions",
+    PVALUE = "P-Value"
   ),
-  species    = "maize",        # uses the built-in maize.genes.loc  
-  out_prefix = "N_maize_GLM",
+  gene_loc     = "inst/extdata/fly.genes.loc",
+  chr_map_path = "inst/extdata/fly.genes.loc.chr_map.tsv",  # <- THIS FIXES IT
+  out_prefix = "Male_starvation_fly",
   out_dir    = "annot",
-  window     = c(25, 25)
+  window     = c(10, 10),
+  sep        = ",",
+  nonhuman   = TRUE
 )
+
+
+args(magma_annotate)
 
 # Run MAGMA on gene-level
 # If it has NMISS
-magma_gene(
-  bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
-  gene_annot = "annot/N_maize_GLM.genes.annot",
-  stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/nitrogen/GWAS_results/nitrogen_0-5cm_maize_LMM.txt",
-  n_total    = 3107,
-  rename_columns = c(
-    CHR    = "Chr",
-    SNP    = "Marker",
-    POS    = "Pos",
-    PVALUE = "p",
-    #NMISS  = "n_miss"
-  ),
-  out_prefix = "N_maize_MLM",
-  out_dir    = "magma_genes",
-  gene_model = c("multi=snp-wise"),
-)
+# magma_gene(
+#   #bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
+#   bfile     = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
+
+#   #gene_annot = "annot/N_maize_GLM.genes.annot",
+#   gene_annot = "annot/Female_starvation_fly.genes.annot",
+  
+#   #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/nitrogen/GWAS_results/nitrogen_0-5cm_maize_LMM.txt",
+#   stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
+  
+#   #n_total    = 3107,
+#   # Fly starvation female
+#   n_total   = 166,
+  
+#   rename_columns = c(
+#     CHR    = "CHR",
+#     SNP    = "SNP",
+#     POS    = "Positions",
+#     PVALUE = "P-Value",
+#     #NMISS  = "n_miss"
+#   ),
+#   out_prefix = "Female_starvation_fly",
+#   out_dir    = "magma_genes",
+#   gene_model = c("multi=snp-wise"),
+# )
 
 # Run MAGMA on gene-level per chromosome
+# magma_gene(
+#   #bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
+#   bfile     = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
+  
+#   #gene_annot = "annot/N_maize_MLM.genes.annot",
+#   gene_annot = "annot/Female_starvation_fly.genes.annot",
+  
+#   #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
+#   #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GLM/nitrogen/gwas_raw/GLM_maize_nitrogen_0_5_stat.txt",
+#   stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
+#   sep       = ",",
+
+  
+#   #n_total    = 3107,
+#   n_total = 166,
+
+#   rename_columns = c(
+#     CHR    = "CHR",
+#     SNP    = "SNP",
+#     POS    = "Positions",
+#     PVALUE = "P-Value",
+#     NMISS  = NULL
+#   ),
+#   out_prefix = "N_maiFemale_starvation_flyze_GLM",
+#   out_dir    = "Fly_magma_genes_by_chr",
+#   gene_model = c("multi=snp-wise"),
+#   chroms     = c("2L","2R","3L","3R","X","4"),
+#   n_threads  = 6       # use up to 10 parallel workers
+# )
+
+# # Run MAGMA on gene-level per chromosome
+# # If it has total number of observations
+# magma_gene(
+#   bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
+#   gene_annot = "annot/N_maize_MLM.genes.annot",
+#   stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
+#   # n_total    = 3107, this is ignored.
+#   rename_columns = c(
+#     CHR    = "Chr",
+#     SNP    = "SNP",
+#     POS    = "Pos",
+#     PVALUE = "P.value",
+#     NOBS   = "nobs"
+#   ),
+#   out_prefix = "N_maize_MLM",
+#   out_dir    = "magma_multi_snp_wise_genes_by_chr_N_maize",
+#   gene_model = c("multi=snp-wise"),
+#   chroms     = 1:10,
+#   n_threads  = 10
+# )
+
+
+# magma_gene(
+#   bfile      = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
+#   gene_annot = ann$gene_annot,
+#   stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
+#   sep        = ",",
+#   n_total    = 166,
+#   rename_columns = c(CHR="CHR", SNP="SNP", PVALUE="P-Value"),
+#   out_prefix = "Female_starvation_fly",
+#   out_dir    = "Fly_magma_genes_by_chr",
+#   gene_model = "multi=snp-wise",
+#   chroms     = c("2L","2R","3L","3R","4","X","Y"),
+#   n_threads  = 7
+# )
+
 magma_gene(
-  bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
-  gene_annot = "annot/N_maize_MLM.genes.annot",
-  #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
-  stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GLM/nitrogen/gwas_raw/GLM_maize_nitrogen_0_5_stat.txt",
-  n_total    = 3107,
-  rename_columns = c(
-    CHR    = "Chr",
-    SNP    = "Marker",
-    POS    = "Pos",
-    PVALUE = "p",
-    NMISS  = NULL
-  ),
-  out_prefix = "N_maize_GLM",
-  out_dir    = "magma_genes_by_chr",
-  gene_model = c("multi=snp-wise"),
-  chroms     = 1:10,
-  n_threads  = 10       # use up to 10 parallel workers
+  bfile      = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
+  gene_annot = ann$gene_annot,
+  stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
+  sep        = ",",
+  n_total    = 166,
+  rename_columns = c(CHR="CHR", SNP="SNP", PVALUE="P-Value"),
+  out_prefix = "Female_starvation_fly",
+  out_dir    = "Fly_magma_genes_by_chr",
+  gene_model = "multi=snp-wise",
+  chroms     = c("2L","2R","3L","3R","4","X","Y"),
+  n_threads  = 7
 )
 
-?magma_gene()
-
-# Run MAGMA on gene-level per chromosome
-# If it has total number of observations
 magma_gene(
-  bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
-  gene_annot = "annot/N_maize_MLM.genes.annot",
-  stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
-  # n_total    = 3107, this is ignored.
-  rename_columns = c(
-    CHR    = "Chr",
-    SNP    = "SNP",
-    POS    = "Pos",
-    PVALUE = "P.value",
-    NOBS   = "nobs"
-  ),
-  out_prefix = "N_maize_MLM",
-  out_dir    = "magma_multi_snp_wise_genes_by_chr_N_maize",
-  gene_model = c("multi=snp-wise"),
-  chroms     = 1:10,
-  n_threads  = 10
+  bfile      = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
+  gene_annot = ann2$gene_annot,
+  stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_male_DGRP.csv",
+  sep        = ",",
+  n_total    = 166,
+  rename_columns = c(CHR="CHR", SNP="SNP", PVALUE="P-Value"),
+  out_prefix = "Male_starvation_fly",
+  out_dir    = "Fly_magma_genes_by_chr",
+  gene_model = "multi=snp-wise",
+  chroms     = c("2L","2R","3L","3R","4","X","Y"),
+  n_threads  = 7
 )
-
-
 
 # Combine all the chromosome
 ## Vector of MAGMA gene files (chr1–chr10)
@@ -633,7 +744,7 @@ mni_omni <- magcat_omni2_pathways(
   include_magma_in_perm = FALSE,                # only for analytic omnibus, no MAGMA in permutations
   omnibus        = "ACAT",                      # or "minP"
   B_perm         = 5000L,                        # number of permutations for omnibus
-  perm_mode      = "mvn",                       # or "global", "both", "none"
+  perm_mode      = "global",                       # or "global", "both", "none"
   magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/magma_gene_cor_pairs_MLM.txt",  # 3-column file gene1 gene2 r
   make_PD        = TRUE,
   seed           = 123,
@@ -641,7 +752,7 @@ mni_omni <- magcat_omni2_pathways(
   out_dir        = "magcat_omnibus_results"
 )
 
-args(MAGCAT::magcat_omni2_pathways)
+
 
 
 res <- magcat_omni2_pathways(

@@ -2,7 +2,7 @@
 % Please edit documentation in R/gff3_to_geneloc.R
 \name{gff3_to_geneloc}
 \alias{gff3_to_geneloc}
-\title{Convert a GFF3 file to a MAGMA gene location file}
+\title{Convert a GFF3 file to a MAGMA gene location file (optionally recoding CHR to 1..K)}
 \usage{
 gff3_to_geneloc(
   gff,
@@ -10,7 +10,14 @@ gff3_to_geneloc(
   feature_type = "gene",
   id_fields = c("gene_id", "ID", "Name"),
   drop_scaffolds = TRUE,
-  chr_prefix = "chr"
+  scaffold_regex = "^(scaf|scaffold|un|unplaced|chrUn|KI|GL|NW_|NT_)",
+  chr_prefix = "chr",
+  recode_chr = c("auto", "none", "order", "map"),
+  chr_order = NULL,
+  chr_map = NULL,
+  strict_chr = FALSE,
+  write_chr_map = TRUE,
+  chr_map_out = NULL
 )
 }
 \arguments{
@@ -18,21 +25,37 @@ gff3_to_geneloc(
 
 \item{out}{Path to write the MAGMA gene location file (tab-delimited).}
 
-\item{feature_type}{GFF3 feature type to use (default "gene").}
+\item{feature_type}{GFF3 feature type(s) to use (default "gene").}
 
 \item{id_fields}{Candidate attribute tags to use as gene IDs
-(searched in order), e.g. "gene_id", "ID", "Name".}
+(searched in order), e.g. c("gene_id","ID","Name").}
 
-\item{drop_scaffolds}{Logical; if TRUE (default), drop seqids that look
-like scaffolds (seqid starting with "scaf", case-insensitive).}
+\item{drop_scaffolds}{Logical; if TRUE, drop seqids that look like scaffolds.}
 
-\item{chr_prefix}{Optional string to strip from the start of chromosome
-names (seqid) when generating the CHR column, e.g. "chr" will turn
-"chr1" into "1", "chr10" into "10". Use NULL to keep seqids as-is.}
+\item{scaffold_regex}{Regex for scaffold/unplaced contigs to drop when drop_scaffolds=TRUE.}
+
+\item{chr_prefix}{Optional string to strip from start of seqid when reading (e.g. "chr").}
+
+\item{recode_chr}{One of "none","auto","order","map".}
+
+\item{chr_order}{If recode_chr="order", the desired order of original chromosome labels.}
+
+\item{chr_map}{If recode_chr="map", a named vector mapping original->new numeric labels.}
+
+\item{strict_chr}{If TRUE, error when encountering CHR labels not in chr_order/chr_map.}
+
+\item{write_chr_map}{If TRUE, write a mapping file.}
+
+\item{chr_map_out}{Optional explicit path for the mapping file. Default: paste0(out, ".chr_map.tsv")}
 }
 \value{
-Invisibly returns a data.frame with columns GENE, CHR, START, STOP.
+Invisibly returns a list with:
+\itemize{
+\item gene_loc_df: data.frame with GENE, CHR_ORIG, CHR, START, STOP
+\item chr_map: named character vector original->new (or NULL if no recode)
+\item chr_map_out: path (or NULL)
+}
 }
 \description{
-Convert a GFF3 file to a MAGMA gene location file
+Convert a GFF3 file to a MAGMA gene location file (optionally recoding CHR to 1..K)
 }
