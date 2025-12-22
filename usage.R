@@ -57,10 +57,10 @@ loc <- gff3_to_geneloc(
 # Keeps the first occurrence of each GENE (stable), writes a cleaned file.
 
 remove_duplicate_genes_loc <- function(#in_file  = "inst/extdata/maize.genes.loc",
-  #out_file = "inst/extdata/maize.genes.loc",
-  in_file  = "inst/extdata/fly.genes.loc",
-  out_file = "inst/extdata/fly.genes.loc",
-  keep     = c("first","best_span")) {
+                                      #out_file = "inst/extdata/maize.genes.loc",
+                                      in_file  = "inst/extdata/fly.genes.loc",
+                                      out_file = "inst/extdata/fly.genes.loc",
+                                      keep     = c("first","best_span")) {
   keep <- match.arg(keep)
 
   if (!file.exists(in_file)) stop("File not found: ", in_file, call. = FALSE)
@@ -143,7 +143,7 @@ print(res)
 #     POS    = "Positions",
 #     PVALUE = "P-Value"   # not used here but keeps things consistent
 #   ),
-#   #species    = "maize",        # uses the built-in maize.genes.loc
+#   #species    = "maize",        # uses the built-in maize.genes.loc  
 #   gene_loc     = "inst/extdata/fly.genes.loc",
 #   out_prefix = "Female_starvation_fly",
 #   out_dir    = "annot",
@@ -197,14 +197,14 @@ args(magma_annotate)
 
 #   #gene_annot = "annot/N_maize_GLM.genes.annot",
 #   gene_annot = "annot/Female_starvation_fly.genes.annot",
-
+  
 #   #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/MLM/nitrogen/GWAS_results/nitrogen_0-5cm_maize_LMM.txt",
 #   stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
-
+  
 #   #n_total    = 3107,
 #   # Fly starvation female
 #   n_total   = 166,
-
+  
 #   rename_columns = c(
 #     CHR    = "CHR",
 #     SNP    = "SNP",
@@ -221,16 +221,16 @@ args(magma_annotate)
 # magma_gene(
 #   #bfile      = "/Users/nirwantandukar/Documents/Research/data/MAGMA/maize/bed_bim_fam_file/all_maize2",
 #   bfile     = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
-
+  
 #   #gene_annot = "annot/N_maize_MLM.genes.annot",
 #   gene_annot = "annot/Female_starvation_fly.genes.annot",
-
+  
 #   #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GAPIT/raw_GWAS_MLM_3PC_N.txt",
 #   #stats_file = "/Users/nirwantandukar/Documents/Research/results/GWAS/GLM/nitrogen/gwas_raw/GLM_maize_nitrogen_0_5_stat.txt",
 #   stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
 #   sep       = ",",
 
-
+  
 #   #n_total    = 3107,
 #   n_total = 166,
 
@@ -316,9 +316,11 @@ magma_gene(
 ## Vector of MAGMA gene files (chr1–chr10)
 files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_chr%d.multi_snp_wise.genes.out", 1:10)
 #files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_genes_by_chr/N_maize_GLM_chr%d.multi_snp_wise.genes.out", 1:10)
-files <- sprintf("/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr/Female_starvation_fly_chr%d.multi_snp_wise.genes.out", 1:10)
 
-
+# Fly
+files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_male",
+        pattern = "^Male_starvation_fly_.*\\.genes\\.out$",
+        full.names = TRUE)
 
 # Optional: if they’re in a subdir, prepend the path, e.g.:
 # files <- file.path("magma_genes", sprintf("N_maize_MLM_chr%d.snp_wise_top.genes.out", 1:10))
@@ -365,7 +367,11 @@ length(unique(genes_all$GENE))
 
 
 # Get gene length
+# Maize
 gff3_path <- "/Users/nirwantandukar/Documents/Research/data/GFF3/Zea_mays.Zm-B73-REFERENCE-NAM-5.0.62.chr.gff3"
+
+# Fly
+gff3_path <- "/Users/nirwantandukar/Documents/Research/data/GFF3/"
 
 # maize_gene_len <- get_gene_lengths(
 #   gff3_file  = gff3_path,
@@ -378,6 +384,10 @@ gff3_path <- "/Users/nirwantandukar/Documents/Research/data/GFF3/Zea_mays.Zm-B73
 
 # remove "gene:""
 maize_gene_len=read.delim("inst/extdata/Zea_mays_gene_lengths.tsv")
+head(maize_gene_len)
+
+# For flies gene length:
+maize_gene_len=read.delim("inst/extdata/dmel.flybase.fbgn.genes.loc.tsv")
 head(maize_gene_len)
 
 head(genes_all)
@@ -393,8 +403,7 @@ adj_out <- magcat_adjust_gene_p(
   len_gene_col = "gene_id",
   len_col      = "length"
 )
-
-
+head(adj_out)
 genes_adj <- adj_out[,c(1,2,3)]
 colnames(genes_adj)=c("GENE", "ZSTAT","P")
 head(genes_adj)
@@ -518,6 +527,10 @@ head(genes_all)
 maize_pw <- magcat_load_pathways("maize", gene_col = "Gene-name")
 head(maize_pw)
 
+# Fly
+fly_pw=read.delim("inst/extdata/pathway/Fly_Cyc.tsv")
+head(fly_pw)
+
 # Run ACAT per pathway (no permutations first):
 pw_res <- magcat_acat_pathways(
   gene_results = genes_adj,
@@ -532,12 +545,12 @@ args(MAGCAT::magcat_acat_pathways)
 
 # Fisher
 f_res= magcat_fisher_pathways( genes_adj,
-                               species         = "maize",
-                               gene_col        = "GENE",
-                               p_col           = "P",
-                               min_p        = 1e-15,
-                               output          = TRUE,
-                               out_dir         = "magcat_fisher"
+  species         = "maize",
+  gene_col        = "GENE",
+  p_col           = "P",
+  min_p        = 1e-15,
+  output          = TRUE,
+  out_dir         = "magcat_fisher"
 )
 args(MAGCAT::magcat_fisher_pathways)
 
@@ -603,7 +616,7 @@ args(MAGCAT::magcat_soft_tfisher_adaptive_pathways)
 ## (works for your custom v1.10 format with "# VERSION" and correlation tail)
 
 # in_dir  <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize"
-# pattern <- "^N_maize_MLM_chr[0-9]+\\.multi_snp_wise.genes.raw"
+# pattern <- "^N_maize_MLM_chr[0-9]+\\.multi_snp_wise.genes.raw"  
 # out_file <- file.path(in_dir, "N_maize_MLM_ALLCHR.multi_snp_wise.genes")
 
 # files <- list.files(in_dir, pattern = pattern, full.names = TRUE)
@@ -701,13 +714,24 @@ genes_adj$ZSTAT=genes_all$ZSTAT
 head(genes_adj)
 
 # Run correlation calculations
+# Maize
 raw_dir <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/"
 chr_files <- Sys.glob(file.path(raw_dir, "N_maize_MLM_chr*.multi_snp_wise.genes.raw"))
 
+# Fly
+raw_file="/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_female"
+chr_files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_female",
+        pattern = "^Female_starvation_fly_.*\\.genes\\.out$",
+        full.names = TRUE)
+
+
+# Maize
 chr_num <- as.integer(sub(".*_chr([0-9]+)\\..*$", "\\1", basename(chr_files)))
 chr_files <- chr_files[order(chr_num)]
 
-out_pairs <- file.path(raw_dir, "magma_gene_cor_pairs_MLM.txt")
+
+
+out_pairs <- file.path(raw_dir, "magma_gene_cor_pairs_MLM_Fly.txt")
 if (file.exists(out_pairs)) file.remove(out_pairs)
 
 first <- TRUE
@@ -745,6 +769,7 @@ writeLines(x, out_pairs, useBytes = TRUE, sep = "\n")
 
 
 # Run the whole OMNI on all chromosome
+# Maize
 mni_omni <- magcat_omni2_pathways(
   gene_results   = genes_adj,
   species        = "maize",                     # load PMN maize pathways automatically
@@ -771,6 +796,37 @@ mni_omni <- magcat_omni2_pathways(
   out_dir        = "magcat_omnibus_results"
 )
 
+
+mni_omni <- magcat_omni2_pathways(
+  gene_results   = genes_adj,
+  species        = NULL,                     # load PMN maize pathways automatically
+  pathways       = fly_pw, 
+  pmn_gene_col   = "Gene-name",                 # column in PMN file
+  gene_col       = "GENE",                      # column in your gene results
+  p_raw_col      = "P",                         # use MAGMA P column
+  z_col          = "ZSTAT",                     # use MAGMA ZSTAT column for Stouffer
+  weight_col     = NULL,                        # optional if you have custom weights
+  tau_grid       = c(0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
+  min_p          = 1e-15,
+  do_fix         = TRUE,
+  stouffer_min_abs_w = 1e-8,
+  stouffer_alternative = "greater",
+  #magma_out      = out,              # MAGMA competitive p-values
+  include_magma_in_omni = FALSE,
+  include_magma_in_perm = FALSE,                # only for analytic omnibus, no MAGMA in permutations
+  omnibus        = "ACAT",                      # or "minP"
+  B_perm         = 10000L,                        # number of permutations for omnibus
+  perm_mode      = "mvn",                       # or "global", "both", "none"
+  magma_cor_file = "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize//magma_gene_cor_pairs_MLM_Fly_male.txt",  # 3-column file gene1 gene2 r
+  make_PD        = TRUE,
+  seed           = 123,
+  output         = TRUE,
+  out_dir        = "magcat_omnibus_results_Fly"
+)
+
+
+
+args(MAGCAT::magcat_omni2_pathways)
 
 
 

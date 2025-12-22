@@ -628,7 +628,6 @@ magma_gene <- function(bfile,
       envir = environment()
     )
 
-<<<<<<< HEAD
     # 'mp' is the full path to magma binary (evaluated on master)
     parallel::clusterExport(cl, varlist = c("mp"), envir = environment())
 
@@ -637,8 +636,6 @@ magma_gene <- function(bfile,
       TRUE
     })
 
-=======
->>>>>>> 2eee477e8c2d63d69540a059efc1278a30196b30
     res <- parallel::parLapply(
       cl,
       X = chroms0,

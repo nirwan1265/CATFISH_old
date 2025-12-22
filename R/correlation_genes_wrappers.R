@@ -1,7 +1,7 @@
 magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
                                                out_pairs_file,
                                                fixed_fields = 9L,
-                                               gene_regex = "^Zm",   # adjust if needed
+                                               gene_regex = "^FBgn",   # adjust if needed
                                                keep_abs_r_ge = 0,
                                                overwrite = TRUE,
                                                verbose = TRUE) {
@@ -128,13 +128,23 @@ magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
 
 
 # Run correlation calculations
+# Maize
 raw_dir <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/"
 chr_files <- Sys.glob(file.path(raw_dir, "N_maize_MLM_chr*.multi_snp_wise.genes.raw"))
 
 chr_num <- as.integer(sub(".*_chr([0-9]+)\\..*$", "\\1", basename(chr_files)))
 chr_files <- chr_files[order(chr_num)]
 
-out_pairs <- file.path(raw_dir, "magma_gene_cor_pairs_MLM.txt")
+# Fly
+# Fly
+raw_file="/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_male"
+chr_files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_male",
+        pattern = "^Male_starvation_fly_.*\\.genes\\.raw$",
+        full.names = TRUE)
+
+
+
+out_pairs <- file.path(raw_dir, "magma_gene_cor_pairs_MLM_Fly_male.txt")
 if (file.exists(out_pairs)) file.remove(out_pairs)
 
 first <- TRUE
@@ -152,7 +162,7 @@ for (f in chr_files) {
   x <- readLines(tmp, warn = FALSE)
   if (!length(x)) next
   if (!first) x <- x[-1]  # drop header
-  writeLines(x, out_pairs, useBytes = TRUE, sep = "\n", append = !first)
+  writeLines(x, out_pairs, useBytes = TRUE, sep = "\n")
   first <- FALSE
 }
 
