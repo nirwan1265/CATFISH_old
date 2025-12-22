@@ -18,7 +18,11 @@ magma_gene(
   gene_model = "snp-wise=top",
   chroms = NULL,
   n_threads = 1,
-  chr_keep = NULL
+  chr_keep = NULL,
+  sep = NULL,
+  chr_map_path = NULL,
+  strict_chr = TRUE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -63,7 +67,9 @@ e.g. "snp-wise=top", "snp-wise=mean", "multi".}
 \code{n_threads > 1}, analysis is run in parallel, one job per chromosome.}
 
 \item{n_threads}{Number of parallel workers to use when \code{chroms}
-is provided. Defaults to 1 (no parallelism). Will be clamped to
+is provided. Defaults to 1 (no parallelism). Will be clamped to}
+
+\item{sep}{Separation = "," or " " or "\t"
 \code{min(length(chroms), detectCores() - 1)}.}
 }
 \description{
