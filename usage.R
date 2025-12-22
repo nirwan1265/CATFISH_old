@@ -13,9 +13,6 @@ library(data.table)
 # 1. See where it's installed
 .libPaths()
 
-# Set magma path
-options(magma.path = "/Users/nirwantandukar/Documents/software/magma_v1.10_mac/magma")
-
 
 
 
@@ -60,10 +57,10 @@ loc <- gff3_to_geneloc(
 # Keeps the first occurrence of each GENE (stable), writes a cleaned file.
 
 remove_duplicate_genes_loc <- function(#in_file  = "inst/extdata/maize.genes.loc",
-                                      #out_file = "inst/extdata/maize.genes.loc",
-                                      in_file  = "inst/extdata/fly.genes.loc",
-                                      out_file = "inst/extdata/fly.genes.loc",
-                                      keep     = c("first","best_span")) {
+  #out_file = "inst/extdata/maize.genes.loc",
+  in_file  = "inst/extdata/fly.genes.loc",
+  out_file = "inst/extdata/fly.genes.loc",
+  keep     = c("first","best_span")) {
   keep <- match.arg(keep)
 
   if (!file.exists(in_file)) stop("File not found: ", in_file, call. = FALSE)
@@ -157,7 +154,7 @@ print(res)
 
 # NEW
 ann <- magma_annotate(
-  stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_male_DGRP.csv",
+  stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
   rename_columns = c(
     CHR = "CHR",
     SNP = "SNP",
@@ -166,7 +163,7 @@ ann <- magma_annotate(
   ),
   gene_loc     = "inst/extdata/fly.genes.loc",
   chr_map_path = "inst/extdata/fly.genes.loc.chr_map.tsv",  # <- THIS FIXES IT
-  out_prefix = "Male_starvation_fly",
+  out_prefix = "Female_starvation_fly",
   out_dir    = "annot",
   window     = c(10, 10),
   sep        = ",",
@@ -191,10 +188,6 @@ ann2 <- magma_annotate(
 )
 
 args(magma_annotate)
-
-
-
-
 
 # Run MAGMA on gene-level
 # If it has NMISS
@@ -293,20 +286,6 @@ args(magma_annotate)
 
 magma_gene(
   bfile      = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
-  gene_annot = ann2$gene_annot,
-  stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_male_DGRP.csv",
-  sep        = ",",
-  n_total    = 166,
-  rename_columns = c(CHR="CHR", SNP="SNP", PVALUE="P-Value"),
-  out_prefix = "Male_starvation_fly",
-  out_dir    = "Fly_magma_genes_by_chr_male",
-  gene_model = "multi=snp-wise",
-  chroms     = c("2L","2R","3L","3R","4","X","Y"),
-  n_threads  = 7
-)
-
-magma_gene(
-  bfile      = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
   gene_annot = ann$gene_annot,
   stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_female_DGRP.csv",
   sep        = ",",
@@ -320,24 +299,26 @@ magma_gene(
 )
 
 magma_gene(
-  bfile        = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
-  gene_annot   = ann2$gene_annot,
-  stats_file   = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_male_DGRP.csv",
-  sep          = ",",
-  n_total      = 166,
+  bfile      = "/Users/nirwantandukar/Documents/Research/data/DGRP/Genotype/genotype_DGRP",
+  gene_annot = ann2$gene_annot,
+  stats_file = "/Users/nirwantandukar/Documents/Research/data/DGRP/Starvation_stress/raw_gwas/raw_GWAS_Starvation_stress_male_DGRP.csv",
+  sep        = ",",
+  n_total    = 166,
   rename_columns = c(CHR="CHR", SNP="SNP", PVALUE="P-Value"),
-  chr_map_path = "inst/extdata/fly.genes.loc.chr_map.tsv",   # <-- ADD THIS
-  out_prefix   = "Male_starvation_fly",
-  out_dir      = "Fly_magma_genes_by_chr_male",
-  gene_model   = "multi=snp-wise",
-  chroms       = c("2L","2R","3L","3R","4","X","Y"),
-  n_threads    = 7
+  out_prefix = "Male_starvation_fly",
+  out_dir    = "Fly_magma_genes_by_chr",
+  gene_model = "multi=snp-wise",
+  chroms     = c("2L","2R","3L","3R","4","X","Y"),
+  n_threads  = 7
 )
 
 # Combine all the chromosome
 ## Vector of MAGMA gene files (chr1–chr10)
 files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/N_maize_MLM_chr%d.multi_snp_wise.genes.out", 1:10)
 #files <- sprintf("/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_genes_by_chr/N_maize_GLM_chr%d.multi_snp_wise.genes.out", 1:10)
+files <- sprintf("/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr/Female_starvation_fly_chr%d.multi_snp_wise.genes.out", 1:10)
+
+
 
 # Optional: if they’re in a subdir, prepend the path, e.g.:
 # files <- file.path("magma_genes", sprintf("N_maize_MLM_chr%d.snp_wise_top.genes.out", 1:10))
@@ -551,12 +532,12 @@ args(MAGCAT::magcat_acat_pathways)
 
 # Fisher
 f_res= magcat_fisher_pathways( genes_adj,
-  species         = "maize",
-  gene_col        = "GENE",
-  p_col           = "P",
-  min_p        = 1e-15,
-  output          = TRUE,
-  out_dir         = "magcat_fisher"
+                               species         = "maize",
+                               gene_col        = "GENE",
+                               p_col           = "P",
+                               min_p        = 1e-15,
+                               output          = TRUE,
+                               out_dir         = "magcat_fisher"
 )
 args(MAGCAT::magcat_fisher_pathways)
 
