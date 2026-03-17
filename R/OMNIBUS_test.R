@@ -241,7 +241,7 @@
 # ----------------------------
 # p-fixing (uses your fix_p_for_acat if available)
 # ----------------------------
-.catfish_fix_p <- function(p, min_p = 1e-15, do_fix = TRUE) {
+.catfish_fix_p <- function(p, min_p = 1e-50, do_fix = TRUE) {
   p <- suppressWarnings(as.numeric(p))
   p <- p[is.finite(p) & !is.na(p)]
   if (!length(p)) return(numeric(0))
@@ -344,7 +344,7 @@
 # ----------------------------
 # Omnibus across METHODS (ACAT or Sidak-minP)
 # ----------------------------
-.catfish_acat_combine <- function(p, min_p = 1e-15, do_fix = TRUE) {
+.catfish_acat_combine <- function(p, min_p = 1e-50, do_fix = TRUE) {
   p <- .catfish_fix_p(p, min_p = min_p, do_fix = do_fix)
   p <- p[p > 0 & p < 1]
   if (!length(p)) return(NA_real_)
@@ -354,7 +354,7 @@
   as.numeric(out)
 }
 
-.catfish_minp_sidak <- function(p, min_p = 1e-15, do_fix = TRUE) {
+.catfish_minp_sidak <- function(p, min_p = 1e-50, do_fix = TRUE) {
   p <- .catfish_fix_p(p, min_p = min_p, do_fix = do_fix)
   p <- p[p > 0 & p < 1]
   k <- length(p)
@@ -363,7 +363,7 @@
   1 - (1 - pmin)^k
 }
 
-.catfish_omni_methods <- function(p_methods, omnibus = c("ACAT", "minP"), min_p = 1e-15, do_fix = TRUE) {
+.catfish_omni_methods <- function(p_methods, omnibus = c("ACAT", "minP"), min_p = 1e-50, do_fix = TRUE) {
   omnibus <- match.arg(omnibus)
   pv <- .catfish_fix_p(p_methods, min_p = min_p, do_fix = do_fix)
   pv <- pv[pv > 0 & pv < 1]
@@ -404,8 +404,117 @@
 
   # leave-one-out empirical p for each null draw:
   # allows minimum 1/(B+1), matching observed Monte Carlo support
+
   rank_max <- rank(p2, ties.method = "max")
   as.numeric(rank_max) / (B + 1)
+}
+
+
+# ----------------------------
+# GPD tail extrapolation helpers (Knijnenburg et al. 2009)
+# ----------------------------
+
+#' Convert p-value to score for GPD tail fitting
+#' @noRd
+.tail_score_from_p <- function(p, floor_p = 1e-300) {
+  -log10(pmax(as.numeric(p), floor_p))
+}
+
+#' Hybrid empirical + GPD tail p-value estimator
+#'
+#' Uses standard plus-one Monte Carlo when exceedances are sufficient,
+#' otherwise fits a GPD to the extreme tail for extrapolation.
+#'
+#' @param p_null Numeric vector of null p-values
+#' @param p_obs Observed p-value
+#' @param method "empirical" (standard) or "hybrid_gpd" (GPD tail extrapolation)
+#' @param switch_exceed If >= this many null draws beat observed, use empirical
+#' @param gpd_k Target number of extreme null draws for GPD fit
+#' @param min_B Minimum null draws required for GPD
+
+#' @param min_tail Minimum tail points required for GPD fit
+#' @param floor_p Floor for p-values to avoid log(0)
+#' @return Calibrated p-value
+#' @noRd
+.emp_or_gpd_p_lower <- function(p_null, p_obs,
+                                method = c("empirical", "hybrid_gpd"),
+                                switch_exceed = 10L,
+                                gpd_k = 250L,
+                                min_B = 10000L,
+                                min_tail = 50L,
+                                floor_p = 1e-300) {
+  method <- match.arg(method)
+
+  p_null <- as.numeric(p_null)
+  p_obs  <- as.numeric(p_obs)
+
+  p_null <- p_null[is.finite(p_null) & !is.na(p_null)]
+  B <- length(p_null)
+
+  if (!is.finite(p_obs) || is.na(p_obs) || B < 1L) return(NA_real_)
+
+  # always compute the standard plus-one empirical p-value
+  n_exc <- sum(p_null <= p_obs, na.rm = TRUE)
+  p_emp <- (1 + n_exc) / (B + 1)
+
+  if (method == "empirical") return(p_emp)
+
+  # only switch to GPD when the empirical tail is too sparse
+  if (B < min_B || n_exc >= switch_exceed) return(p_emp)
+
+  # requires a GPD fitter; use evir package
+  if (!requireNamespace("evir", quietly = TRUE)) {
+    warning("Package 'evir' not installed; falling back to empirical p-value.", call. = FALSE)
+    return(p_emp)
+  }
+
+  s_null <- .tail_score_from_p(p_null, floor_p = floor_p)
+  s_obs  <- .tail_score_from_p(p_obs,  floor_p = floor_p)
+
+  s_null <- s_null[is.finite(s_null) & !is.na(s_null)]
+  if (length(s_null) < min_B) return(p_emp)
+
+  # choose threshold so that roughly the top-k null scores are exceedances
+  s_ord <- sort(s_null, decreasing = TRUE)
+  k <- min(as.integer(gpd_k), floor(0.10 * B))
+  k <- max(k, min_tail)
+  if ((k + 1L) >= B) return(p_emp)
+
+  u <- s_ord[k + 1L]
+  n_u <- sum(s_null > u)
+  if (n_u < min_tail) return(p_emp)
+
+  # if observed score is not beyond the threshold, empirical is enough
+  if (s_obs <= u) return(p_emp)
+
+  fit <- tryCatch(
+    evir::gpd(s_null, threshold = u, method = "ml"),
+    error = function(e) NULL
+  )
+  if (is.null(fit)) return(p_emp)
+
+  xi   <- unname(fit$par.ests["xi"])
+  beta <- unname(fit$par.ests["beta"])
+
+  if (!is.finite(xi) || !is.finite(beta) || beta <= 0) return(p_emp)
+
+  y <- s_obs - u
+
+  tail_cond <- if (abs(xi) < 1e-8) {
+    exp(-y / beta)
+  } else {
+    z <- 1 + xi * y / beta
+    if (z <= 0) return(p_emp)
+    z^(-1 / xi)
+  }
+
+  p_u   <- n_u / B
+  p_gpd <- p_u * tail_cond
+
+  p_gpd <- max(min(p_gpd, 1), floor_p)
+
+  # use the extrapolated tail estimate
+  p_gpd
 }
 
 
@@ -571,7 +680,12 @@
                                           omni_obs, tau_grid, min_p, do_fix,
                                           omnibus, stouffer_alternative,
                                           stouffer_min_abs_w, include_magma,
-                                          magma_pval = NA_real_) {
+                                          magma_pval = NA_real_,
+                                          tail_mode = "empirical",
+                                          tail_switch_exceed = 10L,
+                                          tail_gpd_k = 250L,
+                                          tail_min_B = 10000L,
+                                          tail_min_tail = 50L) {
   n_pool <- length(pool_p)
   idx_mat <- .catfish_sample_idx_mat(n_pool = n_pool, d = d, B = B)
   if (is.null(idx_mat)) return(NA_real_)
@@ -624,8 +738,16 @@
     .catfish_omni_methods(comps, omnibus = omnibus, min_p = min_p, do_fix = do_fix)
   }, numeric(1))
 
-  # Empirical p-value
-  (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B + 1)
+  # Empirical or GPD-extrapolated p-value
+  .emp_or_gpd_p_lower(
+    p_null = omni_null,
+    p_obs  = omni_obs,
+    method = tail_mode,
+    switch_exceed = tail_switch_exceed,
+    gpd_k = tail_gpd_k,
+    min_B = tail_min_B,
+    min_tail = tail_min_tail
+  )
 }
 
 # ----------------------------
@@ -642,7 +764,7 @@ catfish_omni2_prepare <- function(gene_results,
                                 weight_col = NULL,
                                 tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
                                 tau_cap = 1,
-                                min_p = 1e-15,
+                                min_p = 1e-50,
                                 min_genes = 2L,
                                 seed = NULL) {
 
@@ -845,7 +967,13 @@ catfish_omni2_run <- function(prep,
                             pool_p       = NULL,
                             magma_cor_file = NULL,
                             magma_cor_pairs = NULL,
-                             mvn_calibrate_components = FALSE,   # <<<<<< ADD THIS LINE
+                            mvn_calibrate_components = FALSE,
+                            # GPD tail extrapolation (Knijnenburg et al. 2009)
+                            tail_mode = c("empirical", "hybrid_gpd"),
+                            tail_switch_exceed = 10L,
+                            tail_gpd_k = 250L,
+                            tail_min_B = 10000L,
+                            tail_min_tail = 50L,
                             make_PD = TRUE,
                             output = FALSE,
                             out_dir = "catfish_omni2") {
@@ -857,6 +985,7 @@ catfish_omni2_run <- function(prep,
   mvn_marginal <- match.arg(mvn_marginal)
   mvn_pool     <- match.arg(mvn_pool)
   stouffer_alternative <- match.arg(stouffer_alternative)
+  tail_mode <- match.arg(tail_mode)
 
   B_global <- as.integer(B_global)
   B_mvn    <- as.integer(B_mvn)
@@ -1119,7 +1248,15 @@ if (!is.null(prep$z_col)) {
         .catfish_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
       }, numeric(1))
 
-      res$omni_p_global[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_global + 1)
+      res$omni_p_global[i] <- .emp_or_gpd_p_lower(
+        p_null = omni_null,
+        p_obs  = omni_obs,
+        method = tail_mode,
+        switch_exceed = tail_switch_exceed,
+        gpd_k = tail_gpd_k,
+        min_B = tail_min_B,
+        min_tail = tail_min_tail
+      )
       # Set calib_mode for pure global mode (not mvn_global which sets it in MVN section)
       if (perm_mode == "global") {
         res$calib_mode[i] <- "global"
@@ -1213,7 +1350,9 @@ if (!is.null(prep$z_col)) {
                 tau_grid = prep$tau_grid, min_p = prep$min_p, do_fix = isTRUE(do_fix),
                 omnibus = omnibus, stouffer_alternative = stouffer_alternative,
                 stouffer_min_abs_w = stouffer_min_abs_w,
-                include_magma = isTRUE(include_magma_eff), magma_pval = magma_pval
+                include_magma = isTRUE(include_magma_eff), magma_pval = magma_pval,
+                tail_mode = tail_mode, tail_switch_exceed = tail_switch_exceed,
+                tail_gpd_k = tail_gpd_k, tail_min_B = tail_min_B, tail_min_tail = tail_min_tail
               ),
               error = function(e) NA_real_
             )
@@ -1375,7 +1514,15 @@ if (!is.null(prep$z_col)) {
           omni_null[b] <- .catfish_omni_methods(comps_b, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
         }
 
-        res$omni_p_mvn[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_mvn + 1)
+        res$omni_p_mvn[i] <- .emp_or_gpd_p_lower(
+          p_null = omni_null,
+          p_obs  = omni_obs,
+          method = tail_mode,
+          switch_exceed = tail_switch_exceed,
+          gpd_k = tail_gpd_k,
+          min_B = tail_min_B,
+          min_tail = tail_min_tail
+        )
         res$calib_mode[i] <- "mvn"
 
       } else {
@@ -1391,7 +1538,15 @@ if (!is.null(prep$z_col)) {
           .catfish_omni_methods(comps, omnibus = omnibus, min_p = prep$min_p, do_fix = isTRUE(do_fix))
         }, numeric(1))
 
-        res$omni_p_mvn[i] <- (1 + sum(omni_null <= omni_obs, na.rm = TRUE)) / (B_mvn + 1)
+        res$omni_p_mvn[i] <- .emp_or_gpd_p_lower(
+          p_null = omni_null,
+          p_obs  = omni_obs,
+          method = tail_mode,
+          switch_exceed = tail_switch_exceed,
+          gpd_k = tail_gpd_k,
+          min_B = tail_min_B,
+          min_tail = tail_min_tail
+        )
         res$calib_mode[i] <- "mvn"
       }
 
@@ -1686,7 +1841,7 @@ catfish_omni2_pathways <- function(gene_results,
                                  weight_col = NULL,
                                  tau_grid = c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001),
                                  tau_cap = 1,
-                                 min_p = 1e-15,
+                                 min_p = 1e-50,
                                  min_genes = 2L,
                                  # component knobs
                                  do_fix = TRUE,
@@ -1705,6 +1860,12 @@ catfish_omni2_pathways <- function(gene_results,
                                  mvn_pool     = c("use","raw"),
                                  pool_p       = NULL,
                                  mvn_calibrate_components = FALSE,
+                                 # GPD tail extrapolation (Knijnenburg et al. 2009)
+                                 tail_mode = c("empirical", "hybrid_gpd"),
+                                 tail_switch_exceed = 10L,
+                                 tail_gpd_k = 250L,
+                                 tail_min_B = 10000L,
+                                 tail_min_tail = 50L,
                                  # back-compat / low-level
                                  B_global = 0L,
                                  B_mvn = 0L,
@@ -1723,6 +1884,7 @@ catfish_omni2_pathways <- function(gene_results,
   mvn_marginal <- match.arg(mvn_marginal)
   mvn_pool     <- match.arg(mvn_pool)
   stouffer_alternative <- match.arg(stouffer_alternative)
+  tail_mode <- match.arg(tail_mode)
 
   if (!is.null(species)) {
     species <- match.arg(species, c("maize","sorghum","arabidopsis","plant","fly"))
@@ -1844,6 +2006,11 @@ catfish_omni2_pathways <- function(gene_results,
     mvn_pool = mvn_pool,
     pool_p = pool_p,
     mvn_calibrate_components = mvn_calibrate_components,
+    tail_mode = tail_mode,
+    tail_switch_exceed = tail_switch_exceed,
+    tail_gpd_k = tail_gpd_k,
+    tail_min_B = tail_min_B,
+    tail_min_tail = tail_min_tail,
     magma_cor_file = magma_cor_file,
     magma_cor_pairs = magma_cor_pairs,
     make_PD = make_PD,
