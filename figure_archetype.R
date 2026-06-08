@@ -131,13 +131,13 @@ k_gw_sda  <- sum(sda_dat$p < 2.5e-6)
 
 p1 <- ggplot(sda_dat, aes(rank, mlog10p)) +
   geom_line(linewidth = 0.7) +
-  geom_point(size = 0.55, alpha = 0.75) +
-  geom_point(data = sda_top, size = 2) +
+  geom_point(size = 0.8, alpha = 0.8) +
+  geom_point(data = sda_top, size = 1.2, alpha = 0.95) +
   coord_cartesian(ylim = c(0, 12.5)) +
   scale_x_continuous(labels = percent_format(accuracy = 1),
                      breaks = c(0, .25, .5, .75, 1)) +
   labs(
-    title = "Archetype I — Sparse Driver (SDA)",
+    title = "Archetype I",
     subtitle = "several extreme genes; not just one",
     x = "Within-pathway gene rank (fraction)",
     y = expression(-log[10](p))
@@ -152,10 +152,11 @@ p1 <- add_thresholds(p1) +
 cme_dat <- df %>% filter(archetype == "Archetype II — CME") %>% arrange(rank)
 p2 <- ggplot(cme_dat, aes(rank, mlog10p)) +
   geom_line(linewidth = 0.7) +
+  geom_point(size = 0.8, alpha = 0.8) +
   scale_x_continuous(labels = percent_format(accuracy = 1),
                      breaks = c(0, .25, .5, .75, 1)) +
   labs(
-    title = "Archetype II — Coordinated Moderate (CME)",
+    title = "Archetype II",
     subtitle = "broad moderate signal; no single extreme",
     x = "Within-pathway gene rank (fraction)",
     y = expression(-log[10](p))
@@ -167,10 +168,11 @@ p2 <- add_thresholds(p2)
 dps_dat <- df %>% filter(archetype == "Archetype III — DPS") %>% arrange(rank)
 p3 <- ggplot(dps_dat, aes(rank, mlog10p)) +
   geom_line(linewidth = 0.7) +
+  geom_point(size = 0.8, alpha = 0.8) +
   scale_x_continuous(labels = percent_format(accuracy = 1),
                      breaks = c(0, .25, .5, .75, 1)) +
   labs(
-    title = "Archetype III — Diffuse Polygenic Shift (DPS)",
+    title = "Archetype III",
     subtitle = "slight upward shift; almost none cross strict thresholds",
     x = "Within-pathway gene rank (fraction)",
     y = expression(-log[10](p))
@@ -182,10 +184,11 @@ p3 <- add_thresholds(p3)
 hds_dat <- df %>% filter(archetype == "Archetype IV — HDS") %>% arrange(rank)
 p4 <- ggplot(hds_dat, aes(rank, mlog10p)) +
   geom_line(linewidth = 0.7) +
+  geom_point(size = 0.8, alpha = 0.8) +
   scale_x_continuous(labels = percent_format(accuracy = 1),
                      breaks = c(0, .25, .5, .75, 1)) +
   labs(
-    title = "Archetype IV — Hybrid Driver–Support (HDS)",
+    title = "Archetype IV",
     subtitle = "few drivers + a shoulder of moderate genes",
     x = "Within-pathway gene rank (fraction)",
     y = expression(-log[10](p))
@@ -202,13 +205,13 @@ top1 <- sgp_dat[1, , drop = FALSE]
 
 p5 <- ggplot() +
   geom_line(data = sgp_dat,  aes(rank, mlog10p), linewidth = 0.7) +
-  geom_point(data = sgp_dat, aes(rank, mlog10p), size = 0.55, alpha = 0.75) +
-  geom_point(data = top1, aes(rank, mlog10p), size = 2) +
+  geom_point(data = sgp_dat, aes(rank, mlog10p), size = 0.8, alpha = 0.8) +
+  geom_point(data = top1, aes(rank, mlog10p), size = 1.2, alpha = 0.95) +
   coord_cartesian(ylim = c(0, 8.5)) +
   scale_x_continuous(labels = percent_format(accuracy = 1),
                      breaks = c(0, .25, .5, .75, 1)) +
   labs(
-    title = "Archetype V — Single-Gene Proxy (SGP)",
+    title = "Archetype V",
     subtitle = "one dominant gene; remaining genes are mostly null",
     x = "Within-pathway gene rank (fraction)",
     y = expression(-log[10](p))
@@ -219,13 +222,20 @@ p5 <- add_thresholds(p5) +
            paste0("K(p<1e-3)=", k_1e3_sgp, "   K(p<2.5e-6)=", k_gw_sgp))
 
 # ---------------- compose 2x3 layout for five archetypes ----------------
-fig <- (p1 + p2 + p3) / (p4 + p5 + plot_spacer()) +
+layout_design <- "
+AABBCC
+#DDEE#
+"
+
+fig <- wrap_plots(
+  A = p1, B = p2, C = p3, D = p4, E = p5,
+  design = layout_design
+) +
   plot_annotation(
-    title = "Pathway signal archetypes (I-V) as gene-level p-value rank curves",
+    title = "Figure 1 Ranked gene-level association profiles for five pathway signal archetypes",
     theme = theme(plot.title = element_text(face = "bold", size = 13))
   )
 
-#quartz()
 fig
 
 # Save:
@@ -234,7 +244,8 @@ fig
 #ggsave("Fig_archetypesIII.png", p3, width = 7.2, height = 4.6, units = "in", dpi = 600)
 #ggsave("Fig_archetypesIV.png", p4, width = 7.2, height = 4.6, units = "in", dpi = 600)
 #ggsave("Fig_archetypesV.png", p5, width = 7.2, height = 4.6, units = "in", dpi = 600)
-#ggsave("Fig_archetypes_layout.png", fig, width = 10.8, height = 7.0, units = "in", dpi = 600)
+ggsave("/Users/nirwantandukar/Documents/Github/MAGCAT/Figures/Fig1.Archetypes/Fig_archetypes_layout.png",
+       fig, width = 13.5, height = 9.0, units = "in", dpi = 600, bg = "white")
 
 # ggsave("Fig_archetypes_rankcurves.pdf", fig, width = 7.2, height = 4.6, units = "in", device = cairo_pdf)
 # ggsave("Fig_archetypes_rankcurves.png", fig, width = 7.2, height = 4.6, units = "in", dpi = 600)
