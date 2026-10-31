@@ -1,0 +1,9 @@
+"trait","column","n_genes","median_p","lambda_gene","pct_below_0.05","pct_below_1e3"
+"Dry_tons_per_acre","P_SNPWISE_MEAN",33908,0.447,1.27,6.9,0.3
+"Dry_tons_per_acre","P_SNPWISE_TOP1",33908,0.112,5.54,39.5,8.88
+"Dry_tons_per_acre","P_MULTI",33908,0.179,3.96,27.1,4.53
+"Lignin_DM_perc","P_SNPWISE_MEAN",33908,0.449,1.26,5.9,0.11
+"Lignin_DM_perc","P_SNPWISE_TOP1",33908,0.263,2.76,18.4,0.77
+"Lignin_DM_perc","P_MULTI",33908,0.322,2.15,12.2,0.35
+"LDL","P_SNPWISE_MEAN",18563,0.083,6.6,44.1,21.18
+"HDL","P_SNPWISE_MEAN",18563,0.038,9.42,52.7,28.26

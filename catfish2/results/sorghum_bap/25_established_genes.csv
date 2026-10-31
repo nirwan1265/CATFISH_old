@@ -1,0 +1,12 @@
+trait,gene,id,n_genes,combined_rank,gwas_rank,magma_rank,pathway_rank,in_pathway,best_pathway,combined_top_pct,gwas_top_pct,magma_top_pct
+Dry_tons_per_acre,Ma1/PRR37,SORBI_3006G057866,33908,874,929,1878,,FALSE,,2.6,2.7,5.5
+Dry_tons_per_acre,Ma3/PHYB,SORBI_3001G394400,33908,15282,21726,8657,,FALSE,,45.1,64.1,25.5
+Dry_tons_per_acre,Ma5/PHYC,SORBI_3001G087100,33908,29605,33000,21579.5,,FALSE,,87.3,97.3,63.6
+Dry_tons_per_acre,Ma6/GHD7,SORBI_3006G004400,33908,22795,13029,29954,,FALSE,,67.2,38.4,88.3
+Dry_tons_per_acre,Ma2,SORBI_3002G302700,33908,30090,28789.5,25730,,FALSE,,88.7,84.9,75.9
+Dry_tons_per_acre,Dw1,SORBI_3009G229800,33908,2960,6028.5,2188,,FALSE,,8.7,17.8,6.5
+Dry_tons_per_acre,Dw2,SORBI_3006G067700,33908,30293,24916,30289,,FALSE,,89.3,73.5,89.3
+Dry_tons_per_acre,Dw3,SORBI_3007G163800,33908,27037,19328,29536.5,,FALSE,,79.7,57,87.1
+Lignin_DM_perc,bmr2/4CL,SORBI_3004G062500,33908,286,3423,801,169,TRUE,flavonoid biosynthesis,0.8,10.1,2.4
+Lignin_DM_perc,bmr6/CAD,SORBI_3004G071000,33908,7761,9517.5,14940.5,762,TRUE,phenylpropanoid biosynthesis,22.9,28.1,44.1
+Lignin_DM_perc,bmr12/COMT,SORBI_3007G047300,33908,1148,639,12992.5,611.5,TRUE,suberin monomers biosynthesis,3.4,1.9,38.3

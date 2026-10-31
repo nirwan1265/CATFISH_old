@@ -40,6 +40,8 @@
 \IfFileExists{auto/numbers.tex}{\input{auto/numbers.tex}}{}
 \input{auto/lipids_stub.tex}
 \IfFileExists{auto/lipids.tex}{\input{auto/lipids.tex}}{}
+\input{auto/sorghum_stub.tex}
+\IfFileExists{auto/sorghum.tex}{\input{auto/sorghum.tex}}{}
 
 %% \maybefig{file}{width}{caption}{label} -- draws the figure if the PNG has
 %% been generated, otherwise a visible reminder box, so the manuscript
@@ -123,7 +125,12 @@ pathway is significant, so significance no longer discriminates. The ordering
 still does: plasma lipoprotein assembly, remodeling and clearance ranked first
 of $\nLipNpw$ Reactome pathways for LDL-C and third for HDL-C, and the combined
 gene score ranked \textit{LDLR} and \textit{ABCA1} first and recovered
-established lipid genes better than ranking by GWAS association alone. We argue
+established lipid genes better than ranking by GWAS association alone. In a
+sorghum bioenergy panel of 330 lines, where gene--gene correlation is far
+denser than in the human data, the correlated null reduced the excess
+rejection of the independence-based omnibus, no pathway was declared
+significant, and the pathway layer raised all three pre-specified lignin genes
+in the gene ranking. We argue
 that the saturation is a property of self-contained testing at very large $n$,
 not a failure of multiple-testing correction.\\
 \textbf{Availability:} CATFISH is an R package available at
@@ -380,7 +387,7 @@ A threshold is informative mainly when \(m\tau\) is not far below one, so which 
 
 \smallskip\noindent\textit{Undefined components.} When no gene in a pathway falls below any threshold in the grid, the soft TFisher statistic is zero at every \(\tau\) and its one-sided \(p\)-value is exactly one. We treat this as \emph{undefined} rather than as evidence against enrichment, and the omnibus for that pathway is formed from the components that are defined. The distinction is not cosmetic. The ACAT operator maps each component \(p\)-value through \(\tan\{(1/2-p)\pi\}\), so a value at the upper boundary contributes a large negative term; a component that could not be computed would otherwise vote against the pathway and bias the omnibus toward the null. The rule is applied per pathway rather than by set size, because a large pathway in which no gene is individually strong is equally uncomputable. It does condition the component on having at least one gene below a threshold, so where TFisher does contribute its \(p\)-values are stochastically small; because the resampling null is generated under the identical rule, that conditioning appears in the null distribution and is absorbed by the calibration. An analytic omnibus \(p\)-value under this rule would be anti-conservative, whereas the resampled one is not.
 
-\smallskip\noindent\textit{Precision limit.} The soft TFisher implementation returns the null distribution function of the soft-thresholding statistic, so the one-sided \(p\)-value is formed as one minus that value. In double precision the difference is exactly zero once the distribution function exceeds \(1-10^{-16}\), and a strongly enriched pathway would then report \(p=0\). We cap the soft TFisher \(p\)-value at \(10^{-16}\), the smallest value the computation can resolve, rather than at the general lower floor applied to components whose tails are computed in closed form. A cap below the precision limit asserts resolution the statistic does not have; Section~4.4 shows what that does to the family-wise threshold.
+\smallskip\noindent\textit{Precision limit.} The soft TFisher implementation returns the null distribution function of the soft-thresholding statistic, so the one-sided \(p\)-value is formed as one minus that value. In double precision the difference is exactly zero once the distribution function exceeds \(1-10^{-16}\), and a strongly enriched pathway would then report \(p=0\). We cap the soft TFisher \(p\)-value at \(10^{-16}\), the smallest value the computation can resolve, rather than at the general lower floor applied to components whose tails are computed in closed form. A cap below the precision limit asserts resolution the statistic does not have; Section~4.5 shows what that does to the family-wise threshold.
 
 \begin{table*}[!t]
 \centering
@@ -499,7 +506,7 @@ the Westfall--Young adjusted $p$-value \citep{Westfall1993}
 \tilde p^{\mathrm{WY}}_k \;=\;
 \frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(M^{(b)}\le q^{\mathrm{obs}}_k\right)}{B+1},
 \]
-Rejecting all pathways with $\tilde p^{\mathrm{WY}}_k\le\alpha$ controls the family-wise error rate at level $\alpha$ under the complete null, whatever the dependence among pathways, because a false rejection anywhere in the family requires the family minimum to cross the threshold. Three further points apply. First, the control is in the strong sense, not only under the complete null. Westfall--Young procedures control the family-wise error rate strongly when the joint distribution of the statistics for the true null hypotheses does not depend on which other hypotheses are false---the condition of subset pivotality \citep{Westfall1993}. Two features of the construction give it. Each pathway statistic is a deterministic function of its own genes' $z$-scores only; and under the model of Step~1, with association represented as a shift in the means of the associated genes, the genes of a pathway containing no associated gene are jointly $\mathcal{N}(0,R)$, restricted to those genes, whatever happens elsewhere. The observed statistics of the null pathways therefore have exactly their complete-null joint distribution, and because the minimum over any subset of pathways is never smaller than the minimum over the whole family, the probability that any null pathway crosses the threshold is at most $\alpha$. The argument requires the soft TFisher truncation grid to be fixed in advance: a grid chosen from the empirical distribution of all gene-level $p$-values, as in data-adaptive implementations, would make every pathway's statistic depend on genes outside it. Second, the null is parametric: it is generated from the multivariate normal model of Step~1 rather than by permuting phenotypes, so the procedure is Westfall--Young in construction but inherits the adequacy of that model. Third, the counting form of the adjusted $p$-value above, in which null minima equal to the observed value count as at least as extreme, is required rather than a matter of taste. A threshold taken as a quantile of $M$ and applied with an inclusive comparison rejects every observation tied at that quantile, and if the omnibus loses resolution in the tail so that many null minima coincide, the empirical family-wise error rate can approach one (Section~4.4).
+Rejecting all pathways with $\tilde p^{\mathrm{WY}}_k\le\alpha$ controls the family-wise error rate at level $\alpha$ under the complete null, whatever the dependence among pathways, because a false rejection anywhere in the family requires the family minimum to cross the threshold. Three further points apply. First, the control is in the strong sense, not only under the complete null. Westfall--Young procedures control the family-wise error rate strongly when the joint distribution of the statistics for the true null hypotheses does not depend on which other hypotheses are false---the condition of subset pivotality \citep{Westfall1993}. Two features of the construction give it. Each pathway statistic is a deterministic function of its own genes' $z$-scores only; and under the model of Step~1, with association represented as a shift in the means of the associated genes, the genes of a pathway containing no associated gene are jointly $\mathcal{N}(0,R)$, restricted to those genes, whatever happens elsewhere. The observed statistics of the null pathways therefore have exactly their complete-null joint distribution, and because the minimum over any subset of pathways is never smaller than the minimum over the whole family, the probability that any null pathway crosses the threshold is at most $\alpha$. The argument requires the soft TFisher truncation grid to be fixed in advance: a grid chosen from the empirical distribution of all gene-level $p$-values, as in data-adaptive implementations, would make every pathway's statistic depend on genes outside it. Second, the null is parametric: it is generated from the multivariate normal model of Step~1 rather than by permuting phenotypes, so the procedure is Westfall--Young in construction but inherits the adequacy of that model. Third, the counting form of the adjusted $p$-value above, in which null minima equal to the observed value count as at least as extreme, is required rather than a matter of taste. A threshold taken as a quantile of $M$ and applied with an inclusive comparison rejects every observation tied at that quantile, and if the omnibus loses resolution in the tail so that many null minima coincide, the empirical family-wise error rate can approach one (Section~4.5).
 
 Between-pathway correlation is never explicitly estimated or modelled. Because all $K$ pathways are evaluated on the same draw in Step~2, genes shared across pathways perturb them jointly, as in the observed data, and this dependence is reflected in the distribution of $M$. The threshold $\hat t_\alpha=\mathrm{quantile}_\alpha(M)$ is the family-wise significance cutoff implied by the pathway database in use; its ratio to the Bonferroni cutoff $\alpha/K$ quantifies the database’s departure from independence at no extra cost, provided it is read on calibrated statistics; on the analytic scale the ratio also absorbs any miscalibration of the per-pathway statistic (Section~4.1).
 
@@ -638,6 +645,47 @@ twelve with established roles in HDL-C biology---\textit{CETP},
 \textit{LPL}, \textit{ANGPTL4} and \textit{CUBN}---were named before the
 prioritization was run and are used to assess it. They are a
 validation set, not a discovery; the score has no access to them.
+
+\textbf{Sorghum bioenergy traits.} We analysed dry biomass yield (dry tons per
+acre) and lignin content (\% of dry matter) in the sorghum Bioenergy
+Association Panel (BAP) \citep{Brenton2016}: $330$ phenotyped lines, with
+variant--gene LD taken from the panel's own genotypes ($363$ lines; variants
+with minor allele frequency $\ge0.01$). Association was tested with the
+univariate linear mixed model of GEMMA \citep{Zhou2012GEMMA}, giving
+$\nSorSnps$ variants with a $p$-value after MAGMA's sample-size filter.
+
+\emph{Gene analysis.} MAGMA v1.10 \citep{deLeeuw2015} was run separately for
+each chromosome, with variants assigned to BTx623 v3 gene models using a
+$25\,\mathrm{kb}$ upstream and downstream window. MAGMA computes gene--gene
+correlations only between nearby genes on the same chromosome, so the ten
+per-chromosome \texttt{.genes.raw} files together carry the complete
+correlation structure. Of MAGMA's gene models we used the SNP-wise mean, the
+model also used for the lipid traits; Section~3.10.1 shows why the SNP-wise
+top and multi-model $p$-values were not used.
+
+\emph{Pathways and calibration.} Pathways were taken from SorghumBicolorCyc
+\citep{Hawkins2021CornCyc}, restricted to $5$--$200$ genes, giving
+$\nSorDryNpw$ pathways. Westfall--Young calibration used the same settings as
+the other analyses ($B=10{,}000$; same truncation grid and seed).
+
+\emph{Candidate genes.} The GWAS layer reads the variant $p$-values that MAGMA
+itself analysed and assigns them to genes by MAGMA's own gene windows, so that,
+as for the lipid traits, the GWAS and gene layers see identical variant sets.
+
+\emph{Positive controls.} Eleven cloned genes were named before the analysis
+was run. For dry biomass, eight genes controlling flowering time and plant
+height, the main determinants of biomass in this photoperiod-sensitive panel:
+\textit{Ma1}/\textit{PRR37} \citep{Murphy2011PRR37}, \textit{Ma3}/\textit{PHYB}
+\citep{Childs1997PHYB}, \textit{Ma5}/\textit{PHYC}, %% TODO: add the Ma5/PHYC citation
+\textit{Ma6}/\textit{GHD7} \citep{Murphy2014Ghd7}, \textit{Ma2}
+\citep{Casto2019Ma2}, \textit{Dw1} \citep{Hilley2016Dw1}, \textit{Dw2}
+\citep{Hilley2017Dw2} and \textit{Dw3} \citep{Multani2003Dw3}. For lignin, the
+three cloned brown-midrib genes \textit{bmr2}/4CL \citep{Saballos2012bmr2},
+\textit{bmr6}/CAD \citep{Saballos2009bmr6} and \textit{bmr12}/COMT
+\citep{Bout2003bmr12}. SorghumBicolorCyc describes metabolism, so none of the
+flowering-time and height genes is in any tested pathway, while all three
+\textit{bmr} genes are; the two sets therefore test the score with and without
+a contribution from the pathway layer.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{3 Results}
@@ -1425,7 +1473,7 @@ conclusions depends on it either way.
 
 \begin{table}[!t]
 \centering
-\caption{Gene-level signal density and pathway-size dependence across the four
+\caption{Gene-level signal density and pathway-size dependence across the
 GWAS analysed. The last column is the Spearman correlation between pathway size
 and the pathway-level evidence ($-\log_{10}$ omnibus $p$); more negative values
 indicate that larger pathways receive systematically stronger evidence.
@@ -1442,6 +1490,8 @@ Maize grain N (MLM)        & 0.00\%  & 0.468 & $-0.179$ \\
 Sorghum stem volume        & 0.86\%  & 0.440 & n.c.     \\
 Maize grain N (GLM)        & 1.15\%  & 0.185 & $-0.667$ \\
 Human LDL-C (GLGC, EUR)    & 11.2\%  & 0.083 & $-0.807$ \\
+Sorghum dry biomass (BAP)  & \nSorDryGeneGW\% & \nSorDryGeneMed & $\nSorDrySizeRho$ \\
+Sorghum lignin (BAP)       & \nSorLigGeneGW\% & \nSorLigGeneMed & $\nSorLigSizeRho$ \\
 \hline
 \end{tabular}
 \end{table}
@@ -1464,6 +1514,138 @@ is why the MLM analysis is the one we report in Section~3.8. It also
 illustrates how readily a saturated-looking pathway result can arise from a
 mis-specified gene-level model rather than from biology, which is an argument
 for inspecting the gene-level null before interpreting any pathway output.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\subsection*{3.10 Sorghum bioenergy traits: calibration under strong linkage
+disequilibrium}
+
+The lipid analyses test whether CATFISH recovers known biology when signal is
+abundant, and the evidence there is that two related but genetically distinct
+traits converge on the same pathway (Section~3.9.3). They test calibration only
+weakly: at $n\approx1.3$ million the self-contained null is false almost
+everywhere, and human LD is short-range. The sorghum BAP is the complementary
+case (Table~\ref{tab:sorghum_regimes}). With $330$ lines, gene-level signal is
+sparse. Sorghum is predominantly self-pollinating and its LD extends far: each
+gene has on average $\nSorNeighbours$ other genes with $|r|\ge0.1$ in MAGMA's
+gene--gene correlation, against $\nLipNeighbours$ in the human reference panel,
+and on chromosome~1 the assembled gene correlation matrix was far from positive
+definite before eigenvalue repair (smallest eigenvalue $-35$). This is the
+regime in which an omnibus calibrated as if genes were independent is expected
+to be anti-conservative (Sections~3.1 and 3.5), and in which a correlated null
+has the most to correct. The validation here is therefore calibration rather
+than convergence: whether the procedure avoids declaring pathways significant
+when LD is extreme and power is low, and whether the gene score still lifts the
+established genes.
+
+\maybeinput{auto/tab_sorghum_regimes.tex}
+
+\subsubsection*{3.10.1 The gene-level inputs are calibrated once the right
+MAGMA model is used}
+
+The mixed-model GWAS was slightly conservative at the variant level
+($\lambda_{\mathrm{GC}}=\nSorDrySnpLambda$ for dry biomass and
+$\nSorLigSnpLambda$ for lignin). At the gene level the MAGMA model mattered.
+Under the SNP-wise mean model the median gene $p$-value was $\nSorDryGeneMed$
+and $\nSorLigGeneMed$ (gene-level $\lambda=\nSorDryGeneLambda$ and
+$\nSorLigGeneLambda$), close to the null, and it did not change with the number
+of variants in the gene. The SNP-wise top model, and MAGMA's multi-model
+$p$-value that combines it with the mean model, were inflated (median $0.112$
+and $0.179$ for dry biomass, $0.263$ and $0.322$ for lignin), and the inflation
+grew with gene size: from the smallest to the largest fifth of genes, the
+median top-model $p$-value for dry biomass fell from $0.18$ to $0.05$ while the
+mean-model value stayed between $0.44$ and $0.45$ (Supplementary
+Figure~\ref{fig:sorghum_pcol}). Inflation that tracks gene size and is absent
+from the mean model points to the correction for selecting the best variant
+in a gene, which does not hold up under this LD, rather than to biology. The
+pathway null assumes gene $p$-values are uniform where there is no signal, so
+an inflated input would be read as pathway signal; we used the mean model.
+
+\subsubsection*{3.10.2 No pathway is significant, and the correlated null
+removes much of the LD-driven excess}
+
+Of the $\nSorDryNpw$ SorghumBicolorCyc pathways, none was significant under
+Westfall--Young family-wise control for either trait. The smallest
+size-standardised family-wise $p$-values were $\nSorTopFwerDry$ for dry
+biomass (proanthocyanidin biosynthesis from flavanols) and $\nSorTopFwerLig$
+for lignin (glycolysis~I). The uncalibrated analytic omnibus, which treats the
+genes in a pathway as independent, placed $\nSorDryOmniFive\%$ and
+$\nSorLigOmniFive\%$ of pathways below $0.05$, well above the nominal $5\%$.
+Calibrating each pathway against the correlated null reduced this to
+$\nSorDryCalFive\%$ and $\nSorLigCalFive\%$. The excess that remains is
+consistent with the mild gene-level departure from the null above, which a
+self-contained test counts as signal and which accumulates over pathways of
+tens of genes, the same mechanism that saturates the lipid analyses at much
+larger scale. The simulations of Sections~3.1 and 3.5 predicted this ordering:
+independence-based calibration over-rejects under LD, and the correlated null
+corrects much of it.
+
+The lignin ordering is weakly consistent with biology. Phenylpropanoid
+biosynthesis, which supplies the monolignols, ranked $\nSorPhenylRank$ of
+$\nSorLigNpw$, and flavonoid biosynthesis, which branches from the same
+early steps, ranked $\nSorFlavRank$. With $330$ lines we do not read more into
+the pathway ordering than this, and the point of the analysis is the negative
+one: the procedure did not produce discoveries that the data cannot support.
+
+\subsubsection*{3.10.3 The pathway layer lifts the lignin genes}
+
+Table~\ref{tab:sorghum_genes}A gives the ranks of the eleven established genes
+among $\nSorDryNgenes$, under the combined score, under the same score with
+the pathway layer removed, and under each single layer. For lignin, the
+combined score ranked all three \textit{bmr} genes above their rank without the
+pathway layer: \textit{bmr2}/4CL from $1{,}055$ to $286$, \textit{bmr6}/CAD
+from $12{,}542$ to $7{,}761$ and \textit{bmr12}/COMT from $2{,}184$ to
+$1{,}148$. Against GWAS alone, $\nSorLigBetter$ of the $\nSorLigNctrl$ improved
+(median rank $\nSorLigCtrlMedScore$ against $\nSorLigCtrlMedGwas$);
+\textit{bmr12}, which has the strongest variant-level evidence of the three,
+fell from $639$ to $1{,}148$ because its gene-level MAGMA evidence is weak. All
+three genes are in SorghumBicolorCyc lignin-related pathways, so this is the
+case in which the pathway layer can contribute, and it did.
+
+For dry biomass, the flowering-time and height genes are in no tested pathway,
+so the score can only reorder them through the GWAS and MAGMA layers. Two of
+the eight carry detectable signal in this panel, \textit{Ma1}/\textit{PRR37}
+(rank $874$; $929$ by GWAS alone) and \textit{Dw1} ($2{,}960$; $6{,}028$), and
+both rose. The other six have little evidence at either layer and no ranking
+recovers them, so the median rank of the eight ($\nSorDryCtrlMedScore$) is
+uninformative. Dry biomass tests the gene score only weakly, and we report it
+for completeness.
+
+\maybeinput{auto/tab_sorghum_genes.tex}
+
+\subsubsection*{3.10.4 Candidate genes}
+
+The top of each ranking is organised by locus
+(Table~\ref{tab:sorghum_genes}B). For lignin, the first $\nSorLigTopN$ genes
+lie within about $\nSorLigTopSpanKb\,\mathrm{kb}$ on chromosome~$\nSorLigTopChr$
+($\nSorLigTopMb\,\mathrm{Mb}$) and share their strongest variant; none is in a
+SorghumBicolorCyc pathway, and nothing in the data separates them.
+
+For dry biomass, the second-ranked gene, Sobic.004G014400 on chromosome~4,
+encodes cycloartenol synthase, the first committed step of plant sterol
+biosynthesis. Its strongest variant has $p=\nSorCasGwasP$, its MAGMA $p$-value
+is $\nSorCasMagmaP$ (rank $\nSorCasMagmaRank$), and cycloartenol biosynthesis
+ranked $\nSorCycloRank$ of $\nSorDryNpw$ pathways. Without the pathway layer it
+ranks $\nSorCasRankNp$, level with two neighbours that share its lead variant,
+so the pathway layer is what selects it within the locus. We found no earlier
+report linking this gene or region to biomass in sorghum. In
+\textit{Arabidopsis}, loss of cycloartenol synthase is lethal and weak alleles
+disrupt plastid development \citep{Babiychuk2008}, and sterol-deficient mutants
+are impaired in cellulose synthesis \citep{Schrick2012}, which offers a route
+from sterol supply to biomass that remains to be tested.
+
+The fourth-ranked gene, Sobic.008G029200 on chromosome~8, carries a WRKY
+DNA-binding domain. In rice, overexpression of the WRKY gene
+\textit{OsWRKY89} shortened internodes and increased lignification of the culm
+\citep{Wang2007}. %% TODO: confirm that OsWRKY89 is the closest rice relative (gene tree)
+Its pathway evidence, however, comes from a SorghumBicolorCyc entry that
+assigns it acyl-ACP thioesterase activity, which a WRKY transcription factor
+does not have: here the pathway layer rewards an annotation error. Without it
+the gene ranks $\nSorWrkyRankNp$, carried by a strong variant-level signal
+(GWAS rank $\nSorWrkyGwasRank$) that it shares with its neighbour
+Sobic.008G028900. Neither candidate ranks highly for lignin
+($\nSorCasLigRank$ and $\nSorWrkyLigRank$), so the WRKY gene is a biomass
+candidate whose rice relative affects stem growth and lignification, not a
+lignin association.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{4 Discussion}
@@ -1582,7 +1764,32 @@ database. The score also ranks loci rather than genes. The established genes in
 our lists sit beside LD neighbours with almost identical evidence, and only
 fine-mapping or functional data can separate them.
 
-\subsection*{4.4 Numerical precision is a correctness issue}
+\subsection*{4.4 Two regimes, two kinds of validation}
+
+The lipid and sorghum analyses validate different properties of the method.
+The lipid traits have abundant signal and short-range LD, and the evidence that
+the ordering is meaningful is convergence: two traits whose gene-level signals
+are largely disjoint reach the same pathway through different arms of it. They
+say little about false positives, because there the null is false nearly
+everywhere. The sorghum traits have sparse signal and far denser LD
+(Table~\ref{tab:sorghum_regimes}), and the evidence there is calibration: the
+independence-based omnibus over-rejected, the correlated null brought it much
+closer to nominal, and family-wise control declared nothing. A method that
+reported pathway discoveries in this panel would be suspect; this one ranked
+pathways and genes without claiming significance it could not support.
+
+Two lessons carry over to other datasets. First, the gene-level model has to be
+checked before any pathway output is read. In the BAP, MAGMA's multi-model
+output was inflated in proportion to gene size, and a correlated pathway null,
+however well it models LD, would have passed that inflation through as pathway
+signal. Second, curated annotation cuts both ways. It is what let the pathway
+layer lift all three lignin genes, and it is also what lifted a WRKY
+transcription factor through an enzymatic annotation it should not carry.
+Candidates whose rank depends on the pathway layer should have that annotation
+checked; the score makes this straightforward because each layer is reported
+separately.
+
+\subsection*{4.5 Numerical precision is a correctness issue}
 
 Section~2.4 reads like an implementation note and is not one. Had we not moved
 to log space, this paper would have reported a top-pathway list that was
@@ -1620,13 +1827,16 @@ that point is not meaningful. For a family-wise procedure the corresponding
 check is the number of distinct values taken by the null family minimum; a
 threshold drawn from a distribution with a large atom is not a threshold.
 
-\subsection*{4.5 Practical recommendations}
+\subsection*{4.6 Practical recommendations}
 
 For users, our recommendations are as follows. Inspect the gene-level null
 before running any pathway analysis: a median gene-level $p$-value far from
 $0.5$ indicates either genuine saturation or population-structure inflation, and
 these require different responses (the former argues for competitive testing,
-the latter for a mixed model). Calibrate against the correlated null whenever
+the latter for a mixed model). Check also that the gene-level null does not
+drift with gene size; under strong LD, MAGMA's top-variant and multi-model
+$p$-values can be inflated in proportion to the number of variants in a gene
+(Section~3.10.1). Calibrate against the correlated null whenever
 gene--gene correlations are available, and verify that the correlation file
 covers all chromosomes; in one of our own runs only chromosome~1
 correlations had been parsed, and $85\%$ of the genome was silently treated as
@@ -1640,9 +1850,10 @@ minimum. When using adaptive soft TFisher, choose a truncation grid that spans
 small and large thresholds; a grid confined to small $\tau$ leaves the statistic
 empty on most small pathways. Finally, treat the ranking rather than the significance list as the
 deliverable, and validate it against independent biology where possible, as we
-have attempted to do with the maize and lipid analyses. In a saturated analysis,
-compare each pathway with others of its size rather than reading its overall
-rank, and read a candidate-gene list as a ranking of loci.
+have attempted to do with the maize, lipid and sorghum analyses. In a saturated
+analysis, compare each pathway with others of its size rather than reading its
+overall rank, and read a candidate-gene list as a ranking of loci. Check the
+annotation behind any candidate whose rank depends on the pathway layer.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{5 Limitations and future work}
@@ -1720,11 +1931,14 @@ namespace. Given the argument of Section~4.2, that comparison is the single most
 important addition to make, and it is in progress.
 
 \textbf{Incomplete cross-species replication.} The Westfall--Young analysis was
-run on maize and human data. The sorghum stem-volume dataset used in the
+run on maize, sorghum and human data. The sorghum stem-volume dataset used in the
 original CATFISH paper could not be re-analysed under the new calibration
 because the MAGMA \texttt{.genes.raw} file, which the genome-wide correlated
 draw requires, was not available in the archived results; its signal-density
 summary in Table~\ref{tab:density} is reported from the gene-level output alone.
+The sorghum analyses of Section~3.10 use a different panel, the BAP, and with
+$330$ lines they are underpowered for pathway discovery; they test calibration
+and gene ranking, not the detection of new pathways.
 
 \textbf{Tail resolution.} Monte Carlo calibration resolves $p$-values only to
 $1/(B+1)$. CATFISH offers a generalized Pareto tail extrapolation for the
@@ -1766,7 +1980,10 @@ hypothesis, not of the correction, and the ranking survives it: plasma
 lipoprotein assembly, remodeling and clearance led the LDL-C ordering, the
 lipoprotein pathways were extreme for their size in both LDL-C and HDL-C, and
 the gene prioritization recovered established lipid genes better than GWAS
-association alone. CATFISH, and self-contained pathway testing generally, is best
+association alone. In a sorghum panel with far denser LD and little power, the
+same procedure declared no pathway significant and still raised the
+established lignin genes through the pathway layer, which is the behaviour a
+calibrated method should show when the data are weak. CATFISH, and self-contained pathway testing generally, is best
 suited to the low-signal polygenic regime, where the maize grain-nitrogen
 analysis recovered L-homoserine biosynthesis as the leading pathway and a known
 aspartate kinase isozyme as the leading gene out of $34{,}873$, in agreement
@@ -1818,6 +2035,17 @@ Section~3.9: median rank, among all $\nLipNgenes$ genes, of the pre-specified
 established genes for LDL-C (\textbf{C}) and HDL-C (\textbf{D}); lower is
 better. Rankings are stable across the grid, and recovery improves with the
 pathway weight in both the simulation and the real data.}{fig:weights}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Supp_sorghum_pcol_qq.png}{\textwidth}{Gene-level calibration of the
+three MAGMA $p$-values for the sorghum BAP traits: quantile--quantile plots of
+the SNP-wise mean model, the SNP-wise top model and MAGMA's multi-model
+combination for dry biomass (left) and lignin (right), with the median gene
+$p$-value of each. The mean model follows the null; the top-variant and
+multi-model $p$-values are inflated, and their inflation increases with the
+number of variants in the gene (Section~3.10.1).}{fig:sorghum_pcol}
 \end{figure*}
 
 \clearpage

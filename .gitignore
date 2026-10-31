@@ -95,3 +95,21 @@ catfish2/tex/*.synctex.gz
 *.bak[0-9]
 *.tex.bak*
 *.R.bak
+
+# ---- added 2026-11-03: large or regenerable analysis files ----
+# gene-gene correlation pairs (rebuilt from .genes.raw by 17 / 23); sorghum ones are ~690 MB
+*cor_pairs*.txt
+*.cor_pairs.txt.partial
+# MAGMA per-chromosome batch output (only the merged .genes.out is kept)
+*.batch*_chr.genes.out
+*.log.suppl
+# munged GWAS inputs and MAGMA reference/annotation files
+*.magma.pval
+*.neglog10.txt
+*.genes.annot
+*.snploc
+*.synonyms
+*.zip
+*.gz
+# script backups made before edits
+*.bak_pre_*
