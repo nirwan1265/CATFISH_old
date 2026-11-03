@@ -286,59 +286,20 @@ CATFISH is implemented as an R package and is freely available at
 
 \subsection*{1.1 Pathway signal archetypes}
 
-CATFISH was developed to capture heterogeneous pathway-level signal patterns, ranging from highly sparse gene-level associations to weak, broadly distributed enrichment. We define five conceptual pathway signal archetypes to clarify how different gene-level profiles are expected to favor different component tests. These archetypes are not intended as empirically learned classes of real pathways but as statistical templates for interpreting test behavior and motivating the complementary design of CATFISH.
-
-For interpretive clarity, we consider a pathway-level working null and alternative. Under the null, gene-level evidence within a pathway matches the background distribution after accounting for dependence, with no systematic excess of small $p$-values. Under the alternative, the pathway shows enrichment through one or more forms of excess association evidence, including extreme individual genes, broad moderate signals, weak diffuse shifts, or mixed patterns. Figure~\ref{fig:archetypes} illustrates the five ranked signal shapes, and Table~\ref{tab:archetype_summary} summarizes their statistical profiles and expected CATFISH component sensitivity.
-
-In short, Strong Sparse Signal (SSS) refers to pathways driven by a few strongly associated genes that favor extreme-tail methods. Single-Gene Proxy (SGP), a special case of SSS, is composed of a signal dominated by one leading gene, but it should be interpreted cautiously as gene-centric. Moderate Dense Signal (MDS) has many modest, consistent gene associations that favor aggregation methods. Weak Diffuse Enrichment (WDE) constitutes subtle pathway-wide shifts, with few individually significant genes, favoring distributed-signal methods. Mixed Signal Architecture (MSA) represents one or a few strong signals plus broader moderate support that favor balanced methods.
-
-\begin{figure*}[!t]
-\centering
-\maybefig{Fig0_archetypes.png}{\textwidth}{Ranked gene-level association
-profiles for five pathway signal archetypes. Panels illustrate conceptual
-within-pathway $-\log_{10}(p)$ profiles for Strong Sparse Signal (SSS),
-Moderate Dense Signal (MDS), Weak Diffuse Enrichment (WDE), Mixed Signal
-Architecture (MSA), and Single-Gene Proxy (SGP). Horizontal lines mark
-representative significance thresholds. These archetypes motivate the use of
-complementary CATFISH component tests because different methods are
-preferentially sensitive to different ranked signal shapes.}{fig:archetypes}
-\end{figure*}
-
-\begin{table*}[!t]
-\centering
-\caption{Summary of pathway signal archetypes and expected CATFISH component
-sensitivity. Each archetype represents a conceptual ranked gene-level
-association profile rather than an empirically learned class of real pathways.}
-\label{tab:archetype_summary}
-\scriptsize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{p{0.17\textwidth} p{0.30\textwidth} p{0.21\textwidth} p{0.13\textwidth}}
-\hline
-\textbf{Archetype} & \textbf{Gene-level $p$-value pattern} & \textbf{Ranked-profile shape} & \textbf{Expected sensitive tests} \\
-\hline
-Strong Sparse Signal (SSS) &
-A small number of genes have extremely small $p$-values, while most genes remain close to null. &
-Sharp early peak followed by a rapid drop; pronounced elbow. &
-ACAT, minP \\
-Moderate Dense Signal (MDS) &
-Many genes show modest but consistent association, without one clearly dominant gene. &
-Broad shoulder of moderate signals across a substantial fraction of the pathway. &
-Fisher, Stouffer, soft TFisher \\
-Weak Diffuse Enrichment (WDE) &
-Most genes are individually non-significant, but the pathway shows a subtle overall shift toward smaller $p$-values. &
-Gentle pathway-wide deflection with few or no strong individual peaks. &
-Stouffer, Fisher \\
-Mixed Signal Architecture (MSA) &
-One or a few strong genes occur together with a broader set of moderate supporting signals. &
-Strong leading peak plus a moderate shoulder. &
-soft TFisher, Fisher, ACAT \\
-Single-Gene Proxy (SGP) &
-One dominant gene accounts for most of the pathway-level signal, while the remaining genes are near null. &
-Single extreme peak followed by an otherwise null-like profile. &
-minP, ACAT \\
-\hline
-\end{tabular}
-\end{table*}
+A pathway can be associated with a trait in very different ways. Its evidence
+may come from one extreme gene, from a few strong genes, from many genes of
+moderate effect, or from a faint shift shared by nearly all of its members, and
+the component tests of CATFISH are sensitive to different parts of that range.
+We formalise the range as five pathway signal archetypes: Strong Sparse Signal
+(SSS), Single-Gene Proxy (SGP), Moderate Dense Signal (MDS), Weak Diffuse
+Enrichment (WDE) and Mixed Signal Architecture (MSA). They are statistical
+templates for interpreting test behaviour, not empirically learned classes of
+real pathways, and they are the reason CATFISH combines complementary components
+instead of choosing one in advance. Section~3.1 defines the archetypes, relates
+each to a biological setting in which it is expected, and tests the predicted
+correspondence between archetype and component under the family-wise decision
+rule used throughout this paper. Supplementary Note~S1 gives the expanded
+descriptions and the simulation design.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{2 Methods}
@@ -348,7 +309,7 @@ minP, ACAT \\
 For a pathway $S$ containing $m=|S|$ genes, let $p_g$ denote the gene-level
 association $p$-value for gene $g\in S$ and $Z_g$ the corresponding gene-level $Z$-statistic. We write $\mathbf{p}_S=(p_1,\dots,p_m)$ and $\mathbf{Z}_S=(Z_1,\dots,Z_m)$. Gene-level statistics are obtained with MAGMA \citep{deLeeuw2015}, which aggregates SNP-level GWAS evidence across variants assigned to a gene while accounting for LD, gene size, and local marker density, and which additionally returns the gene--gene correlation matrix induced by LD. These quantities are the common inputs for every CATFISH component test and for both calibration layers.
 
-Each pathway is assessed using five complementary component tests (Table~\ref{tab:components}): ACAT \citep{Liu2019ACATV,Liu2020ACAT}, Fisher \citep{Fisher1932}, adaptive soft-thresholding TFisher \citep{Zhang2020TFisher}, minP, and Stouffer \citep{Stouffer1949}. Together, they cover the archetypes in Section~1.1 and apply directly to gene-level $p$-values or $Z$-scores without external weights or pathway-specific tuning. We combine the component $p$-values into a single omnibus statistic via an ACAT-type cross-method operator $\mathcal{O}(\cdot)$. This omnibus is a pathway-level summary of evidence across components, not an additional gene-level test.
+Each pathway is assessed using five complementary component tests (Table~\ref{tab:components}): ACAT \citep{Liu2019ACATV,Liu2020ACAT}, Fisher \citep{Fisher1932}, adaptive soft-thresholding TFisher \citep{Zhang2020TFisher}, minP, and Stouffer \citep{Stouffer1949}. Together, they cover the signal archetypes of Section~3.1 and apply directly to gene-level $p$-values or $Z$-scores without external weights or pathway-specific tuning. We combine the component $p$-values into a single omnibus statistic via an ACAT-type cross-method operator $\mathcal{O}(\cdot)$. This omnibus is a pathway-level summary of evidence across components, not an additional gene-level test.
 
 Four components (ACAT, Fisher, minP, Stouffer) are fully determined by gene-level $p$-values and require no tuning. Soft TFisher is the exception: it adapts over a grid of truncation thresholds $\tau$, which determines which genes contribute. This is the only tunable choice in CATFISH, and we justify it below.
 
@@ -515,7 +476,7 @@ Rather than combining, we calibrate each of the five components against its own 
 \item \textbf{Robustness to an incomplete correlation file}
 (\texttt{08\_missing\_correlation.R}). Data are simulated under the true correlation, but calibration (null bank, marginal $p$-values, and Westfall--Young threshold) uses a matrix where a fraction $\{0,0.25,0.5,0.75,1\}$ of off-diagonal entries is set to zero, mimicking unreported gene pairs. Evaluation draws are shared across missingness levels; only calibration varies. For real data, \texttt{10\_pair\_coverage.R} places a correlation file on this scale by reporting the fraction of within-pathway gene pairs on the same chromosome and close enough to be correlated for which MAGMA reports a value.
 
-\item \textbf{Archetype power} (\texttt{17\_archetype\_power\_wy.R}), shared-universe design with $\rho=0.3$. One pathway in each family carries signal shaped as one of the five archetypes of Section~1.1; the remaining $K-1$ are null. Signal is a mean shift on the gene-level $z$ scale applied to a fixed fraction of the pathway's genes, at positions permuted in every replicate: SSS shifts $15\%$ of genes by $3.0$; MDS $60\%$ by $1.1$; WDE $90\%$ by $0.55$; MSA $10\%$ by $1.8$ and a further $60\%$ by $1.1$; and SGP $5\%$ by $4.0$, with at least one gene in every layer. Shifts are multiplied by an effect scale over a grid running from undetectable to saturated, at $m\in\{5,20,50\}$. For each component and for the omnibus we record the probability that the signal pathway clears its own Westfall--Young threshold. Regret is the difference in that probability between the best single component and the omnibus in the same cell.
+\item \textbf{Archetype power} (\texttt{17\_archetype\_power\_wy.R}), shared-universe design with $\rho=0.3$. One pathway in each family carries signal shaped as one of the five archetypes of Section~3.1 (Table~\ref{tab:archetype_summary}); the remaining $K-1$ are null. Signal is a mean shift on the gene-level $z$ scale applied to a fixed fraction of the pathway's genes, at positions permuted in every replicate: SSS shifts $15\%$ of genes by $3.0$; MDS $60\%$ by $1.1$; WDE $90\%$ by $0.55$; MSA $10\%$ by $1.8$ and a further $60\%$ by $1.1$; and SGP $5\%$ by $4.0$, with at least one gene in every layer. Shifts are multiplied by an effect scale over a grid running from undetectable to saturated, at $m\in\{5,20,50\}$. For each component and for the omnibus we record the probability that the signal pathway clears its own Westfall--Young threshold. Regret is the difference in that probability between the best single component and the omnibus in the same cell.
 \end{enumerate}
 
 Unless stated otherwise, each configuration uses $B$ null draws for the
@@ -632,7 +593,247 @@ a contribution from the pathway layer.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{3 Results}
 
-\subsection*{3.1 Independence-based calibration is anti-conservative;
+\subsection*{3.1 Five pathway signal archetypes, and the component that
+detects each}
+
+Before asking whether the pathway $p$-values are calibrated, we ask what kind of
+signal each component is built to find. Consider a pathway-level working null
+and alternative. Under the null, the gene-level evidence within a pathway
+matches the background distribution after accounting for dependence, with no
+systematic excess of small $p$-values. Under the alternative the pathway carries
+excess evidence, but that evidence can be distributed among its genes in many
+ways. The distribution is easiest to see in the ranked profile, the pathway's
+gene-level $-\log_{10}p$ values sorted from largest to smallest
+(Figure~\ref{fig:archetypes}). We define five archetypes by the shape of that
+profile (Table~\ref{tab:archetype_summary}). They are templates, not
+empirically learned classes: a real pathway may sit between two of them or
+combine features of several, and its archetype is not known in advance.
+Supplementary Note~S1 describes each in more detail.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig0_archetypes.png}{\textwidth}{Ranked gene-level association
+profiles for five pathway signal archetypes. Panels illustrate conceptual
+within-pathway $-\log_{10}(p)$ profiles for Strong Sparse Signal (SSS),
+Moderate Dense Signal (MDS), Weak Diffuse Enrichment (WDE), Mixed Signal
+Architecture (MSA), and Single-Gene Proxy (SGP). Horizontal lines mark
+representative significance thresholds. These archetypes motivate the use of
+complementary CATFISH component tests because different methods are
+preferentially sensitive to different ranked signal shapes.}{fig:archetypes}
+\end{figure*}
+
+\begin{table*}[!t]
+\centering
+\caption{Summary of pathway signal archetypes and expected CATFISH component
+sensitivity. Each archetype represents a conceptual ranked gene-level
+association profile rather than an empirically learned class of real pathways.
+The last column gives the signal used to generate each archetype in the
+simulation of Section~3.1: the fraction of the pathway's genes that are
+shifted, and the mean shift on the gene-level $z$ scale before multiplication
+by the effect scale. Every layer contains at least one gene.}
+\label{tab:archetype_summary}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{0.15\textwidth} p{0.26\textwidth} p{0.19\textwidth} p{0.12\textwidth} p{0.14\textwidth}}
+\hline
+\textbf{Archetype} & \textbf{Gene-level $p$-value pattern} & \textbf{Ranked-profile shape} & \textbf{Expected sensitive tests} & \textbf{Simulated signal} \\
+\hline
+Strong Sparse Signal (SSS) &
+A small number of genes have extremely small $p$-values, while most genes remain close to null. &
+Sharp early peak followed by a rapid drop; pronounced elbow. &
+ACAT, minP &
+$15\%$ of genes at $3.0$ \\
+Moderate Dense Signal (MDS) &
+Many genes show modest but consistent association, without one clearly dominant gene. &
+Broad shoulder of moderate signals across a substantial fraction of the pathway. &
+Fisher, Stouffer, soft TFisher &
+$60\%$ at $1.1$ \\
+Weak Diffuse Enrichment (WDE) &
+Most genes are individually non-significant, but the pathway shows a subtle overall shift toward smaller $p$-values. &
+Gentle pathway-wide deflection with few or no strong individual peaks. &
+Stouffer, Fisher &
+$90\%$ at $0.55$ \\
+Mixed Signal Architecture (MSA) &
+One or a few strong genes occur together with a broader set of moderate supporting signals. &
+Strong leading peak plus a moderate shoulder. &
+soft TFisher, Fisher, ACAT &
+$10\%$ at $1.8$ plus $60\%$ at $1.1$ \\
+Single-Gene Proxy (SGP) &
+One dominant gene accounts for most of the pathway-level signal, while the remaining genes are near null. &
+Single extreme peak followed by an otherwise null-like profile. &
+minP, ACAT &
+$5\%$ at $4.0$ \\
+\hline
+\end{tabular}
+\end{table*}
+
+The five components read the ranked profile differently
+(Table~\ref{tab:components}). minP uses only its first point. ACAT averages
+Cauchy-transformed $p$-values, whose heavy tail lets the smallest one or few
+dominate the average; it is governed by the head of the profile as minP is,
+but unlike minP it rewards a second and third strong gene. Fisher sums
+$-2\log p_g$ over every gene. A gene's contribution grows only logarithmically
+as its $p$-value shrinks, so the statistic rewards many moderately small
+$p$-values more than a few very small ones. Stouffer gives every gene's $Z_g$
+equal weight and $Z_g$ grows more slowly still, so a small shift shared by all
+genes accumulates with pathway size while a single extreme gene is diluted by
+$1/\sqrt{m}$. Soft TFisher discards genes above a truncation threshold $\tau$
+and sums the excess evidence of the rest. It moves from minP-like behaviour at
+small $\tau$ towards Fisher as $\tau$ approaches one, and adapting over $\tau$
+lets it follow the profile to wherever its shoulder ends. These properties alone
+predict which components should be sensitive to each archetype
+(Table~\ref{tab:archetype_summary}, fourth column).
+
+\emph{Strong Sparse Signal (SSS).} A small number of genes carry nearly all of
+the evidence and the rest are close to null, so the ranked profile has a sharp
+early peak and a pronounced elbow. The evidence sits in the head of the profile,
+which ACAT and minP read directly and aggregation over the whole pathway
+dilutes. SSS is expected where pathway output is controlled by a bottleneck: a
+committed-step enzyme, a rate-limiting regulator or an essential transporter
+\citep{MorenoSanchez2008,Naz2023,Tanner2018,Song2020}. Aspartokinase is an
+example. It catalyses the entry reaction of the aspartate-derived pathway that
+produces lysine, threonine, methionine and isoleucine
+\citep{Galili2011,Hasenoehrl2019}, and variation at that entry point can
+produce a strong, localised signal while the downstream genes remain near null.
+An aspartate kinase isozyme is the leading gene of the maize analysis in
+Section~3.8.
+
+\emph{Single-Gene Proxy (SGP).} The limiting case of SSS: one gene accounts for
+nearly all of the pathway's evidence, and the profile is a single extreme peak
+followed by null-like values. minP and ACAT are again the sensitive components,
+but the interpretation differs, because the pathway result adds little to the
+gene-level association and should be read as gene-centric. SGP arises when a
+pathway is effectively defined by one major gene, most often in small or
+heavily overlapping annotations. Phenylalanine metabolism is an example.
+\textit{PAH} encodes phenylalanine hydroxylase, the rate-limiting enzyme that
+converts phenylalanine to tyrosine, and its variants are the main cause of
+phenylketonuria \citep{Flydal2013PAH,Elhawary2022PKU}; a signal in a broader
+phenylalanine-metabolism set that also contains cofactor synthesis and recycling
+genes would largely be the signal of \textit{PAH}.
+
+\emph{Moderate Dense Signal (MDS).} Many genes show modest but consistent
+association and no gene dominates, so the profile is a broad shoulder of
+moderately small $p$-values. Fisher and Stouffer, which aggregate over the
+whole pathway, and soft TFisher at intermediate $\tau$ are predicted to be
+sensitive; minP, which sees one gene, is not. MDS is expected where pathway
+output depends on many interacting components rather than one effector, so that
+genetic variation produces many moderate perturbations across the network
+rather than one large change. Cytokine signalling from TNF$\alpha$ and
+IL-1$\beta$ to NF-$\kappa$B, which runs through receptor engagement, adaptor
+recruitment, kinase cascades, feedback and transcriptional control, is an
+example \citep{Jiang2021CytoSig,Megha2021Inflammation,Verstrepen2008NFkB,vanLoo2011NFkB,Cargnello2011MAPK}.
+
+\emph{Weak Diffuse Enrichment (WDE).} Most genes are individually
+non-significant, but the pathway as a whole is shifted toward smaller
+$p$-values: a gentle deflection of the profile with few or no strong peaks.
+Stouffer, which accumulates small shifts across genes, and Fisher are predicted
+to be sensitive, and the extreme-tail tests have little to find. WDE is the
+signature of highly polygenic architecture. Human height, influenced by many
+thousands of variants of small effect
+\citep{Guo2018HeightGWAS,Yengo2022HeightSaturation}, is the standard example;
+coherent processes such as TGF-$\beta$ and Hedgehog signalling and growth-plate
+extracellular matrix may be detectable there mainly through cumulative
+pathway-level enrichment \citep{LangoAllen2010Height,Guo2018HeightGWAS}.
+
+\emph{Mixed Signal Architecture (MSA).} One or a few strong genes sit on top of
+a broader set of moderate supporting signals, so the profile is a leading peak
+followed by a shoulder, between SSS and MDS. Soft TFisher, which can truncate
+below the shoulder, and Fisher, which rewards both parts, are predicted to be
+sensitive, with ACAT responding to the peak. MSA is expected where a few core
+genes with large, pathway-defining effects are embedded in a wider network of
+auxiliary components. LDL-cholesterol metabolism, analysed in Section~3.9, is
+an example: rare high-effect variants in \textit{LDLR}, \textit{APOB} and
+\textit{PCSK9} cause familial hypercholesterolaemia, while common variants of
+small to moderate effect in further lipoprotein genes, among them
+\textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}
+and \textit{SORT1}, shape LDL-C in the population
+\citep{Chasman2009LipoproteinProfiles,Peloso2022WGSbloodlipids,Umlai2025LDLC}.
+
+\emph{The predicted correspondence holds under the family-wise rule.} The
+correspondence between archetype and component is a prediction, and it is
+testable only under simulation, because the archetype of a real pathway is
+unknown. We generated pathways carrying each archetype's ranked signal shape
+(Table~\ref{tab:archetype_summary}, last column; Section~2.6, item~6), embedded
+each in a family of $149$ null pathways drawn from the same correlated gene
+universe, and measured the probability that the signal pathway clears the
+family-wise Westfall--Young threshold. Effect sizes were scaled over a grid so
+that every archetype passes from undetectable to saturated, and the component
+set, the universe and the resampling are exactly those used elsewhere in this
+paper.
+
+The predictions hold. In $\nArchCellsIn$ of $\nArchCellsTot$ archetype-by-size
+cells the component that most often achieved the highest family-wise power was
+inside the set predicted in Table~\ref{tab:archetype_summary}
+(Table~\ref{tab:archverify}). The separation is sharp and in the expected
+direction: diffuse enrichment is recovered by Stouffer, with the extreme-tail
+tests near their null; single-gene and strongly sparse signals are recovered by
+minP and ACAT, with Fisher and Stouffer close to powerless; and dense or mixed
+architectures by Fisher, with soft TFisher close behind. No component is best
+everywhere, which is the premise the omnibus rests on.
+
+The ranks below first place matter as much as the winners. Across the
+$\nArchInfCells$ informative cells, Fisher finished first $\nFisherFirst$ times
+but fourth or lower in $\nFisherFourthPlus$, and minP finished last in
+$\nMinPLast$. Soft TFisher finished first only $\nTFFirst$ time, but second in
+$\nTFSecond$ and third in $\nTFThird$, and never lower than third: it is the
+only component never among the weakest. Inside an omnibus that averages its
+inputs, that is the more useful property. A component that is never best but
+never near its null protects the combination precisely in the cells where the
+specialists disagree. It also qualifies Table~\ref{tab:archetype_summary}: soft
+TFisher belongs among the tests sensitive to dense and mixed signal, where it
+ran close behind Fisher, but it was not the most sensitive test for any
+archetype.
+
+What matters in practice is not which component wins but how much the omnibus
+gives up by not knowing in advance which one would. We measure that as
+\emph{regret}: the difference between the best single component in a cell and
+the omnibus in the same cell. Regret is small for most architectures
+(Table~\ref{tab:archregret}, Figure~\ref{fig:archregret}), from
+$\nArchRegretBest$ for $\nArchRegretBestA$ to $\nArchRegretWorstA$ at
+$\nArchRegretWorst$. Against the alternative of choosing one component in
+advance, which risks the full gap between the best and worst component in a
+cell---frequently more than $0.5$ in power---that is a favourable trade.
+
+The exception is worth stating plainly. In the single-gene case the omnibus can
+give up as much as $\nArchMaxRegret$ in a single cell, because minP and ACAT
+detect the pathway while Fisher and Stouffer are near their null, and averaging
+across components dilutes a signal that only two of them can see. This is a
+property of combination rather than a defect of any component, and it is the
+price of not having to choose. It also marks the regime in which a gene-level
+test, rather than a pathway-level one, is the appropriate instrument.
+
+\emph{The component pattern is part of the result.} Because CATFISH reports
+every component alongside the omnibus, the archetypes also give a way to read a
+real pathway. A pathway carried by minP and ACAT, with Fisher and Stouffer near
+their null, is sparse or single-gene driven, and should be checked against its
+leading gene before it is interpreted as coordinated pathway enrichment. A
+pathway carried by Stouffer and Fisher, with the extreme-tail tests
+unremarkable, is diffuse, and its leading genes may individually be far from
+significance. The omnibus answers whether a pathway is associated; the
+component pattern indicates how.
+
+\maybeinput{auto/tab_archetype_verification.tex}
+\maybeinput{auto/tab_archetype_regret.tex}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig11_archetype_power.png}{\textwidth}{Family-wise power to detect a
+signal pathway, by archetype (columns) and pathway size (rows), as a function of
+effect scale. Each line is one component test; the dashed black line is the
+ACAT-O omnibus. The component predicted for each archetype in
+Table~\ref{tab:archetype_summary} separates from the others over the range in
+which power is informative.}{fig:archpower}
+\end{figure*}
+
+\begin{figure}[!t]
+\centering
+\maybefig{Fig12_archetype_regret.png}{\columnwidth}{Power the omnibus gives up
+relative to the best single component in each cell. Bars are the mean across
+sizes and effect scales; crosses mark the worst single cell. The dashed line
+marks a regret of $0.05$.}{fig:archregret}
+\end{figure}
+
+\subsection*{3.2 Independence-based calibration is anti-conservative;
 per-pathway and Westfall--Young calibration are not}
 
 Under the global null, the analytic omnibus $p$-value is valid only if the genes
@@ -694,7 +895,7 @@ Westfall--Young family-wise error rate, both track the nominal
 level.}{fig:type1}
 \end{figure*}
 
-\subsection*{3.2 Genomic-control inflation tracks the same failure}
+\subsection*{3.3 Genomic-control inflation tracks the same failure}
 
 The genomic-control inflation factor $\lambda$ summarises the same null in a
 form familiar from GWAS practice (Figure~\ref{fig:lambda}), and it points the
@@ -717,7 +918,7 @@ $\lambda$ for the analytic and per-pathway calibrated omnibus under the global n
 LD level and pathway size. The horizontal line marks $\lambda=1$.}{fig:lambda}
 \end{figure}
 
-\subsection*{3.3 The omnibus degrades gracefully when its components are broken}
+\subsection*{3.4 The omnibus degrades gracefully when its components are broken}
 
 A multi-test omnibus is only useful if a single misbehaving component cannot
 dominate it, and a family-wise procedure is only useful if that robustness
@@ -783,7 +984,7 @@ direction the components were corrupted; the calibrated statistic stays near
 one.}{fig:breakage_lambda}
 \end{figure}
 
-\subsection*{3.4 No single component is load-bearing}
+\subsection*{3.5 No single component is load-bearing}
 
 Removing each component in turn and rebuilding the null bank, the marginal
 calibration and the family-wise threshold from scratch
@@ -800,7 +1001,7 @@ independent, moderate and strong LD regimes---flat at nominal---while the
 Bonferroni rate moved from $\nLooBonfInd$ to $\nLooBonfMod$ to $\nLooBonfStr$,
 reaching $\nLooBonfMax$ at worst. We are careful about what this does and does
 not show. Bonferroni is applied here to the analytic omnibus $p$-value, which is
-itself anti-conservative under LD (Section~3.1), so the inflation is the
+itself anti-conservative under LD (Section~3.2), so the inflation is the
 compounding of an uncalibrated per-test statistic with a correction that cannot
 repair it, which is what a pipeline that skips calibration actually does.
 In the independent rows, where the analytic $p$-value is valid, Bonferroni was
@@ -813,7 +1014,7 @@ from, does not.
 Within that pattern, removing Stouffer, Fisher or soft TFisher lowered the
 Bonferroni rate, while removing ACAT or minP raised it. Stouffer and Fisher are
 the aggregation statistics that within-pathway correlation inflates
-(Section~3.5), and soft TFisher's uncalibrated value is a minimum over thresholds
+(Section~3.6), and soft TFisher's uncalibrated value is a minimum over thresholds
 and therefore stochastically small; ACAT and minP stay close to nominal, so
 removing them leaves the omnibus more dominated by the inflated components.
 
@@ -846,7 +1047,7 @@ or $\lambda=1$). Note the y-scale of the third panel, which is the point of the
 comparison.}{fig:loo}
 \end{figure*}
 
-\subsection*{3.5 Linkage disequilibrium breaks the aggregation tests, not the
+\subsection*{3.6 Linkage disequilibrium breaks the aggregation tests, not the
 extreme-value tests}
 
 The omnibus hides which of its inputs is failing. Calibrating each component
@@ -875,7 +1076,7 @@ architecture may use a single calibrated component in place of the omnibus
 without losing error control, which is what makes the architecture-specific
 testing described in Section~2.3 usable.
 
-This result also explains an observation in Section~3.4: removing an
+This result also explains an observation in Section~3.5: removing an
 aggregation component lowered the Bonferroni family-wise rate while removing
 ACAT or minP raised it. The aggregation components are the ones that were
 inflated in the first place.
@@ -910,7 +1111,7 @@ inflates; the extreme-value components, ACAT and minP, are nearly
 unaffected. Calibration restores all five.}{fig:components}
 \end{figure*}
 
-\subsection*{3.6 Both calibrations degrade when the correlation file is
+\subsection*{3.7 Both calibrations degrade when the correlation file is
 incomplete, and the family-wise one degrades faster}
 
 Every result above assumes the gene--gene correlation matrix is the one the
@@ -961,7 +1162,7 @@ actually reported. We provide \texttt{10\_pair\_coverage.R} for this, and
 recommend that it be run and its result stated alongside any family-wise
 $p$-value.
 
-Finally, and consistently with Section~3.2, $\lambda$ did not flag any of this.
+Finally, and consistently with Section~3.3, $\lambda$ did not flag any of this.
 Across the missingness sweep it ranged from $\nMissLamLo$ to $\nMissLamHi$,
 drifting \emph{below} one as correlation information was removed, while the
 marginal type~I error more than doubled. This is the second independent setting
@@ -981,82 +1182,6 @@ under moderate and strong LD. \textbf{B}~Genomic-control inflation $\lambda$ for
 the marginal calibration, which falls below one rather than rising as the
 type~I error more than doubles.}{fig:missing}
 \end{figure*}
-
-\subsection*{3.7 Each archetype is detected by the component predicted for it}
-
-Section~1.1 proposed five pathway signal archetypes and predicted, on
-statistical grounds, which component tests should be sensitive to each. That
-prediction is testable only under simulation, because the architecture of a real
-pathway is unknown. We generated pathways carrying each archetype's ranked
-signal shape, embedded them in a family of null pathways drawn from the same
-correlated gene universe, and measured the probability that the signal pathway
-clears the family-wise Westfall--Young threshold. Effect sizes were scaled over
-a grid so that every archetype passes from undetectable to saturated, and the
-component set, the universe and the resampling are exactly those used
-elsewhere in this paper.
-
-The predictions hold. In $\nArchCellsIn$ of $\nArchCellsTot$ archetype-by-size
-cells the component that most often achieved the highest family-wise power was
-inside the set predicted in Table~\ref{tab:archetype_summary}
-(Table~\ref{tab:archverify}). The separation is sharp and in the expected
-direction: diffuse enrichment is recovered by Stouffer, with the extreme-tail
-tests near their null; single-gene and strongly sparse signals are recovered by
-minP and ACAT, with Fisher and Stouffer close to powerless; and dense or mixed
-architectures by Fisher, with soft TFisher close behind. No component is best
-everywhere, which is the premise the omnibus rests on.
-
-The ranks below first place matter as much as the winners. Across the
-$\nArchInfCells$ informative cells, Fisher finished first $\nFisherFirst$ times
-but fourth or lower in $\nFisherFourthPlus$, and minP finished last in
-$\nMinPLast$. Soft TFisher finished first only $\nTFFirst$ time, but second in
-$\nTFSecond$ and third in $\nTFThird$, and never lower than third: it is the
-only component never among the weakest. Inside an omnibus that averages its
-inputs, that is the more useful property. A component that is never best but
-never near its null protects the combination precisely in the cells where the
-specialists disagree. It also qualifies Table~\ref{tab:archetype_summary}: soft
-TFisher belongs among the tests sensitive to dense and mixed signal, where it
-ran close behind Fisher, but it was not the most sensitive test for any
-archetype.
-
-What matters in practice is not which component wins but how much the omnibus
-gives up by not knowing in advance which one would. We measure that as
-\emph{regret}: the difference between the best single component in a cell and
-the omnibus in the same cell. Regret is small for most architectures
-(Table~\ref{tab:archregret}, Figure~\ref{fig:archregret}), from
-$\nArchRegretBest$ for $\nArchRegretBestA$ to $\nArchRegretWorstA$ at
-$\nArchRegretWorst$. Against the alternative of choosing one component in
-advance, which risks the full gap between the best and worst component in a
-cell---frequently more than $0.5$ in power---that is a favourable trade.
-
-The exception is worth stating plainly. In the single-gene case the omnibus can
-give up as much as $\nArchMaxRegret$ in a single cell, because minP and ACAT
-detect the pathway while Fisher and Stouffer are near their null, and averaging
-across components dilutes a signal that only two of them can see. This is a
-property of combination rather than a defect of any component, and it is the
-price of not having to choose. It also marks the regime in which a gene-level
-test, rather than a pathway-level one, is the appropriate instrument.
-
-\maybeinput{auto/tab_archetype_verification.tex}
-\maybeinput{auto/tab_archetype_regret.tex}
-
-\begin{figure*}[!t]
-\centering
-\maybefig{Fig11_archetype_power.png}{\textwidth}{Family-wise power to detect a
-signal pathway, by archetype (columns) and pathway size (rows), as a function of
-effect scale. Each line is one component test; the dashed black line is the
-ACAT-O omnibus. The component predicted for each archetype in
-Table~\ref{tab:archetype_summary} separates from the others over the range in
-which power is informative.}{fig:archpower}
-\end{figure*}
-
-\begin{figure}[!t]
-\centering
-\maybefig{Fig12_archetype_regret.png}{\columnwidth}{Power the omnibus gives up
-relative to the best single component in each cell. Bars are the mean across
-sizes and effect scales; crosses mark the worst single cell. The dashed line
-marks a regret of $0.05$.}{fig:archregret}
-\end{figure}
-
 
 \subsection*{3.8 Maize grain nitrogen: Westfall--Young recovers the known
 pathway and gene}
@@ -1399,7 +1524,7 @@ without TFisher to rank~$3$ with it, PPAR$\alpha$ stayed at rank~$8$, and
 plasma lipoprotein clearance went from $100$ to $96$; of the $41$ sets matching
 lipid, lipoprotein or sterol terms, $13$ moved up, $20$ moved down and $8$ did
 not move, with a median change of zero. This matches the leave-one-out
-simulation of Section~3.4, where removing TFisher changed the Westfall--Young
+simulation of Section~3.5, where removing TFisher changed the Westfall--Young
 family-wise error rate by at most $0.004$ in any configuration
 (Table~\ref{tab:loo}).
 
@@ -1593,7 +1718,7 @@ gene--gene correlation, against $\nLipNeighbours$ in the human reference panel,
 and on chromosome~1 the assembled gene correlation matrix was far from positive
 definite before eigenvalue repair (smallest eigenvalue $-35$). This is the
 regime in which an omnibus calibrated as if genes were independent is expected
-to be anti-conservative (Sections~3.1 and 3.5), and in which a correlated null
+to be anti-conservative (Sections~3.2 and 3.6), and in which a correlated null
 has the most to correct. The validation here is therefore calibration rather
 than convergence: whether the procedure avoids declaring pathways significant
 when LD is extreme and power is low, and whether the gene score still lifts the
@@ -1637,7 +1762,7 @@ $\nSorDryCalFive\%$ and $\nSorLigCalFive\%$. The excess that remains is
 consistent with the mild gene-level departure from the null above, which a
 self-contained test counts as signal and which accumulates over pathways of
 tens of genes, the same mechanism that saturates the lipid analyses at much
-larger scale. The simulations of Sections~3.1 and 3.5 predicted this ordering:
+larger scale. The simulations of Sections~3.2 and 3.6 predicted this ordering:
 independence-based calibration over-rejects under LD, and the correlated null
 corrects much of it.
 
@@ -1930,7 +2055,7 @@ variants, generate phenotypes, and push them through the full
 GWAS--MAGMA--CATFISH pipeline. That experiment is the natural next step and is
 the one that would establish power against realistic genetic architectures
 rather than against latent mean shifts; it was deliberately excluded here rather
-than attempted partially. Consequently, the archetype power curves of Section~3.7
+than attempted partially. Consequently, the archetype power curves of Section~3.1
 are power against stylised signal shapes injected on the gene-level $z$ scale,
 not against realistic genetic architectures.
 
@@ -1940,7 +2065,7 @@ matrix, so any pair MAGMA does not report is treated as independent. For distant
 gene pairs this is close to true and the matrix is banded by construction, but a
 nearby pair that goes unreported---because it fell outside a batch boundary, or
 because one gene was dropped---becomes a genuine understatement of dependence,
-in the anti-conservative direction. Section~3.6 quantifies the cost, and
+in the anti-conservative direction. Section~3.7 quantifies the cost, and
 corrects an assumption we made before measuring it: the two readings do
 \emph{not} inherit the limitation equally. The family-wise reading degrades
 faster than the marginal one, because the family minimum is a tail
@@ -1970,7 +2095,7 @@ in LD with a causal variant in a neighbouring gene; a pathway containing it is
 then non-null under the self-contained gene-level hypothesis even if it contains
 no causal gene, so rejecting it is not a family-wise error, although it may be a
 false positive biologically. The argument also inherits the adequacy of the
-correlation matrix, and Section~3.6 shows how quickly family-wise calibration
+correlation matrix, and Section~3.7 shows how quickly family-wise calibration
 degrades when that matrix is incomplete. We have not separately confirmed strong
 control by simulation; under the model it follows from the complete-null
 results.
@@ -1978,7 +2103,7 @@ results.
 \textbf{Parametric null.} The null draws come from a multivariate normal model
 of gene--gene correlation rather than from permuting phenotypes. The procedure
 is Westfall--Young in construction, but its validity is that of the correlation
-model, which Section~3.6 makes concrete.
+model, which Section~3.7 makes concrete.
 
 \textbf{Soft TFisher resolution.} With the current implementation the soft
 TFisher $p$-value cannot be resolved below about $10^{-16}$, so among strongly
@@ -2080,6 +2205,157 @@ The authors thank the anonymous reviewers for their valuable suggestions.
 
 \clearpage
 \section*{Supplementary material}
+
+\subsection*{Supplementary Note S1: The five pathway signal archetypes}
+
+This note expands the definitions of Section~3.1. Throughout, the
+\emph{ranked profile} of a pathway is its gene-level $-\log_{10}p$ values sorted
+from largest to smallest, and an archetype is a shape of that profile. The
+archetypes are statistical templates: they are not inferred from real
+pathways, a real pathway may combine features of several, and none of the
+analyses in this paper assigns a real pathway to an archetype.
+
+\subsubsection*{S1.1 Strong Sparse Signal (SSS)}
+
+In an SSS pathway a small subset of genes carries most of the association
+evidence and the remaining genes are close to null. The ranked profile shows one
+or a few extremely small ordered $p$-values followed by a sharp drop to
+null-like values. The pathway-level signal is therefore driven by a limited
+number of high-evidence genes rather than by broad enrichment, and the
+statistics that read the head of the profile, ACAT and minP, are expected to
+detect it most efficiently. Statistics that weight all genes equally dilute
+the leading genes with the null majority.
+
+Biologically, SSS is expected when pathway behaviour is controlled by one or a
+few bottleneck genes, such as a committed-step enzyme, a rate-limiting regulator
+or an essential transporter
+\citep{MorenoSanchez2008,Naz2023,Tanner2018,Song2020}. A representative example
+is aspartokinase in the aspartate-derived amino-acid pathway, which produces
+lysine, threonine, methionine and isoleucine from aspartate \citep{Galili2011}.
+Aspartokinase catalyses the entry reaction, the phosphorylation of aspartate to
+aspartyl phosphate \citep{Hasenoehrl2019}. Variation at this entry-point enzyme
+can generate a strong localised signal while many downstream genes remain
+buffered or near null. The leading candidate gene of the maize grain-nitrogen
+analysis (Section~3.8) is an aspartate kinase isozyme, and the leading pathway,
+L-homoserine biosynthesis, is the branch whose first step it catalyses.
+
+\subsubsection*{S1.2 Single-Gene Proxy (SGP)}
+
+In an SGP pathway the significance is driven primarily by one strongly
+associated gene and the remaining genes are near null; the ranked profile is a
+single extreme peak followed by an otherwise null-like distribution.
+Statistically SGP is a boundary case of SSS, and minP and ACAT are again the
+sensitive components. Its interpretation differs, however, because the pathway
+result adds little beyond the dominant gene-level association.
+
+Biologically, SGP arises when a pathway is effectively defined by one major
+gene, especially in small or overlapping annotations. Phenylalanine metabolism
+illustrates the pattern. \textit{PAH} encodes phenylalanine hydroxylase, the
+rate-limiting enzyme for the conversion of phenylalanine to tyrosine, and
+pathogenic \textit{PAH} variation is the main cause of phenylketonuria and of
+most PAH deficiency \citep{Flydal2013PAH,Elhawary2022PKU}. Broader
+phenylalanine-metabolism pathways also contain genes for tetrahydrobiopterin
+synthesis, recycling, chaperoning and related processes, but because of the
+dominant role of \textit{PAH} a pathway-level result may largely reflect a
+gene-centric signal rather than coordinated enrichment. Pathways that are
+significant through minP and ACAT alone should be interpreted cautiously for
+this reason, and Section~3.1 shows that this is also the regime in which the
+omnibus loses the most power relative to its best component.
+
+\subsubsection*{S1.3 Moderate Dense Signal (MDS)}
+
+In an MDS pathway many genes show modest but consistent association and no
+single gene dominates. The ranked profile is a broad shoulder of moderately
+small $p$-values rather than a sharp peak, and the pathway-level evidence is the
+combined contribution of many genes. Statistics that aggregate consistent
+moderate evidence, Fisher's and Stouffer's methods, are expected to be most
+sensitive, with soft TFisher also performing well when the enrichment is
+concentrated in a moderately sized subset of the pathway.
+
+Biologically, MDS is expected in pathways whose output depends on many
+interacting components rather than one key effector. Cytokine-driven immune
+signalling is a representative example. In TNF$\alpha$/IL-1$\beta$ to
+NF-$\kappa$B signalling, pathway activity depends on receptor engagement,
+adaptor recruitment, kinase cascades, feedback and downstream transcriptional
+and post-transcriptional control
+\citep{Jiang2021CytoSig,Megha2021Inflammation,Verstrepen2008NFkB,vanLoo2011NFkB,Cargnello2011MAPK}.
+Genetic variation in such a pathway is more likely to cause many moderate
+perturbations across the network than a single large-effect change.
+
+\subsubsection*{S1.4 Weak Diffuse Enrichment (WDE)}
+
+In a WDE pathway most genes are individually non-significant, yet the pathway
+as a whole is shifted toward stronger association. The ranked profile shows a
+gentle pathway-wide deflection rather than a peak or a shoulder, and the signal
+is weak but widespread. Statistics that capture distributed enrichment across
+many genes, particularly Stouffer's and Fisher's methods, are expected to be
+most sensitive \citep{deLeeuw2015}; the extreme-tail statistics are close to
+their null because no gene is extreme.
+
+Biologically, WDE corresponds to highly polygenic architecture, in which
+pathway-level signal arises from many small effects. Human height is the
+classic example, influenced by thousands of variants with individually small
+effects \citep{Guo2018HeightGWAS,Yengo2022HeightSaturation}. In that setting,
+coherent pathways such as TGF-$\beta$ signalling, Hedgehog signalling and
+growth-plate extracellular-matrix processes may be detectable mainly through
+cumulative pathway-level enrichment rather than strong single-gene signals
+\citep{LangoAllen2010Height,Guo2018HeightGWAS}.
+
+\subsubsection*{S1.5 Mixed Signal Architecture (MSA)}
+
+In an MSA pathway one or a few genes show strong association while a broader
+set of genes provides moderate support. The ranked profile is a sharp leading
+peak followed by a moderate shoulder, which places MSA between the sparse SSS
+and the coordinated MDS regimes. Statistics that accommodate both the localised
+strong signal and the distributed support are expected to be most sensitive,
+particularly adaptive soft TFisher and Fisher's method; ACAT responds to the
+peak. In the family-wise simulation of Section~3.1, Fisher was the most
+powerful component for MSA at every pathway size, with soft TFisher close
+behind.
+
+Biologically, MSA is expected in pathways in which a few core regulatory or
+structural genes with large, pathway-defining effects are embedded in a wider
+network of auxiliary components. Low-density lipoprotein cholesterol metabolism
+illustrates the pattern. Rare, high-effect variants in \textit{LDLR},
+\textit{APOB} and \textit{PCSK9} cause monogenic familial hypercholesterolaemia,
+whereas population-level variation in LDL-C also reflects common alleles with
+small to moderate effects in many additional lipid-modulating genes
+\citep{Umlai2025LDLC,Peloso2022WGSbloodlipids}. GWAS of lipoprotein traits
+further implicate genes of lipoprotein metabolism and remodelling, including
+\textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}
+and \textit{SORT1} \citep{Chasman2009LipoproteinProfiles}. Several of these are
+among the established genes used to evaluate the candidate-gene score in
+Section~3.9.4.
+
+\subsubsection*{S1.6 How the archetypes were simulated}
+
+The simulation of Section~3.1 (Section~2.6, item~6) uses the shared-universe
+design: $3{,}000$ genes in independent blocks of $50$ with exchangeable
+within-block correlation $\rho=0.3$, from the first $600$ of which a family of
+$K=150$ pathways of $m\in\{5,20,50\}$ genes is drawn at random, so the pathways
+overlap. One pathway in the family carries signal; the other $149$ are null. The
+signal is a mean shift on the gene-level $z$ scale applied in layers, each layer
+a fixed fraction of the pathway's genes shifted by a fixed amount
+(Table~\ref{tab:archetype_summary}, last column): SSS shifts $15\%$ of genes by
+$3.0$; SGP $5\%$ by $4.0$; MDS $60\%$ by $1.1$; WDE $90\%$ by $0.55$; and MSA
+$10\%$ by $1.8$ and a further $60\%$ by $1.1$. A layer always contains at least
+one gene, so at $m=5$ the sparse archetypes shift exactly one gene and MSA
+shifts one gene strongly and three moderately. The shifted genes are chosen
+afresh in every replicate, so the signal does not always fall on the same genes
+or the same LD blocks. All shifts are multiplied by an effect scale in
+$\{0.5,1.0,1.5,2.0,2.5,3.0\}$, which takes every archetype from undetectable to
+saturated at the pathway sizes considered.
+
+The null bank, the five components, the soft TFisher grid, the undefined-component
+rule and the omnibus are those of Section~2. For each archetype, size and effect
+scale we record, for every component and for the omnibus, the fraction of
+replicates in which the signal pathway clears that statistic's own
+Westfall--Young family-wise threshold at $\alpha=0.05$. A cell is informative
+when the most powerful component has power above $0.05$ and below $0.98$, so that
+cells in which nothing or everything is detected do not count; the observed
+winners of Table~\ref{tab:archverify} and the counts of first, second and lower
+placings in Section~3.1 are taken over informative cells. Regret in a cell is the power of the best single
+component minus the power of the omnibus.
 
 \maybeinput{auto/tab_candidates_supp.tex}
 
