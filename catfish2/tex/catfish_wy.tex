@@ -1457,6 +1457,127 @@ illustrates how readily a saturated-looking pathway result can arise from a
 mis-specified gene-level model rather than from biology, which is an argument
 for inspecting the gene-level null before interpreting any pathway output.
 
+\subsubsection*{3.9.7 The lipid results replicate in four independent ancestry
+groups}
+
+Everything above comes from the European-ancestry stratum of one consortium
+meta-analysis. To ask whether the pathway ranking and the gene list are
+properties of the biology or of that one dataset, we repeated the entire
+analysis in the four other ancestry groups released with the same GLGC 2021
+study \citep{Graham2021GLGC}: African and African American (AFR,
+$n\approx99{,}400$, mostly African American), East Asian (EAS,
+$n\approx146{,}500$), South Asian (SAS, $n\approx41{,}000$) and Hispanic (HIS,
+$n\approx48{,}100$). Each ancestry-specific file is a separate meta-analysis of
+participants who are not in the European set, so the four are independent
+samples of new individuals. They also differ from the European data, and from
+each other, in allele frequencies and in the length and pattern of linkage
+disequilibrium, and they are nine to thirty-two times smaller.
+
+Each of the eight new trait--ancestry sets went through the pipeline used for
+the European data, with one change: linkage disequilibrium was taken from the
+1000 Genomes Phase~3 reference panel matching the ancestry group (African, East
+Asian and South Asian, with the admixed American panel for the Hispanic group).
+Probabilities were rebuilt from the released $-\log_{10}p$ column as before, and
+variants were kept if they were present in that panel, between $12.6$ and
+$26.8$ million per set (the most in the African panel, which carries the most
+variation). Variants were assigned to genes with the same $10\,\mathrm{kb}$
+window and NCBI37.3 gene locations, giving $18{,}429$ to $18{,}563$ genes per
+set. MAGMA was run per chromosome and merged, and the Westfall--Young procedure,
+the $1{,}390$ Reactome pathways, $B=10{,}000$, the five components, the
+candidate-gene score and its weights, and the lists of established genes were
+all unchanged. Nothing was tuned on the new data.
+
+\emph{The leading pathway replicates in every set.} Plasma lipoprotein
+assembly, remodeling and clearance ranked first of $1{,}390$ in all eight
+replication sets, for both traits (Figure~\ref{fig:replication}A,B). In the
+European data it is first for LDL-C and third for HDL-C, so it leads nine of
+the ten trait--ancestry combinations. Its sub-pathways follow it. Of the nine
+pathways in the plasma-lipoprotein subtree, five or six ranked in the top ten
+of every replication set, and six to eight in the top twenty: plasma
+lipoprotein clearance and remodeling at ranks two to seven, LDL clearance at
+ranks three to ten for LDL-C, and HDL remodeling and chylomicron remodeling at
+ranks four to ten for HDL-C. Two LXR-mediated sets, NR1H2 and NR1H3 mediated
+signaling and the NR1H3/NR1H2 regulation of cholesterol transport and efflux,
+which govern the expression of \textit{ABCA1} and other lipoprotein genes,
+ranked in the top ten in most replication sets as well.
+
+\emph{The European ranking differs below the top, and the main difference
+between the datasets is sample size.} In the European data the same
+sub-pathways sat at ranks from $51$ to over $500$, and large generic
+sets---metabolism of steroids, cellular response to chemical stress, programmed
+cell death, SUMOylation, intra-Golgi traffic---took most of the other places in
+the top five. The five ancestry groups were released by the same consortium
+and harmonised in the same way, and they were processed identically here, so
+the contrast is unlikely to be one of processing. The clearest difference is
+size, and its effect is the saturation described in Section~3.9.1. At $1.32$ million participants, $1{,}372$ (LDL-C)
+and $1{,}387$ (HDL-C) of the $1{,}390$ pathways were significant under
+family-wise control, and in a genome where background association is
+everywhere, large pathways accumulate evidence because they are large. In the
+replication sets, with $41{,}000$ to $147{,}000$ participants, $118$ to $700$
+pathways were significant, the background is sparse, and the specific
+lipoprotein sets stand out at the top without any adjustment for size. That the
+same pathway is first under both conditions---a nearly saturated genome and a
+sparse one---is the strongest evidence in this paper that the ordering reflects
+biology rather than the properties of a particular dataset.
+
+\emph{The leading genes replicate as loci.} Figure~\ref{fig:replication}C,D
+shows every gene ranked in the top twenty of the combined score in at least
+three of the five ancestry groups. Seven genes were in the top twenty in all
+five for each trait. For LDL-C these were \textit{LDLR}, \textit{APOE},
+\textit{PCSK9} and \textit{APOB}, all established genes, together with
+\textit{APOC1}, \textit{PVRL2} and \textit{TOMM40}. \textit{LDLR} ranked first
+in the European, African and Hispanic sets, second in the South Asian set and
+third in the East Asian set; \textit{APOE} was first in the East Asian set and
+\textit{APOB} first in the South Asian set. For HDL-C they were \textit{ABCA1},
+\textit{CETP}, \textit{LPL} and \textit{LIPC}, all established, together with
+\textit{NLRC5}, \textit{SLC12A3} and \textit{HERPUD1}. \textit{ABCA1} ranked
+first in three ancestry groups and \textit{CETP} in the other two. The
+non-established genes in these lists are, with few exceptions, neighbours of
+an established gene: \textit{APOC1}, \textit{PVRL2} and \textit{TOMM40} lie
+within the \textit{APOE} cluster on chromosome~19, and \textit{NLRC5},
+\textit{HERPUD1} and \textit{SLC12A3} lie next to \textit{CETP} on
+chromosome~16. What replicates across ancestries is therefore the locus, and
+within each locus the established gene was usually the first-ranked one. Some
+genes ranked highly in only some groups; \textit{LPA}, for example, ranked
+second for LDL-C in the African set and sixth in the European set but between
+$37$ and $44$ in the other three.
+
+\emph{The combined score beats GWAS association alone in every set.} Across
+all ten trait--ancestry sets, the established genes had a better median rank
+under the combined score than under the GWAS layer alone, by a wide margin in
+the African sets ($15$ against $76$ for LDL-C, $13.5$ against $68$ for HDL-C)
+and in every case at least modestly (Supplementary
+Figure~\ref{fig:supp_replication}A). The combined score placed at least as
+many established genes in the top twenty as GWAS alone in all ten sets, and
+more in eight (Supplementary Figure~\ref{fig:supp_replication}B); the MAGMA
+layer alone was the weakest of the three in seven of the ten. The gain from
+combining layers seen in the European data (Section~3.9.4) is therefore not a
+property of that dataset.
+
+Taken together, the replication shows that the method returns the same leading
+pathway and the same leading loci across two related phenotypes, five ancestry
+groups, up to thirty-two-fold differences in sample size and different LD
+structures, using inputs that share no individuals with the discovery data.
+The caveat of Section~4.3 still applies to the gene-level comparison: the
+established genes are, partly by construction, members of curated pathways.
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig17_replication.png}{\textwidth}{Replication of the lipid results
+in five GLGC 2021 ancestry groups. Each column is an independent ancestry-specific
+GWAS analysed with the identical pipeline; $n$ is the number of participants and
+``sig.'' the number of Reactome pathways significant under Westfall--Young
+family-wise control ($\alpha=0.05$). Cell values are ranks; shading darkens
+toward rank~1. \textbf{A},~\textbf{B}~Pathways: the five leading pathways of
+each ancestry group, with their rank among all $1{,}390$ pathways in every
+group, for LDL-C (\textbf{A}) and HDL-C (\textbf{B}); bold rows are the
+plasma-lipoprotein subtree. \textbf{C},~\textbf{D}~Genes: every gene ranked in
+the top twenty of the combined score in at least three of the five groups, with
+its overall rank among about $18{,}500$ genes in each; bold genes are the
+established genes named before the analysis, and the last column counts the
+groups in which the gene is in the top twenty.}{fig:replication}
+\end{figure*}
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \subsection*{3.10 Sorghum bioenergy traits: calibration under strong linkage
 disequilibrium}
@@ -1977,6 +2098,18 @@ Section~3.9: median rank, among all $\nLipNgenes$ genes, of the pre-specified
 established genes for LDL-C (\textbf{C}) and HDL-C (\textbf{D}); lower is
 better. Rankings are stable across the grid, and recovery improves with the
 pathway weight in both the simulation and the real data.}{fig:weights}
+\end{figure*}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{SuppFig_replication_established.png}{\textwidth}{Established lipid
+genes under the combined candidate score and under each single layer, in the
+five GLGC 2021 ancestry groups. \textbf{A}~Median rank, among about $18{,}500$
+genes, of the $13$ LDL-C and $12$ HDL-C established genes named before the
+analysis (log scale; lower is better). \textbf{B}~Number of those genes in the
+top twenty. The combined score has the best median rank in all ten
+trait--ancestry sets and places at least as many established genes in the top
+twenty as GWAS association alone in every set.}{fig:supp_replication}
 \end{figure*}
 
 \begin{figure*}[!t]

@@ -89,6 +89,24 @@ if (SPECIES == "maize") {
               "SORT1","TM6SF2","LPA","TRIB1"),
     character(0))
 }
+## Replication ancestries (GLGC AFR, EAS, SAS, HIS): ANC=afr|eas|sas|his, with
+## SPECIES=human. Same formula, weights, Reactome sets and gene locations; the
+## MAGMA results, WY result, SNP-to-gene annotation (that ancestry's 1000G
+## panel; HIS uses AMR) and GWAS file are the ancestry's own. Outputs are named
+## 06_candidate_genes_<trait>_<anc>.csv. ANC=eur (default) changes nothing.
+ANC <- tolower(Sys.getenv("ANC", "eur"))
+if (SPECIES == "human" && ANC != "eur") {
+  if (!ANC %in% c("afr", "eas", "sas", "his"))
+    stop("ANC must be eur, afr, eas, sas or his", call. = FALSE)
+  PANEL <- c(afr = "afr", eas = "eas", sas = "sas", his = "amr")[[ANC]]
+  GENES_OUT   <- file.path(BASE, "results/human_LDL", sprintf("magma_%s_%s", TRAIT, ANC),
+                           sprintf("%s_%s.genes.out", TRAIT, ANC))
+  WY_CSV      <- file.path(BASE, "results/human_LDL/catfish",
+                           sprintf("%s_%s_reactome_5comp_westfall_young.csv", TRAIT, ANC))
+  GENES_ANNOT <- file.path(DATA_D, sprintf("g1000_%s.genes.annot", PANEL))
+  TAG         <- paste0(TRAIT, "_", ANC)
+}
+
 ## every path above can still be overridden individually
 GENES_OUT  <- Sys.getenv("MAGMA_GENES_OUT", GENES_OUT)
 WY_CSV     <- Sys.getenv("WY_CSV",          WY_CSV)
@@ -100,7 +118,9 @@ GENES_ANNOT <- Sys.getenv("MAGMA_GENES_ANNOT", GENES_ANNOT)
 ## optional: SNP-level GWAS results.  If absent, S_GWAS is set to 0 for every
 ## gene and the score reduces to the MAGMA + pathway layers.  Expected columns
 ## are configurable below.
-GWAS_FILE <- Sys.getenv("GWAS_FILE", if (SPECIES == "human") {
+GWAS_FILE <- Sys.getenv("GWAS_FILE", if (SPECIES == "human" && ANC != "eur") {
+  file.path(DATA_D, sprintf("lipids/%s_%s.neglog10.txt", TRAIT, ANC))
+} else if (SPECIES == "human") {
   cand <- c(file.path(DATA_D, sprintf("lipids/%s_eur.neglog10.txt", TRAIT)),
             file.path(DATA_D, "ldl/ldl_eur.neglog10.txt"),
             file.path(DATA_D, sprintf("lipids/%s_eur.magma.pval", TRAIT)),
@@ -109,6 +129,15 @@ GWAS_FILE <- Sys.getenv("GWAS_FILE", if (SPECIES == "human") {
   hit <- cand[file.exists(cand)]
   if (length(hit)) hit[1] else ""
 } else "")
+if (SPECIES == "human" && ANC != "eur") {
+  ## no silent fallback for the replication runs: every layer must be present
+  need <- c(GENES_OUT, WY_CSV, GENES_ANNOT, GWAS_FILE)
+  miss <- need[!file.exists(need)]
+  if (length(miss))
+    stop("missing input(s) for ", TAG, ":\n  ", paste(miss, collapse = "\n  "),
+         "\n(copy the .neglog10.txt and g1000_<panel>.genes.annot files from the cluster)",
+         call. = FALSE)
+}
 CHUNK <- as.integer(Sys.getenv("ANNOT_CHUNK", "2000"))
 GWAS_SNP_COL <- Sys.getenv("GWAS_SNP_COL", "SNP")
 GWAS_CHR_COL <- Sys.getenv("GWAS_CHR_COL", "Chr")
