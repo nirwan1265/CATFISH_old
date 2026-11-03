@@ -94,9 +94,10 @@ TARGETS <- list(
           "PLTP","LPL","ANGPTL4","CUBN"))
 LIPO <- "^REACTOME_(PLASMA_LIPOPROTEIN|LDL_|HDL_|VLDL_|VLDLR_|CHYLOMICRON_)"
 
-## rank bins, black (rank 1) to near-white
+## rank bins: one viridis scale shared by every column (rank 1 = dark purple,
+## 21-50 = yellow-green); ranks beyond 50 drop to pale grey so they recede.
 BINS   <- c("1", "2-3", "4-6", "7-10", "11-20", "21-50", ">50")
-GREYS  <- setNames(c("#000000", "#2b2b2b", "#525252", "#737373", "#969696", "#c8c8c8", "#ededed"), BINS)
+GREYS  <- setNames(c(viridisLite::viridis(6, end = 0.9), "#ececec"), BINS)
 binr   <- function(r) factor(BINS[cut(r, c(0, 1, 3, 6, 10, 20, 50, Inf), labels = FALSE)], levels = BINS)
 inkr   <- function(r) ifelse(r <= 10, "white", "black")
 pretty_pw <- function(x) {
