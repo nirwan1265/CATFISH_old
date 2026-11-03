@@ -12,14 +12,30 @@
 # =============================================================================
 set -euo pipefail
 
+#   ANC=AFR TRAIT=LDL bash 13_munge_trait.sh   # other ancestries (default EUR);
+#   SNPs are filtered to that ancestry's 1000G panel (HIS uses the AMR panel)
 TRAIT="${TRAIT:?set TRAIT, e.g. TRAIT=HDL}"
+USER_BIM="${BIM:-}"
 . "$(dirname "$0")/env.sh"
+# ancestry -> GLGC file suffix and MAGMA 1000G panel (default EUR = unchanged)
+ANC="$(echo "${ANC:-EUR}" | tr '[:lower:]' '[:upper:]')"
+a="$(echo "$ANC" | tr '[:upper:]' '[:lower:]')"
+case "$ANC" in
+  EUR) SUFFIX="HRC_1KGP3_others_ALL"; PANEL=eur ;;
+  AFR) SUFFIX="HRC_1KGP3_others_ALL"; PANEL=afr ;;
+  SAS) SUFFIX="HRC_1KGP3_others_ALL"; PANEL=sas ;;
+  EAS) SUFFIX="1KGP3_ALL";            PANEL=eas ;;
+  HIS) SUFFIX="1KGP3_ALL";            PANEL=amr ;;   # Hispanic -> 1000G AMR panel
+  *) echo "ANC must be EUR, AFR, EAS, SAS or HIS (got $ANC)" >&2; exit 1 ;;
+esac
+[ -n "$USER_BIM" ] || BIM="$DATA/g1000_${PANEL}.bim"
 
 t="$(echo "$TRAIT" | tr '[:upper:]' '[:lower:]')"
 TDIR="$DATA/$t"                      # mirrors the existing $DATA/ldl/
-IN="${IN:-$TDIR/${TRAIT}_INV_EUR_HRC_1KGP3_others_ALL.meta.singlevar.results.gz}"
-PVAL="$TDIR/${t}_eur.magma.pval"
-NLOG="$TDIR/${t}_eur.neglog10.txt"
+IN="${IN:-$TDIR/${TRAIT}_INV_${ANC}_${SUFFIX}.meta.singlevar.results.gz}"
+PVAL="$TDIR/${t}_${a}.magma.pval"
+NLOG="$TDIR/${t}_${a}.neglog10.txt"
+echo "trait=$TRAIT ancestry=$ANC panel=g1000_$PANEL"
 mkdir -p "$TDIR"
 
 [ -f "$IN" ]  || { echo "missing: $IN  (run 12_fetch_glgc.sh first)" >&2; exit 1; }

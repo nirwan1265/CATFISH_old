@@ -18,7 +18,12 @@ set -euo pipefail
 
 ROOT=/share/maize/ntanduk/CATFISH
 MAGMA=/rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/magma_v1.10/magma
-PREFIX=$ROOT/magma/ldl_eur
+# Same TRAIT / ANC / OUTDIR as the 04 run (defaults: ldl, eur, $ROOT/magma), e.g.
+#   TRAIT=hdl ANC=afr OUTDIR=$ROOT/magma_hdl_afr bsub -J merge_hdl_afr < 05_magma_merge_LSF.sh
+TRAIT=${TRAIT:-ldl}
+ANC=${ANC:-eur}
+OUTDIR=${OUTDIR:-$ROOT/magma}
+PREFIX=$OUTDIR/${TRAIT}_${ANC}
 
 mkdir -p logs
 

@@ -22,7 +22,12 @@ TRAIT="${TRAIT:?set TRAIT, e.g. TRAIT=hdl}"
 
 ROOT=/share/maize/ntanduk/CATFISH
 MAGMA=/rsstu/users/r/rrellan/sara/nirwan_backup/ntanduk/magma_v1.10/magma
-PREFIX=$ROOT/magma_$TRAIT/${TRAIT}_eur
+# same ANC as the 14 run (default EUR, unchanged):
+#   ANC=AFR TRAIT=ldl bsub -J merge_ldl_afr < 15_magma_merge_trait_LSF.sh
+ANC="$(echo "${ANC:-EUR}" | tr '[:lower:]' '[:upper:]')"
+a="$(echo "$ANC" | tr '[:upper:]' '[:lower:]')"
+if [ "$ANC" = "EUR" ]; then PREFIX=$ROOT/magma_$TRAIT/${TRAIT}_eur
+else PREFIX=$ROOT/magma_${TRAIT}_$a/${TRAIT}_$a; fi
 
 mkdir -p logs
 

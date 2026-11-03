@@ -9,16 +9,20 @@
 ## batch file carries only its own.
 ##
 ##   TRAIT=hdl Rscript 17_prep_trait_catfish.R
+##   TRAIT=ldl ANC=afr Rscript 17_prep_trait_catfish.R   # replication ancestries
+##     (default ANC=eur: paths and names unchanged)
 ## =============================================================================
 suppressPackageStartupMessages({ library(CATFISH) })
 
 TRAIT <- tolower(Sys.getenv("TRAIT", "hdl"))
+ANC   <- tolower(Sys.getenv("ANC", "eur"))
 BASE  <- path.expand(Sys.getenv("CATFISH_BASE", "~/Documents/Github/MAGCAT"))
 MDIR  <- Sys.getenv("MAGMA_DIR",
-                    file.path(BASE, "results/human_LDL", paste0("magma_", TRAIT)))
-RAW   <- file.path(MDIR, sprintf("%s_eur.genes.raw", TRAIT))
+                    file.path(BASE, "results/human_LDL",
+                              if (ANC == "eur") paste0("magma_", TRAIT) else paste0("magma_", TRAIT, "_", ANC)))
+RAW   <- file.path(MDIR, sprintf("%s_%s.genes.raw", TRAIT, ANC))
 OUT_D <- file.path(BASE, "results/human_LDL/catfish")
-OUT   <- file.path(OUT_D, sprintf("%s_eur.cor_pairs.txt", TRAIT))
+OUT   <- file.path(OUT_D, sprintf("%s_%s.cor_pairs.txt", TRAIT, ANC))
 dir.create(OUT_D, recursive = TRUE, showWarnings = FALSE)
 
 if (!file.exists(RAW)) {
@@ -26,8 +30,8 @@ if (!file.exists(RAW)) {
   stop(sprintf(paste0("merged file not found: %s\n",
        "  %d per-chromosome batch files are present, but the merge step has\n",
        "  not been run (or its output was not copied back). On the cluster:\n",
-       "    TRAIT=%s bsub < 15_magma_merge_trait_LSF.sh"),
-       RAW, length(batches), TRAIT), call. = FALSE)
+       "    ANC=%s TRAIT=%s bsub < 15_magma_merge_trait_LSF.sh"),
+       RAW, length(batches), ANC, TRAIT), call. = FALSE)
 }
 
 cat(sprintf("trait=%s\nreading %s\n", TRAIT, RAW))
@@ -45,7 +49,7 @@ magma_genesraw_to_cor_pairs_banded(
 cat(sprintf("wrote %s\n", OUT))
 
 ## sanity check: how many chromosomes are actually represented?
-go <- file.path(MDIR, sprintf("%s_eur.genes.out", TRAIT))
+go <- file.path(MDIR, sprintf("%s_%s.genes.out", TRAIT, ANC))
 if (file.exists(go)) {
   g <- utils::read.table(go, header = TRUE, stringsAsFactors = FALSE)
   cp <- utils::read.delim(OUT, header = TRUE, stringsAsFactors = FALSE)

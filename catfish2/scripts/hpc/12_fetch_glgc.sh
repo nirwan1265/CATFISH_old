@@ -17,10 +17,22 @@
 #
 #   bash 12_fetch_glgc.sh            # HDL logTG TC
 #   TRAITS="HDL logTG TC nonHDL" bash 12_fetch_glgc.sh
+#   ANC=AFR TRAITS="LDL HDL" bash 12_fetch_glgc.sh   # other ancestries (default EUR)
 # =============================================================================
 set -euo pipefail
 
 . "$(dirname "$0")/env.sh"
+# ancestry -> GLGC file suffix and MAGMA 1000G panel (default EUR = unchanged)
+ANC="$(echo "${ANC:-EUR}" | tr '[:lower:]' '[:upper:]')"
+a="$(echo "$ANC" | tr '[:upper:]' '[:lower:]')"
+case "$ANC" in
+  EUR) SUFFIX="HRC_1KGP3_others_ALL"; PANEL=eur ;;
+  AFR) SUFFIX="HRC_1KGP3_others_ALL"; PANEL=afr ;;
+  SAS) SUFFIX="HRC_1KGP3_others_ALL"; PANEL=sas ;;
+  EAS) SUFFIX="1KGP3_ALL";            PANEL=eas ;;
+  HIS) SUFFIX="1KGP3_ALL";            PANEL=amr ;;   # Hispanic -> 1000G AMR panel
+  *) echo "ANC must be EUR, AFR, EAS, SAS or HIS (got $ANC)" >&2; exit 1 ;;
+esac
 
 BASE="https://csg.sph.umich.edu/willer/public/glgc-lipids2021/results/ancestry_specific"
 TRAITS="${TRAITS:-HDL logTG TC}"
@@ -31,7 +43,7 @@ TRAITS="${TRAITS:-HDL logTG TC}"
 if ! curl -fsSI --max-time 20 "$BASE/" >/dev/null 2>&1; then
   echo "cannot reach $BASE from this host." >&2
   echo "  Either run this on a host with outbound HTTPS and copy the files to" >&2
-  echo "  $OUT, or use a data-transfer node if the cluster has one." >&2
+  echo "  $DATA/<trait>/, or use a data-transfer node if the cluster has one." >&2
   exit 1
 fi
 
@@ -39,7 +51,7 @@ for T in $TRAITS; do
   t="$(echo "$T" | tr '[:upper:]' '[:lower:]')"
   OUT="$DATA/$t"                    # mirrors the existing $DATA/ldl/
   mkdir -p "$OUT"
-  F="${T}_INV_EUR_HRC_1KGP3_others_ALL.meta.singlevar.results.gz"
+  F="${T}_INV_${ANC}_${SUFFIX}.meta.singlevar.results.gz"
   if [ -s "$OUT/$F" ]; then
     echo "already have $F"; continue
   fi

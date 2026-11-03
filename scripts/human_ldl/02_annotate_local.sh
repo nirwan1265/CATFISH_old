@@ -12,10 +12,14 @@ set -euo pipefail
 MAGMA="${MAGMA:-$HOME/Documents/software/magma_v1.10_mac/magma}"
 DATA="${DATA:-$HOME/Documents/Github/MAGCAT_data}"
 
-BFILE="$DATA/g1000_eur"
+# REF: MAGMA 1000G reference prefix (default g1000_eur). The annotation depends
+# only on the reference panel, so one file per ancestry serves both traits.
+#   REF=g1000_afr PREFIX=$DATA/g1000_afr bash 02_annotate_local.sh
+REF="${REF:-g1000_eur}"
+BFILE="$DATA/$REF"
 GENELOC="$DATA/NCBI37.3.gene.loc"
-SNPLOC="$DATA/g1000_eur.snploc"
-PREFIX="$DATA/ldl_eur"
+SNPLOC="$DATA/$REF.snploc"
+PREFIX="${PREFIX:-$DATA/ldl_eur}"
 WINDOW="10,10"          # matches the sorghum analysis
 
 [ -x "$MAGMA" ] || { echo "MAGMA not found at $MAGMA" >&2; exit 1; }

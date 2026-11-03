@@ -14,12 +14,32 @@
 #              8 POOLED_ALT_AF 9 EFFECT_SIZE 10 SE 11 pvalue_neg_log10
 #              12 pvalue 13 pvalue_neg_log10_GC 14 pvalue_GC
 # Output cols: SNP P N          (overwrites OUT each run)
+#
+# Parameters (env; defaults reproduce the original LDL-C EUR run):
+#   TRAIT     ldl | hdl                       (default ldl)
+#   GLGC_ANC  EUR | AFR | EAS | SAS | HIS     (default EUR; GLGC ancestry code)
+#   REF       MAGMA 1000G reference prefix    (default g1000_eur; use g1000_afr,
+#             g1000_eas, g1000_sas, g1000_amr for AFR, EAS, SAS, HIS)
+#   IN, BIM, OUT  explicit paths, override everything above
+# e.g.  TRAIT=hdl GLGC_ANC=AFR REF=g1000_afr bash 01_munge_glgc_ldl.sh
 set -euo pipefail
 
 DATA="${DATA:-$HOME/Documents/Github/MAGCAT_data}"
-IN="$DATA/ldl/LDL_INV_EUR_HRC_1KGP3_others_ALL.meta.singlevar.results.gz"
-BIM="$DATA/g1000_eur.bim"
-OUT="$DATA/ldl/ldl_eur.magma.pval"
+TRAIT="${TRAIT:-ldl}"
+GLGC_ANC="${GLGC_ANC:-EUR}"
+REF="${REF:-g1000_eur}"
+TU=$(echo "$TRAIT" | tr '[:lower:]' '[:upper:]')
+AL=$(echo "$GLGC_ANC" | tr '[:upper:]' '[:lower:]')
+# GLGC names: <TRAIT>_INV_<ANC>_HRC_1KGP3_others_ALL... (AFR, EUR, SAS) or
+# <TRAIT>_INV_<ANC>_1KGP3_ALL... (EAS, HIS); the glob matches both and not the
+# without_UKB_ / nonFinnish_only_ variants.
+if [ -z "${IN:-}" ]; then
+  IN=$(ls "$DATA/$TRAIT/${TU}_INV_${GLGC_ANC}_"*ALL.meta.singlevar.results.gz 2>/dev/null | head -1 || true)
+  [ -n "$IN" ] || IN="$DATA/$TRAIT/${TU}_INV_${GLGC_ANC}_*ALL.meta.singlevar.results.gz"
+fi
+BIM="${BIM:-$DATA/$REF.bim}"
+OUT="${OUT:-$DATA/$TRAIT/${TRAIT}_${AL}.magma.pval}"
+echo "trait=$TRAIT  ancestry=$GLGC_ANC  reference=$REF"
 
 [ -f "$IN" ]  || { echo "missing: $IN"  >&2; exit 1; }
 [ -f "$BIM" ] || { echo "missing: $BIM" >&2; exit 1; }

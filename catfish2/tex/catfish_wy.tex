@@ -286,33 +286,11 @@ CATFISH is implemented as an R package and is freely available at
 
 \subsection*{1.1 Pathway signal archetypes}
 
-CATFISH was developed to capture heterogeneous pathway-level signal patterns,
-ranging from highly sparse gene-level associations to weak, broadly distributed
-enrichment. We define five conceptual pathway signal archetypes to clarify how
-different gene-level profiles are expected to favor different component tests.
-These archetypes are not intended as empirically learned classes of real
-pathways but as statistical templates for interpreting test behavior and
-motivating the complementary design of CATFISH.
+CATFISH was developed to capture heterogeneous pathway-level signal patterns, ranging from highly sparse gene-level associations to weak, broadly distributed enrichment. We define five conceptual pathway signal archetypes to clarify how different gene-level profiles are expected to favor different component tests. These archetypes are not intended as empirically learned classes of real pathways but as statistical templates for interpreting test behavior and motivating the complementary design of CATFISH.
 
-For interpretive clarity, we consider a pathway-level working null and
-alternative. Under the null, gene-level evidence within a pathway matches the
-background distribution after accounting for dependence, with no systematic
-excess of small $p$-values. Under the alternative, the pathway shows enrichment
-through one or more forms of excess association evidence, including extreme
-individual genes, broad moderate signals, weak diffuse shifts, or mixed
-patterns. Figure~\ref{fig:archetypes} illustrates the five ranked signal shapes,
-and Table~\ref{tab:archetype_summary} summarizes their statistical profiles and
-expected CATFISH component sensitivity.
+For interpretive clarity, we consider a pathway-level working null and alternative. Under the null, gene-level evidence within a pathway matches the background distribution after accounting for dependence, with no systematic excess of small $p$-values. Under the alternative, the pathway shows enrichment through one or more forms of excess association evidence, including extreme individual genes, broad moderate signals, weak diffuse shifts, or mixed patterns. Figure~\ref{fig:archetypes} illustrates the five ranked signal shapes, and Table~\ref{tab:archetype_summary} summarizes their statistical profiles and expected CATFISH component sensitivity.
 
-In short, Strong Sparse Signal (SSS) refers to pathways driven by a few strongly
-associated genes that favor extreme-tail methods. Single-Gene Proxy (SGP), a
-special case of SSS, is composed of a signal dominated by one leading gene, but
-it should be interpreted cautiously as gene-centric. Moderate Dense Signal (MDS)
-has many modest, consistent gene associations that favor aggregation methods.
-Weak Diffuse Enrichment (WDE) constitutes subtle pathway-wide shifts, with few
-individually significant genes, favoring distributed-signal methods. Mixed
-Signal Architecture (MSA) represents one or a few strong signals plus broader
-moderate support that favor balanced methods.
+In short, Strong Sparse Signal (SSS) refers to pathways driven by a few strongly associated genes that favor extreme-tail methods. Single-Gene Proxy (SGP), a special case of SSS, is composed of a signal dominated by one leading gene, but it should be interpreted cautiously as gene-centric. Moderate Dense Signal (MDS) has many modest, consistent gene associations that favor aggregation methods. Weak Diffuse Enrichment (WDE) constitutes subtle pathway-wide shifts, with few individually significant genes, favoring distributed-signal methods. Mixed Signal Architecture (MSA) represents one or a few strong signals plus broader moderate support that favor balanced methods.
 
 \begin{figure*}[!t]
 \centering
@@ -368,14 +346,7 @@ minP, ACAT \\
 \subsection*{2.1 Gene-level inputs and component tests}
 
 For a pathway $S$ containing $m=|S|$ genes, let $p_g$ denote the gene-level
-association $p$-value for gene $g\in S$ and $Z_g$ the corresponding gene-level
-$Z$-statistic. We write $\mathbf{p}_S=(p_1,\dots,p_m)$ and
-$\mathbf{Z}_S=(Z_1,\dots,Z_m)$. Gene-level statistics are obtained with MAGMA
-\citep{deLeeuw2015}, which aggregates SNP-level GWAS evidence across variants
-assigned to a gene while accounting for LD, gene size, and local marker density,
-and which additionally returns the gene--gene correlation matrix induced by LD.
-These quantities are the common inputs for every CATFISH component test and for
-both calibration layers.
+association $p$-value for gene $g\in S$ and $Z_g$ the corresponding gene-level $Z$-statistic. We write $\mathbf{p}_S=(p_1,\dots,p_m)$ and $\mathbf{Z}_S=(Z_1,\dots,Z_m)$. Gene-level statistics are obtained with MAGMA \citep{deLeeuw2015}, which aggregates SNP-level GWAS evidence across variants assigned to a gene while accounting for LD, gene size, and local marker density, and which additionally returns the gene--gene correlation matrix induced by LD. These quantities are the common inputs for every CATFISH component test and for both calibration layers.
 
 Each pathway is assessed using five complementary component tests (Table~\ref{tab:components}): ACAT \citep{Liu2019ACATV,Liu2020ACAT}, Fisher \citep{Fisher1932}, adaptive soft-thresholding TFisher \citep{Zhang2020TFisher}, minP, and Stouffer \citep{Stouffer1949}. Together, they cover the archetypes in Section~1.1 and apply directly to gene-level $p$-values or $Z$-scores without external weights or pathway-specific tuning. We combine the component $p$-values into a single omnibus statistic via an ACAT-type cross-method operator $\mathcal{O}(\cdot)$. This omnibus is a pathway-level summary of evidence across components, not an additional gene-level test.
 
@@ -445,16 +416,10 @@ The construction relies on three assumptions: (i) \emph{Approximate normality}: 
 \subsection*{2.3 Calibration and family-wise control from a shared correlated null}
 
 CATFISH obtains two different $p$-values for every pathway: a marginal one,
-which asks whether that pathway is enriched, and a family-wise one, which asks
-whether evidence this strong would appear anywhere among the $K$ pathways
-tested by chance. Both are read from a single set of resampled null draws. The
-procedure has four steps.
+which asks whether that pathway is enriched, and a family-wise one, which asks whether evidence this strong would appear anywhere among the $K$ pathways tested by chance. Both are read from a single set of resampled null draws. The procedure has four steps.
 
 \paragraph{Step 1: generate the null.}
-Gene--gene correlations are read from MAGMA's \texttt{.genes.raw} output as a
-list of gene pairs and their correlations. For each chromosome $c$ containing
-$m_c$ genes we form an $m_c\times m_c$ correlation matrix $R_c$ by starting
-from the identity and filling in the reported pairs,
+Gene--gene correlations are read from MAGMA's \texttt{.genes.raw} output as a list of gene pairs and their correlations. For each chromosome $c$ containing $m_c$ genes we form an $m_c\times m_c$ correlation matrix $R_c$ by starting from the identity and filling in the reported pairs,
 \[
 R_c = I_{m_c} + \sum_{(i,j)\in\mathcal{P}_c}
       r_{ij}\left(e_ie_j^{\top}+e_je_i^{\top}\right),
@@ -466,19 +431,12 @@ Writing $R_c=U_c^{\top}U_c$ for the Cholesky factor, replicate $b$ draws
 \mathbf{Z}^{(b)}_c = U_c^{\top}\boldsymbol{\varepsilon},\qquad
 \boldsymbol{\varepsilon}\sim\mathcal{N}(0,I_{m_c}),
 \]
-independently per chromosome, and the concatenation $\mathbf{Z}^{(b)}$ is one
-genome-wide null realisation carrying the estimated LD structure. Gene-level
-null $p$-values follow by the Gaussian copula
-$p_g^{(b)}=1-\Phi(Z_g^{(b)})$, matching MAGMA's one-sided sign convention. This
-is repeated for $b=1,\dots,B$.
+independently per chromosome, and the concatenation $\mathbf{Z}^{(b)}$ is one genome-wide null realisation carrying the estimated LD structure. Gene-level null $p$-values follow by the Gaussian copula $p_g^{(b)}=1-\Phi(Z_g^{(b)})$, matching MAGMA's one-sided sign convention. This is repeated for $b=1,\dots,B$.
 
 We draw genome-wide, not pathway-by-pathway, because Step~4 requires all $K$ pathways to be scored on the \emph{same} realisation so shared genes perturb them jointly. Drawing each pathway from its own correlation submatrix would be marginally correct but would remove the dependence structure Step~4 needs.
 
 \paragraph{Step 2: score every pathway on every replicate.}
-For each replicate we recompute all five component statistics and the omnibus
-operator $\mathcal{O}(\cdot)$ for every pathway in the family
-$\mathcal{F}=\{S_1,\dots,S_K\}$, giving a $B\times K$ matrix of null omnibus
-values
+For each replicate we recompute all five component statistics and the omnibus operator $\mathcal{O}(\cdot)$ for every pathway in the family $\mathcal{F}=\{S_1,\dots,S_K\}$, giving a $B\times K$ matrix of null omnibus values
 \[
 Q^{(b)}_k = \mathcal{O}\!\left(\mathbf{p}^{(b)}(S_k)\right),
 \qquad b=1,\dots,B,\quad k=1,\dots,K .
@@ -486,9 +444,7 @@ Q^{(b)}_k = \mathcal{O}\!\left(\mathbf{p}^{(b)}(S_k)\right),
 Because all components are recomputed from the same draw, $Q$ preserves within-pathway gene dependence, cross-method dependence, and—since all $K$ pathways share the draw—between-pathway dependence. The observed values $q^{\mathrm{obs}}_k=\mathcal{O}(\mathbf{p}^{\mathrm{obs}}(S_k))$ are computed the same way from the real data. Applying $\mathcal{O}$ to the observed components without resampling yields the uncalibrated analytic omnibus $\mathrm{Omnibus}_{\mathrm{An}}(S_k)=q^{\mathrm{obs}}_k$, which assumes gene independence and serves as the baseline.
 
 \paragraph{Step 3: the marginal \texorpdfstring{$p$}{p}-value.}
-Compare each pathway's observed statistic with its own null values across the
-$B$ replicates. The LD-aware marginal $p$-value is the Monte Carlo tail
-probability
+Compare each pathway's observed statistic with its own null values across the $B$ replicates. The LD-aware marginal $p$-value is the Monte Carlo tail probability
 \[
 \tilde p_k \;=\;
 \frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(Q^{(b)}_k\le q^{\mathrm{obs}}_k\right)}{B+1}.
@@ -500,8 +456,7 @@ Within each replicate, record the smallest statistic across the whole family,
 \[
 M^{(b)} = \min_{1\le k\le K} Q^{(b)}_k ,
 \]
-and compare each observed statistic with the resulting distribution. This gives
-the Westfall--Young adjusted $p$-value \citep{Westfall1993}
+and compare each observed statistic with the resulting distribution. This gives the Westfall--Young adjusted $p$-value \citep{Westfall1993}
 \[
 \tilde p^{\mathrm{WY}}_k \;=\;
 \frac{1+\sum_{b=1}^{B}\mathbf{1}\!\left(M^{(b)}\le q^{\mathrm{obs}}_k\right)}{B+1},
@@ -527,8 +482,7 @@ These changes let the pipeline represent pathway $p$-values down to $e^{-745}\ap
 
 \subsection*{2.5 Candidate-gene prioritization}
 
-The output a biologist acts on is a short list of genes, so CATFISH ranks genes
-by a composite score over three evidence layers:
+The output a biologist acts on is a short list of genes, so CATFISH ranks genes by a composite score over three evidence layers:
 \[
 \mathrm{Score}(g)=S_{\mathrm{GWAS}}(g)+S_{\mathrm{MAGMA}}(g)
 +0.5\,S_{\mathrm{PATH}}(g)+0.3\,B_{\mathrm{hub}}(g).
@@ -536,12 +490,7 @@ by a composite score over three evidence layers:
 Each layer enters by rank rather than by its raw statistic,
 $S_\bullet(g)=-\log_{10}\!\left(r_\bullet(g)/N_\bullet\right)$, where
 $r_{\mathrm{GWAS}}$ is the gene's rank by minimum SNP-level $p$-value,
-$r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$
-the rank of its best pathway by the size-standardised Westfall--Young statistic
-$z_k$ of Section~2.3; rank one is the strongest evidence. The hub term
-$B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in
-several pathways. Genes missing a layer score zero for it, so an absent layer
-neither helps nor penalises.
+$r_{\mathrm{MAGMA}}$ its rank by gene-level $p$-value, and $r_{\mathrm{PATH}}$ the rank of its best pathway by the size-standardised Westfall--Young statistic $z_k$ of Section~2.3; rank one is the strongest evidence. The hub term $B_{\mathrm{hub}}(g)=\log_{10}(n_{\mathrm{path}}(g)+1)$ rewards membership in several pathways. Genes missing a layer score zero for it, so an absent layer neither helps nor penalises.
 
 We use ranks instead of $-\log_{10}p$ to make layers with different tail behaviour comparable and to avoid the $p$-value floors in Section~2.4. Pathway evidence is halved because the pathway $p$-value is a set-level statistic shared across member genes; the hub term is intentionally secondary. We fixed the weights \emph{a priori} and assessed them afterwards over a grid, $w_{\mathrm{path}}\in\{0,0.25,0.5,0.75,1\}$ and $w_{\mathrm{hub}}\in\{0,0.1,\dots,0.5\}$, in a truth-planted simulation and in the real analyses of Section~3.9 (Supplementary Figure~\ref{fig:weights}). The simulation draws $400$ replicate datasets of $500$ genes and $50$ pathways, plants causal genes concentrated in five pathways, and generates correlated GWAS-, MAGMA- and pathway-level evidence for them \citep{Tandukar2025Thesis}. Rankings were stable across the grid: the Spearman correlation of each full ranking with the default ranking was at least $0.986$, and the top twenty genes overlapped the default top twenty by at least $88\%$. Recovery of planted causal genes in the top twenty rose steadily with the pathway weight, from $0.71$ to $0.85$, and was $0.80$ at the defaults, so the defaults are not the optimum of that simulation. They are a deliberately conservative middle value: the pathway layer is set-level evidence shared by every member gene and, in curated databases, partly encodes prior knowledge, so it should not outweigh direct genetic evidence. We did not re-tune the weights on the validation genes of Section~3.9.4.
 
@@ -558,17 +507,10 @@ Simulations are run on the omnibus statistic under its null, except where a sign
 We miscalibrate $k$ of five components by replacing each affected component’s $p$-value with $p^{\gamma}$, and test whether the omnibus and its calibration remain valid. We run both corruption directions: for $0<p<1$, $\gamma<1$ yields $p^{\gamma}>p$ (conservative) and $\gamma>1$ yields $p^{\gamma}<p$ (anti-conservative), the latter being most relevant for false positives. We use $\gamma\in\{0.7,1.4\}$; sweep $k=0,\dots,4$; evaluate up to three component combinations per $k$; and cross with the same LD regimes at $m\in\{20,50\}$. We apply corruption to both null replicates and observed statistics, allowing resampling calibration to absorb it.
 
 \item \textbf{Leave-one-out component sensitivity} (\texttt{03\_adaptive\_loo.R}).
-We remove each component in turn, recompute the null bank and the calibration
-from scratch, and measure the change in type~I error and $\lambda$. This
-isolates how much each component contributes to, or destabilises, the calibrated
-omnibus, and identifies components whose removal would change inference.
+We remove each component in turn, recompute the null bank and the calibration from scratch, and measure the change in type~I error and $\lambda$. This isolates how much each component contributes to, or destabilizes, the calibrated omnibus, and identifies components whose removal would change inference.
 
 \item \textbf{Per-component calibration} (\texttt{09\_component\_calibration.R}).
-Rather than combining, we calibrate each of the five components against its own
-null and report analytic and calibrated type~I error, family-wise rate and
-$\lambda$ per component. This identifies which statistics LD actually breaks and
-whether a single calibrated component is usable in place of the omnibus when the
-signal architecture is known in advance.
+Rather than combining, we calibrate each of the five components against its own null and report analytic and calibrated type~I error, family-wise rate and $\lambda$ per component. This identifies which statistics LD actually breaks and whether a single calibrated component is usable in place of the omnibus when the signal architecture is known in advance.
 
 \item \textbf{Robustness to an incomplete correlation file}
 (\texttt{08\_missing\_correlation.R}). Data are simulated under the true correlation, but calibration (null bank, marginal $p$-values, and Westfall--Young threshold) uses a matrix where a fraction $\{0,0.25,0.5,0.75,1\}$ of off-diagonal entries is set to zero, mimicking unreported gene pairs. Evaluation draws are shared across missingness levels; only calibration varies. For real data, \texttt{10\_pair\_coverage.R} places a correlation file on this scale by reporting the fraction of within-pathway gene pairs on the same chromosome and close enough to be correlated for which MAGMA reports a value.

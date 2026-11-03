@@ -32,6 +32,10 @@
 #     use_tfisher  TRUE/FALSE             (default FALSE -- TFisher's analytic
 #                                          null is the slow component)
 #   TRAIT=hdl Rscript 18_westfall_young_trait.R 10000 FALSE human
+#   TRAIT=ldl ANC=afr Rscript 18_westfall_young_trait.R 10000 TRUE human
+#     ANC (default eur): GLGC ancestry for the replication runs (afr, eas, sas,
+#     his); reads results/human_LDL/magma_<trait>_<anc>/ and writes
+#     <trait>_<anc>_... outputs. EUR paths and names are unchanged.
 #
 #   2026-10-29: TFisher component corrected to match the simulations and the
 #   package (see .tfisher_log). Statistics otherwise unchanged; B, the window,
@@ -56,23 +60,25 @@ DATA_D <- path.expand("~/Documents/Github/MAGCAT_data")
 RES    <- path.expand("~/Documents/Research/results/MAGMA/MAGCAT")
 
 TRAIT <- tolower(Sys.getenv("TRAIT", "ldl"))
+ANC   <- tolower(Sys.getenv("ANC", "eur"))
 
 if (SPECIES == "human") {
   ## LDL lives in the original directory layout; the other GLGC traits in a
   ## per-trait magma_<trait>/ directory beside it. Everything else -- the
   ## Reactome sets, the window, the minimum set size -- is identical, which is
   ## what makes the traits comparable.
-  MDIR <- if (TRAIT == "ldl") file.path(BASE, "results/human_LDL/magma")
+  MDIR <- if (ANC != "eur") file.path(BASE, "results/human_LDL", paste0("magma_", TRAIT, "_", ANC))
+          else if (TRAIT == "ldl") file.path(BASE, "results/human_LDL/magma")
           else file.path(BASE, "results/human_LDL", paste0("magma_", TRAIT))
-  GENES_FILES <- file.path(MDIR, sprintf("%s_eur.genes.out", TRAIT))
+  GENES_FILES <- file.path(MDIR, sprintf("%s_%s.genes.out", TRAIT, ANC))
   P_COL     <- "P"
   CORPAIRS  <- file.path(BASE, "results/human_LDL/catfish",
-                         sprintf("%s_eur.cor_pairs.txt", TRAIT))
+                         sprintf("%s_%s.cor_pairs.txt", TRAIT, ANC))
   SETS      <- file.path(DATA_D, "c2.cp.reactome.v2026.2.Hs.entrez.sets.annot")
   OUT_D     <- file.path(BASE, "results/human_LDL/catfish")
   ## the component set goes in the filename: a 5-component run must not
   ## overwrite the 4-component one, since the pair IS the TFisher ablation
-  TAG       <- sprintf("%s_eur_reactome_%dcomp", TRAIT,
+  TAG       <- sprintf("%s_%s_reactome_%dcomp", TRAIT, ANC,
                        if (isTRUE(USE_TFISHER)) 5L else 4L)
   MIN_GENES <- 10L
 } else if (SPECIES == "maize") {
@@ -120,7 +126,7 @@ if (grepl("^maize", SPECIES)) {
 dir.create(OUT_D, recursive = TRUE, showWarnings = FALSE)
 stopifnot(all(file.exists(GENES_FILES)), file.exists(CORPAIRS), file.exists(SETS))
 cat(sprintf("SPECIES = %s%s   (%d gene file(s), P column '%s')\n",
-            SPECIES, if (SPECIES == "human") paste0("  TRAIT = ", TRAIT) else "",
+            SPECIES, if (SPECIES == "human") paste0("  TRAIT = ", TRAIT, "  ANC = ", ANC) else "",
             length(GENES_FILES), P_COL))
 
 set.seed(SEED)
