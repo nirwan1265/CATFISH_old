@@ -78,8 +78,9 @@ plot_theme <- theme_minimal(base_size = 24) +
 heat_theme <- plot_theme + theme(
   axis.line = element_blank(), panel.grid.major = element_blank(),
   panel.grid.minor = element_blank(), axis.title.x = element_blank(),
-  axis.title.y = element_blank(), plot.title = element_text(size = 24, face = "bold", hjust = 0),
-  axis.text.x.top = element_text(size = 20, color = "black", lineheight = 0.9))
+  axis.title.y = element_blank(),
+  axis.text.x.top = element_text(size = 20, color = "black", lineheight = 0.9),
+  plot.title = element_blank())   # no figure titles (journal style)
 
 ANC   <- c("eur", "afr", "eas", "sas", "his")
 ANC_L <- c(eur = "EUR", afr = "AFR", eas = "EAS", sas = "SAS", his = "HIS")
@@ -238,7 +239,7 @@ pB <- ggplot(long, aes(anc, top, fill = method)) +
        title = sprintf("In the top %d (of 13 LDL-C, 12 HDL-C genes)", TOP_G)) +
   plot_theme + theme(strip.text = element_text(size = 24, face = "bold"))
 supp <- (pA / pB) + plot_annotation(tag_levels = "A") &
-  theme(plot.tag = element_text(size = 30, face = "bold"))
+  theme(plot.tag = element_text(size = 30, face = "bold"), plot.title = element_blank())
 ggsave(file.path(FIG_DIR, "SuppFig_replication_established.png"), supp,
        width = 20, height = 15, dpi = 300, bg = "white")
 

@@ -766,7 +766,7 @@ overlapping pathways. Rows are the direction of the deliberate corruption
 ($p\mapsto p^{\gamma}$, with $\gamma=1.4$ anti-conservative and $\gamma=0.7$
 conservative); columns are the within-pathway LD level. Each panel shows the
 per-pathway marginal rates and the family-wise rates together, since all four
-are rates at the nominal $0.05$ marked by the dotted line. Line type
+are rates at the nominal $0.05$ marked by the dashed line. Line type
 distinguishes pathway size. The analytic statistic and the Bonferroni
 correction applied to it both drift with $k$; the calibrated marginal rate and
 the Westfall--Young family-wise rate do not.}{fig:breakage}
@@ -976,8 +976,8 @@ calibration diagnostic in pathway analysis.
 \maybefig{Fig6_missing_correlation.png}{\textwidth}{Robustness to an incomplete
 gene--gene correlation file. Data are generated from the true correlation
 structure while calibration uses a matrix with the stated fraction of
-off-diagonal entries zeroed. Left and centre: error rates at $\alpha=0.05$
-under moderate and strong LD. Right: genomic-control inflation $\lambda$ for
+off-diagonal entries zeroed. \textbf{A}~Error rates at $\alpha=0.05$
+under moderate and strong LD. \textbf{B}~Genomic-control inflation $\lambda$ for
 the marginal calibration, which falls below one rather than rising as the
 type~I error more than doubles.}{fig:missing}
 \end{figure*}
@@ -1197,10 +1197,10 @@ synthesis---the pathway statins inhibit---bearing on LDL-C more than on HDL-C.
 \begin{figure*}[!t]
 \centering
 \maybefig{Fig14_lipid_pathway_size.png}{\textwidth}{Pathway evidence against
-pathway size for LDL-C (left) and HDL-C (right). Each point is one of the
+pathway size for LDL-C (\textbf{A}) and HDL-C (\textbf{B}). Each point is one of the
 $\nLipNpw$ Reactome pathways; lower values of the standardised statistic
-$z_{\mathrm{std}}$ are stronger. The grey line is a lowess fit of the size
-trend. Red points are the plasma-lipoprotein subtree of Reactome; the circled
+$z_{\mathrm{std}}$ are stronger. The dark line is a loess fit of the size
+trend. Black points are the plasma-lipoprotein subtree of Reactome; the circled
 point is its parent set, plasma lipoprotein assembly, remodeling and
 clearance. Large sets accumulate evidence in a saturated genome; the
 lipoprotein sets are extreme for their size in both traits.}{fig:lipid_size}
@@ -1374,11 +1374,10 @@ large-$n$ GWAS summary statistics.
 \begin{figure*}[!t]
 \centering
 \maybefig{Fig15_lipid_gene_recovery.png}{\textwidth}{Ranks of the
-pre-specified established genes among all $\nLipNgenes$ genes for LDL-C (left)
-and HDL-C (right), ranked by the strongest assigned variant (GWAS), by the
+pre-specified established genes among all $\nLipNgenes$ genes for LDL-C (\textbf{A})
+and HDL-C (\textbf{B}), ranked by the strongest assigned variant (GWAS), by the
 MAGMA gene-level $p$-value, and by the combined CATFISH score. Lines join the
-same gene; black bars are medians; the dotted lines mark ranks $10$ and
-$50$.}{fig:lipid_recovery}
+same gene; black bars are medians.}{fig:lipid_recovery}
 \end{figure*}
 
 \subsubsection*{3.9.5 The adaptive TFisher component is defensible but not
@@ -2088,7 +2087,7 @@ The authors thank the anonymous reviewers for their valuable suggestions.
 \centering
 \maybefig{Fig16_weight_sensitivity.png}{\textwidth}{Sensitivity of the
 candidate-gene score to the pathway weight $w_{\mathrm{path}}$ ($x$-axis) and
-the hub weight $w_{\mathrm{hub}}$ ($y$-axis); the red box marks the defaults
+the hub weight $w_{\mathrm{hub}}$ ($y$-axis); the outlined cell marks the defaults
 ($0.5$, $0.3$). \textbf{A},~\textbf{B}~Truth-planted simulation
 ($400$ replicates of $500$ genes and $50$ pathways with causal genes concentrated
 in five pathways): mean fraction of planted causal genes among the top twenty
