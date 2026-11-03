@@ -38,7 +38,7 @@ CATFISH depends on the ACAT package, which is only available on GitHub (not CRAN
 ```r
 # install.packages("remotes")
 remotes::install_github("yaowuliu/ACAT")
-remotes::install_github("nirwantandukar/CATFISH")
+remotes::install_github("nirwan1265/CATFISH")
 ```
 
 ### 3) Set MAGMA path

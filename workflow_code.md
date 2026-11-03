@@ -34,7 +34,7 @@ This document provides a complete workflow for running pathway enrichment analys
 
 ```{r install-catfish}
 # Install from GitHub
-devtools::install_github("nirwantandukar/CATFISH")
+devtools::install_github("nirwan1265/CATFISH")
 
 # Load the package
 library(CATFISH)

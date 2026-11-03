@@ -71,8 +71,8 @@
 #' @seealso
 #' Useful links:
 #' \itemize{
-#'   \item \url{https://github.com/nirwantandukar/CATFISH}
-#'   \item Report bugs at \url{https://github.com/nirwantandukar/CATFISH/issues}
+#'   \item \url{https://github.com/nirwan1265/CATFISH}
+#'   \item Report bugs at \url{https://github.com/nirwan1265/CATFISH/issues}
 #' }
 #'
 #' @name CATFISH-package

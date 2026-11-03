@@ -22,7 +22,7 @@ CATFISH (MAGMA-based Gene and pathway Analysis with ACAT aggregation) provides a
 
 ```{r installation}
 # Install from GitHub (when available)
-# devtools::install_github("nirwantandukar/CATFISH")
+# devtools::install_github("nirwan1265/CATFISH")
 
 # Load the package
 library(CATFISH)

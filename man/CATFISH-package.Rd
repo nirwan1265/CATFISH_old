@@ -78,19 +78,24 @@ CATFISH includes Plant Metabolic Network (PMN) pathway definitions for:
 \seealso{
 Useful links:
 \itemize{
-  \item \url{https://github.com/nirwantandukar/CATFISH}
-  \item Report bugs at \url{https://github.com/nirwantandukar/CATFISH/issues}
+  \item \url{https://github.com/nirwan1265/CATFISH}
+  \item Report bugs at \url{https://github.com/nirwan1265/CATFISH/issues}
 }
 
 
 Useful links:
 \itemize{
-\item \url{https://github.com/nirwantandukar/CATFISH}
-\item Report bugs at \url{https://github.com/nirwantandukar/CATFISH/issues}
+\item \url{https://github.com/nirwan1265/CATFISH}
+\item Report bugs at \url{https://github.com/nirwan1265/CATFISH/issues}
 }
 }
 \author{
 \strong{Maintainer}: Nirwan Tandukar \email{tandukar.nirwan@gmail.com}
+
+Authors:
+\itemize{
+  \item Nirwan Tandukar \email{tandukar.nirwan@gmail.com}
+}
 
 
 Nirwan Tandukar \email{tandukar.nirwan@gmail.com}

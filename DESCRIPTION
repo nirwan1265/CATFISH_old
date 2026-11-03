@@ -11,12 +11,11 @@ Description: CATFISH provides an R interface to MAGMA (Multi-marker Analysis of
     correlations and controls the family-wise error rate. Built-in support for Plant Metabolic Network (PMN) pathways
     for maize, sorghum, arabidopsis, and general plant species.
 License: MIT + file LICENSE
-URL: https://github.com/nirwantandukar/CATFISH
-BugReports: https://github.com/nirwantandukar/CATFISH/issues
+URL: https://github.com/nirwan1265/CATFISH
+BugReports: https://github.com/nirwan1265/CATFISH/issues
 Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
-RoxygenNote: 7.3.2
 Imports:
     stats,
     utils,
@@ -44,3 +43,4 @@ Remotes:
     github::yaowuliu/ACAT
 VignetteBuilder: knitr
 Config/testthat/edition: 3
+Config/roxygen2/version: 8.1.0
