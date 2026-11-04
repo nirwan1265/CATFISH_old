@@ -593,161 +593,17 @@ a contribution from the pathway layer.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{3 Results}
 
-\subsection*{3.1 Five pathway signal archetypes, and the component that
-detects each}
+\subsection*{3.1 Five pathway signal archetypes, and their component tests}
 
-Before asking whether the pathway $p$-values are calibrated, we ask what kind of
-signal each component is built to find. Consider a pathway-level working null
-and alternative. Under the null, the gene-level evidence within a pathway
-matches the background distribution after accounting for dependence, with no
-systematic excess of small $p$-values. Under the alternative the pathway carries
-excess evidence, but that evidence can be distributed among its genes in many
-ways. The distribution is easiest to see in the ranked profile, the pathway's
-gene-level $-\log_{10}p$ values sorted from largest to smallest
-(Figure~\ref{fig:archetypes}). We define five archetypes by the shape of that
-profile (Table~\ref{tab:archetype_summary}). They are templates, not
-empirically learned classes: a real pathway may sit between two of them or
-combine features of several, and its archetype is not known in advance.
-Supplementary Note~S1 describes each in more detail.
+Consider a pathway-level working null and alternative hypotheses. Under the null, the gene-level evidence within a pathway matches the background distribution after accounting for dependence, with no systematic excess of small $p$-values. Under the alternative, the pathway carries excess evidence, However, that evidence can be distributed among its genes in many ways. We define five archetypes based on specific profiles (Figure~\ref{fig:archetypes}; Table~\ref{tab:archetype_summary}). These are templates for how pathways might behave. However, real pathways may fall between archetypes or combine features, and the archetype is not known in advance. Where each archetype is expected, Table~\ref{tab:archetype_summary} lists each profile shape and its predicted component. We describe the biological contexts where each is expected, with details in Supplementary Note~S1.
 
-\begin{figure*}[!t]
-\centering
-\maybefig{Fig0_archetypes.png}{\textwidth}{Ranked gene-level association
-profiles for five pathway signal archetypes. Panels illustrate conceptual
-within-pathway $-\log_{10}(p)$ profiles for Strong Sparse Signal (SSS),
-Moderate Dense Signal (MDS), Weak Diffuse Enrichment (WDE), Mixed Signal
-Architecture (MSA), and Single-Gene Proxy (SGP). Horizontal lines mark
-representative significance thresholds. These archetypes motivate the use of
-complementary CATFISH component tests because different methods are
-preferentially sensitive to different ranked signal shapes.}{fig:archetypes}
-\end{figure*}
+SSS is expected when pathway output is constrained by a bottleneck such as a committed-step enzyme, rate-limiting regulator, or essential transporter \citep{MorenoSanchez2008,Naz2023,Tanner2018,Song2020}. Aspartokinase catalyzes the entry step of the aspartate-derived pathway, producing lysine, threonine, methionine, and isoleucine \citep{Galili2011,Hasenoehrl2019}, so the signal can be strong and localized there while downstream genes are near null. SGP is the limiting case, where a pathway is effectively one gene, typically in small or highly overlapping annotations. \textit{PAH} is the rate-limiting enzyme converting phenylalanine to tyrosine and the main cause of phenylketonuria \citep{Flydal2013PAH,Elhawary2022PKU}, so any signal in a broader phenylalanine-metabolism set would largely reflect it. Such pathways add little beyond gene-level association and should be interpreted as gene-centric.
 
-\begin{table*}[!t]
-\centering
-\caption{Summary of pathway signal archetypes and expected CATFISH component
-sensitivity. Each archetype represents a conceptual ranked gene-level
-association profile rather than an empirically learned class of real pathways.
-The last column gives the signal used to generate each archetype in the
-simulation of Section~3.1: the fraction of the pathway's genes that are
-shifted, and the mean shift on the gene-level $z$ scale before multiplication
-by the effect scale. Every layer contains at least one gene.}
-\label{tab:archetype_summary}
-\scriptsize
-\setlength{\tabcolsep}{4pt}
-\begin{tabular}{p{0.15\textwidth} p{0.26\textwidth} p{0.19\textwidth} p{0.12\textwidth} p{0.14\textwidth}}
-\hline
-\textbf{Archetype} & \textbf{Gene-level $p$-value pattern} & \textbf{Ranked-profile shape} & \textbf{Expected sensitive tests} & \textbf{Simulated signal} \\
-\hline
-Strong Sparse Signal (SSS) &
-A small number of genes have extremely small $p$-values, while most genes remain close to null. &
-Sharp early peak followed by a rapid drop; pronounced elbow. &
-ACAT, minP &
-$15\%$ of genes at $3.0$ \\
-Moderate Dense Signal (MDS) &
-Many genes show modest but consistent association, without one clearly dominant gene. &
-Broad shoulder of moderate signals across a substantial fraction of the pathway. &
-Fisher, Stouffer, soft TFisher &
-$60\%$ at $1.1$ \\
-Weak Diffuse Enrichment (WDE) &
-Most genes are individually non-significant, but the pathway shows a subtle overall shift toward smaller $p$-values. &
-Gentle pathway-wide deflection with few or no strong individual peaks. &
-Stouffer, Fisher &
-$90\%$ at $0.55$ \\
-Mixed Signal Architecture (MSA) &
-One or a few strong genes occur together with a broader set of moderate supporting signals. &
-Strong leading peak plus a moderate shoulder. &
-soft TFisher, Fisher, ACAT &
-$10\%$ at $1.8$ plus $60\%$ at $1.1$ \\
-Single-Gene Proxy (SGP) &
-One dominant gene accounts for most of the pathway-level signal, while the remaining genes are near null. &
-Single extreme peak followed by an otherwise null-like profile. &
-minP, ACAT &
-$5\%$ at $4.0$ \\
-\hline
-\end{tabular}
-\end{table*}
+MDS is expected when pathway output depends on many interacting components rather than a single effector, as in TNF$\alpha$/IL-1$\beta$ cytokine signaling to NF-$\kappa$B via receptor engagement, adaptor recruitment, kinase cascades, feedback, and transcriptional control \citep{Jiang2021CytoSig,Megha2021Inflammation,Verstrepen2008NFkB,vanLoo2011NFkB,Cargnello2011MAPK}. WDE reflects a highly polygenic architecture. The human height is the canonical example \citep{Guo2018HeightGWAS,Yengo2022HeightSaturation}, where coherent processes (e.g., TGF-$\beta$, Hedgehog, growth-plate extracellular matrix) may be detectable only in aggregate \citep{LangoAllen2010Height}. MSA is expected when a few pathway-defining genes with large effects sit within a broader network of auxiliary components. LDL-cholesterol metabolism (Section~3.9, explained as a biological example) illustrates this. Rare high-effect variants in \textit{LDLR}, \textit{APOB}, and \textit{PCSK9} cause familial hypercholesterolaemia, while common variants in \textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}, and \textit{SORT1} shape population LDL-C \citep{Chasman2009LipoproteinProfiles,Peloso2022WGSbloodlipids,Umlai2025LDLC}.
 
-The five components read the ranked profile differently
-(Table~\ref{tab:components}). minP uses only its first point. ACAT averages
-Cauchy-transformed $p$-values, whose heavy tail lets the smallest one or few
-dominate the average; it is governed by the head of the profile as minP is,
-but unlike minP it rewards a second and third strong gene. Fisher sums
-$-2\log p_g$ over every gene. A gene's contribution grows only logarithmically
-as its $p$-value shrinks, so the statistic rewards many moderately small
-$p$-values more than a few very small ones. Stouffer gives every gene's $Z_g$
-equal weight and $Z_g$ grows more slowly still, so a small shift shared by all
-genes accumulates with pathway size while a single extreme gene is diluted by
-$1/\sqrt{m}$. Soft TFisher discards genes above a truncation threshold $\tau$
-and sums the excess evidence of the rest. It moves from minP-like behaviour at
-small $\tau$ towards Fisher as $\tau$ approaches one, and adapting over $\tau$
-lets it follow the profile to wherever its shoulder ends. These properties alone
-predict which components should be sensitive to each archetype
-(Table~\ref{tab:archetype_summary}, fourth column).
+% The five components interpret the ranked profile differently (Table~\ref{tab:components}). minP uses only the top gene. ACAT averages Cauchy-transformed $p$-values; its heavy tail makes the smallest few dominate, so it is head-driven like minP but also rewards a second or third strong gene. Fisher sums $-2\log p_g$ across genes; because contributions grow only logarithmically, it favors many moderately small $p$-values over a few extreme ones. Stouffer averages $Z_g$ with equal weights; since $Z_g$ grows even more slowly, small shared shifts accumulate with pathway size, while a single extreme gene is diluted by $1/\sqrt{m}$. Soft TFisher drops genes with $p>\tau$ and sums the remaining excess evidence, shifting from minP-like at small $\tau$ toward Fisher as $\tau\to1$; adapting over $\tau$ lets it track the profile up to its shoulder. These properties predict which components are sensitive to each archetype (Table~\ref{tab:archetype_summary}, fourth column).
 
-\emph{Strong Sparse Signal (SSS).} A small number of genes carry nearly all of
-the evidence and the rest are close to null, so the ranked profile has a sharp
-early peak and a pronounced elbow. The evidence sits in the head of the profile,
-which ACAT and minP read directly and aggregation over the whole pathway
-dilutes. SSS is expected where pathway output is controlled by a bottleneck: a
-committed-step enzyme, a rate-limiting regulator or an essential transporter
-\citep{MorenoSanchez2008,Naz2023,Tanner2018,Song2020}. Aspartokinase is an
-example. It catalyses the entry reaction of the aspartate-derived pathway that
-produces lysine, threonine, methionine and isoleucine
-\citep{Galili2011,Hasenoehrl2019}, and variation at that entry point can
-produce a strong, localised signal while the downstream genes remain near null.
-An aspartate kinase isozyme is the leading gene of the maize analysis in
-Section~3.8.
 
-\emph{Single-Gene Proxy (SGP).} The limiting case of SSS: one gene accounts for
-nearly all of the pathway's evidence, and the profile is a single extreme peak
-followed by null-like values. minP and ACAT are again the sensitive components,
-but the interpretation differs, because the pathway result adds little to the
-gene-level association and should be read as gene-centric. SGP arises when a
-pathway is effectively defined by one major gene, most often in small or
-heavily overlapping annotations. Phenylalanine metabolism is an example.
-\textit{PAH} encodes phenylalanine hydroxylase, the rate-limiting enzyme that
-converts phenylalanine to tyrosine, and its variants are the main cause of
-phenylketonuria \citep{Flydal2013PAH,Elhawary2022PKU}; a signal in a broader
-phenylalanine-metabolism set that also contains cofactor synthesis and recycling
-genes would largely be the signal of \textit{PAH}.
-
-\emph{Moderate Dense Signal (MDS).} Many genes show modest but consistent
-association and no gene dominates, so the profile is a broad shoulder of
-moderately small $p$-values. Fisher and Stouffer, which aggregate over the
-whole pathway, and soft TFisher at intermediate $\tau$ are predicted to be
-sensitive; minP, which sees one gene, is not. MDS is expected where pathway
-output depends on many interacting components rather than one effector, so that
-genetic variation produces many moderate perturbations across the network
-rather than one large change. Cytokine signalling from TNF$\alpha$ and
-IL-1$\beta$ to NF-$\kappa$B, which runs through receptor engagement, adaptor
-recruitment, kinase cascades, feedback and transcriptional control, is an
-example \citep{Jiang2021CytoSig,Megha2021Inflammation,Verstrepen2008NFkB,vanLoo2011NFkB,Cargnello2011MAPK}.
-
-\emph{Weak Diffuse Enrichment (WDE).} Most genes are individually
-non-significant, but the pathway as a whole is shifted toward smaller
-$p$-values: a gentle deflection of the profile with few or no strong peaks.
-Stouffer, which accumulates small shifts across genes, and Fisher are predicted
-to be sensitive, and the extreme-tail tests have little to find. WDE is the
-signature of highly polygenic architecture. Human height, influenced by many
-thousands of variants of small effect
-\citep{Guo2018HeightGWAS,Yengo2022HeightSaturation}, is the standard example;
-coherent processes such as TGF-$\beta$ and Hedgehog signalling and growth-plate
-extracellular matrix may be detectable there mainly through cumulative
-pathway-level enrichment \citep{LangoAllen2010Height,Guo2018HeightGWAS}.
-
-\emph{Mixed Signal Architecture (MSA).} One or a few strong genes sit on top of
-a broader set of moderate supporting signals, so the profile is a leading peak
-followed by a shoulder, between SSS and MDS. Soft TFisher, which can truncate
-below the shoulder, and Fisher, which rewards both parts, are predicted to be
-sensitive, with ACAT responding to the peak. MSA is expected where a few core
-genes with large, pathway-defining effects are embedded in a wider network of
-auxiliary components. LDL-cholesterol metabolism, analysed in Section~3.9, is
-an example: rare high-effect variants in \textit{LDLR}, \textit{APOB} and
-\textit{PCSK9} cause familial hypercholesterolaemia, while common variants of
-small to moderate effect in further lipoprotein genes, among them
-\textit{ABCA1}, \textit{LIPC}, \textit{CETP}, \textit{PLTP}, \textit{ANGPTL3}
-and \textit{SORT1}, shape LDL-C in the population
-\citep{Chasman2009LipoproteinProfiles,Peloso2022WGSbloodlipids,Umlai2025LDLC}.
 
 \emph{The predicted correspondence holds under the family-wise rule.} The
 correspondence between archetype and component is a prediction, and it is
@@ -814,6 +670,64 @@ component pattern indicates how.
 
 \maybeinput{auto/tab_archetype_verification.tex}
 \maybeinput{auto/tab_archetype_regret.tex}
+
+\begin{figure*}[!t]
+\centering
+\maybefig{Fig0_archetypes.png}{\textwidth}{Ranked gene-level association
+profiles for five pathway signal archetypes. Panels illustrate conceptual
+within-pathway $-\log_{10}(p)$ profiles for Strong Sparse Signal (SSS),
+Moderate Dense Signal (MDS), Weak Diffuse Enrichment (WDE), Mixed Signal
+Architecture (MSA), and Single-Gene Proxy (SGP). Horizontal lines mark
+representative significance thresholds. These archetypes motivate the use of
+complementary CATFISH component tests because different methods are
+preferentially sensitive to different ranked signal shapes.}{fig:archetypes}
+\end{figure*}
+
+\begin{table*}[!t]
+\centering
+\caption{Summary of pathway signal archetypes and expected CATFISH component
+sensitivity. Each archetype represents a conceptual ranked gene-level
+association profile rather than an empirically learned class of real pathways.
+The last column gives the signal used to generate each archetype in the
+simulation of Section~3.1: the fraction of the pathway's genes that are
+shifted, and the mean shift on the gene-level $z$ scale before multiplication
+by the effect scale. Every layer contains at least one gene.}
+\label{tab:archetype_summary}
+\scriptsize
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{p{0.15\textwidth} p{0.26\textwidth} p{0.19\textwidth} p{0.12\textwidth} p{0.14\textwidth}}
+\hline
+\textbf{Archetype} & \textbf{Gene-level $p$-value pattern} & \textbf{Ranked-profile shape} & \textbf{Expected sensitive tests} & \textbf{Simulated signal} \\
+\hline
+Strong Sparse Signal (SSS) &
+A small number of genes have extremely small $p$-values, while most genes remain close to null. &
+Sharp early peak followed by a rapid drop; pronounced elbow. &
+ACAT, minP &
+$15\%$ of genes at $3.0$ \\
+Moderate Dense Signal (MDS) &
+Many genes show modest but consistent association, without one clearly dominant gene. &
+Broad shoulder of moderate signals across a substantial fraction of the pathway. &
+Fisher, Stouffer, soft TFisher &
+$60\%$ at $1.1$ \\
+Weak Diffuse Enrichment (WDE) &
+Most genes are individually non-significant, but the pathway shows a subtle overall shift toward smaller $p$-values. &
+Gentle pathway-wide deflection with few or no strong individual peaks. &
+Stouffer, Fisher &
+$90\%$ at $0.55$ \\
+Mixed Signal Architecture (MSA) &
+One or a few strong genes occur together with a broader set of moderate supporting signals. &
+Strong leading peak plus a moderate shoulder. &
+soft TFisher, Fisher, ACAT &
+$10\%$ at $1.8$ plus $60\%$ at $1.1$ \\
+Single-Gene Proxy (SGP) &
+One dominant gene accounts for most of the pathway-level signal, while the remaining genes are near null. &
+Single extreme peak followed by an otherwise null-like profile. &
+minP, ACAT &
+$5\%$ at $4.0$ \\
+\hline
+\end{tabular}
+\end{table*}
+
 
 \begin{figure*}[!t]
 \centering
