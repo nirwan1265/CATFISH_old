@@ -763,56 +763,88 @@ Per-pathway calibration to the correlated null eliminated most errors. Empirical
 
 The family-wise columns evaluate the Westfall--Young procedure using sample splitting. The family-minimum null is estimated on half the simulated families and tested on the other half, so results are not correct by construction. Empirical FWER ranged from $\nTWyMin$ to $\nTWyMax$, within Monte Carlo error for 250 held-out families (SE $\approx 0.014$ at the nominal level), and the family minimum remained a continuous statistic throughout, taking $\nWyDistinctMin$ distinct values across the $500$ simulated families even in the worst configuration, so the threshold is not resting on a tie. Bonferroni on the analytic $p$-value inherits its miscalibration. FWER was $\nTBonfInd$ under independence with $m=5$ (where the analytic $p$-value is valid) but increased to $\nTBonfMod$ at $\rho=0.3$, $m=20$, and $\nTBonfStr$ at $\rho=0.6$, $m=50$. With independent pathways, this inflation is entirely due to per-test miscalibration compounded across the family.
 
-None of this is visible in the genomic-control factor $\lambda$, which points the wrong way (Figure~\ref{fig:lambda}). For the analytic omnibus, $\lambda$ was $\nLamAnInd$ at $\rho=0$, $m=50$ and dropped to $\nLamAnStr$ at $\rho=0.6$, $m=50$, well below one, in the same setting where analytic type I error was largest. There is no contradiction. THe $\lambda$ reflects the median null $p$-value, whereas type I error depends on the lower tail. Under strong within-pathway correlation, the analytic null is reshaped rather than shifted, with extra mass in the lower tail and a median above one half, so $\lambda$ can suggest conservatism while the tail is anti-conservative. After per-pathway calibration, $\lambda$ lay in $[\nLamMvnMin,\nLamMvnMax]$. Thus, $\lambda$ near or below one is not evidence that the tail is calibrated.
+None of this is visible in the genomic-control factor $\lambda$, which points the wrong way (Figure~\ref{fig:lambda}). For the analytic omnibus, $\lambda$ was $\nLamAnInd$ at $\rho=0$, $m=50$ and dropped to $\nLamAnStr$ at $\rho=0.6$, $m=50$, well below one, in the same setting where analytic type I error was largest. There is no contradiction. The $\lambda$ reflects the median null $p$-value, whereas type I error depends on the lower tail. Under strong within-pathway correlation, the analytic null is reshaped rather than shifted, with extra mass in the lower tail and a median above one half, so $\lambda$ can suggest conservatism while the tail is anti-conservative. After per-pathway calibration, $\lambda$ lay in $[\nLamMvnMin,\nLamMvnMax]$. Thus, $\lambda$ near or below one is not evidence that the tail is calibrated.
+
+\subsection*{3.5 No single component is load-bearing}
+
+An omnibus is useful only if no misbehaving component can dominate it, and a family-wise procedure only if that robustness persists at the family level. We tested both on the overlapping pathway universe (Methods), where each gene belongs to $\nBrkMembership$ pathways on average, by deliberately corrupting components and by removing them.
+
+For corruption, we replaced the $p$-value of each of $k$ selected components with $p^{\gamma}$: conservative at $\gamma=0.7$ and anti-conservative at $\gamma=1.4$ (Table~\ref{tab:breakage}, Figure~\ref{fig:breakage}). With $k=0$, the analytic omnibus had mean marginal type~I error $\nBrkAnKzero$ and the calibrated omnibus $\nBrkMvnKzero$, while family-wise rates were $\nBrkWyKzero$ (Westfall--Young) and $\nBrkBonfKzero$ (Bonferroni). Anti-conservative corruption of four of five components increased error for the analytic omnibus to $\nBrkAnKfour$ and for Bonferroni to $\nBrkBonfKfour$, while calibrated marginal and Westfall--Young rates remained stable at $\nBrkMvnKfour$ and $\nBrkWyKfour$. Conservative corruption shifted the analytic omnibus to $\nBrkConsAnKfour$ (loss of power), but calibrated rates again held at $\nBrkConsMvnKfour$ and $\nBrkConsWyKfour$. Across all settings, the family-wise rate stayed within $[\nBrkWyRangeLo,\nBrkWyRangeHi]$ and the marginal rate within $[\nBrkMvnRangeLo,\nBrkMvnRangeHi]$.
+
+Removal is a harsher test than corruption because the component is absent. Dropping each component in turn and rebuilding the null bank, marginal calibration, and family-wise threshold (Table~\ref{tab:loo}, Figure~\ref{fig:loo}) kept marginal type~I error within $[\nLooMvnMin,\nLooMvnMax]$ vs.\ $\nLooFullMvn$ and the Westfall--Young rate within $[\nLooWyMin,\nLooWyMax]$ vs.\ $\nLooFullWy$. The largest change was from removing \texttt{\nLooWorst} ($\nLooWorstVal$). Genomic-control inflation stayed near one for all deletions and both corruption directions (Figures~\ref{fig:breakage_lambda} and~\ref{fig:loo}).
+
+Both findings share the same explanation. Resampling calibration applies the same corruption to null replicates and observed data, so uniform miscalibration largely cancels, and the family-wise threshold (a quantile of the corrupted null) shifts accordingly. Under deletion, the null bank is recomputed for the remaining components, so both $p$-values remain valid for any subset. Neither approach handles data-dependent component error, which would not cancel and was not tested. Analytic calibration offers neither safeguard and therefore inherits corruption directly.
+
+The leave-one-out table shows the clearest contrast between the two family-wise procedures. Averaged over pathway sizes and variants, Westfall--Young stayed at nominal across LD regimes ($\nLooWyInd$, $\nLooWyMod$, $\nLooWyStr$), while Bonferroni rose from $\nLooBonfInd$ to $\nLooBonfMod$ to $\nLooBonfStr$, reaching $\nLooBonfMax$ at worst. Here Bonferroni corrects an analytic $p$-value that is anti-conservative under LD (Section~3.4), so it compounds an uncalibrated per-test statistic with a correction that cannot fix it. Under independence, where the analytic $p$-value is valid, Bonferroni was near nominal. The overlap of $\nBrkMembership$ pathways per gene is not enough to make it noticeably conservative. Family-wise correction inherits per-test miscalibration, while the Westfall--Young threshold, based on the same null as the statistic, does not.
+
+The removed component affects Bonferroni predictably. Dropping Stouffer, Fisher, or soft TFisher lowers the rate, while dropping ACAT or minP raises it. Stouffer and Fisher are inflated by within-pathway correlation (Section~3.6), and soft TFisher is stochastically small because it takes a minimum over thresholds without calibration. ACAT and minP stay near nominal, so removing them makes the omnibus more dominated by inflated components. These choices affect sensitivity, not validity, so users can drop a component they distrust (e.g., minP when gene-level $p$-values are floored), at a power cost for architectures where it performs best. The default should therefore be to run all five. The archetype of a real pathway is unknown in advance, and carrying every component costs only the small regret mentioned in Section~3.3, whereas dropping the one that happens to be sensitive forfeits its power entirely. Dropping a component is a decision for a particular dataset with a stated reason, not a default.
 
 
-\subsection*{3.2 Independence-based calibration is anti-conservative;
-per-pathway and Westfall--Young calibration are not}
+\subsection*{3.6 What the calibration needs from the correlation structure}
 
-Under the global null, the analytic omnibus $p$-value is valid only if the genes
-within a pathway are independent. Table~\ref{tab:null_calibration} and
-Figure~\ref{fig:type1} show what happens when they are not. At $\rho=0$ and
-$m=5$ the analytic type~I error was $\nTAnInd$ against a nominal $0.05$, which
-is the behaviour one expects when the generating assumption holds. As either the
-within-pathway correlation or the pathway size increases, the analytic
-calibration departs from nominal, reaching $\nTAnStr$ at $\rho=0.6$, $m=50$,
-the largest value in the grid. The direction is the expected one:
-correlated genes carry less independent information than the analytic reference
-distribution assumes, so the statistic looks more extreme than it is.
+The omnibus obscures which input fails. Calibrating components separately (Table~\ref{tab:components_cal}, Figure~\ref{fig:components}) shows that LD damage is concentrated in two of five components, and which two can be predicted from what each statistic measures.
 
-Per-pathway calibration against the correlated null removed most of this.
-Empirical type~I error was $\nTMvnInd$ at $\rho=0$, $m=5$ and $\nTMvnStr$ at
-$\rho=0.6$, $m=50$, remaining within $[\nTMvnMin,\nTMvnMax]$ across the whole
-grid. At the stricter level $\alpha=0.01$, the analytic calibration reached
-$\nTAnMaxOne$ against the calibrated statistic's $\nTMvnMaxOne$, indicating that the
-discrepancy grows rather than shrinks in the tail, which is where pathway
-analysis operates.
+Under the independent null, all components were correctly sized (e.g., ACAT $\nCmpACATInd$, Stouffer $\nCmpStoufferInd$). Under strong LD, the aggregation statistics inflated—Fisher (summing $-2\log p$) to $\nCmpFisherStr$ and Stouffer (summing $Z$) to $\nCmpStoufferStr$ versus nominal $0.05$—while the extreme-value statistics changed little: ACAT $\nCmpACATStr$ and minP $\nCmpminPStr$. Aggregation methods effectively count correlated genes as repeated evidence, inflating the statistic; extreme-value methods depend on the single strongest gene and are insensitive to near-duplicates. The omnibus inherits its worst inputs’ inflation, reaching $\nCmpOmnibusStr$.
 
-The family-wise columns test the Westfall--Young construction, and here they are
-a genuine test rather than a check of arithmetic: the null distribution of the
-family minimum is estimated on half of the simulated families and applied to the
-other half. Empirical family-wise error ranged from $\nTWyMin$ to $\nTWyMax$
-across the grid, within the Monte Carlo error of $250$ held-out families, for
-which the standard error at the nominal level is about $0.014$. Bonferroni, applied to the analytic $p$-value, inherits that
-value's miscalibration: its family-wise error was $\nTBonfInd$ in the
-independent configuration with $m=5$, where the analytic $p$-value is valid, but
-$\nTBonfMod$ at $\rho=0.3$, $m=20$ and $\nTBonfStr$ at $\rho=0.6$, $m=50$. The
-pathways in this design are independent of one another, so none of that
-inflation comes from between-pathway dependence; all of it is the per-test
-statistic being wrong, compounded across the family.
+Calibration to the correlated null removed inflation for every component, yielding Fisher $\nCmpFisherCal$, Stouffer $\nCmpStoufferCal$, and omnibus $\nCmpOmnibusCal$. Thus, if a user knows a pathway’s signal architecture, a single calibrated component can replace the omnibus without losing error control. Soft TFisher requires two cautions: (1) it is undefined when no gene falls below any truncation threshold, so such components must be excluded from the omnibus rather than set to $p=1$, since ACAT’s $\tan\{(1/2-p)\pi\}$ transform would treat this boundary value as evidence against the pathway, pushing the median omnibus $p$-value above $1/2$, lowering $\lambda$ below 1, while inflating the tail; and (2) its uncalibrated statistic is a minimum over thresholds, not a $p$-value, so only its calibrated and family-wise entries in Table~\ref{tab:components_cal} are interpretable.
 
-Reaching these numbers required two corrections worth recording, because both
-failures were silent. In an earlier version the family-wise error at
-$\rho=0.6$, $m=50$ was $1.00$. The cause was not the Westfall--Young logic but a
-loss of resolution in the omnibus. Soft TFisher's tail underflowed for about
-$3.5\%$ of null pathways in that configuration, each such pathway was assigned
-the same floor value, and with $200$ pathways per family nearly every family's
-minimum was that one shared number; a quantile of a distribution concentrated on
-a single value, applied with an inclusive comparison, rejects every family.
-Capping soft TFisher at the precision it actually has (Section~2.1) and
-computing the adjusted $p$-value in its counting form (Section~2.3) restored the
-family minimum to a continuous statistic: even in the worst configuration it
-takes $\nWyDistinctMin$ distinct values across the $500$ simulated families.
+All results so far assume the gene–gene correlation matrix used for calibration matches the data-generating matrix. In practice, the matrix is built by inserting MAGMA-reported pairs into an identity matrix, treating unreported pairs as independent. We quantified the impact by generating data under the true correlations while calibrating with matrices where a known fraction of off-diagonals were set to zero (Table~\ref{tab:missing}, Figure~\ref{fig:missing}). With a complete matrix, marginal type I error was $\nMissMvnZero$ and Westfall–Young family-wise error $\nMissWyZero$ (both nominal). Zeroing half the pairs increased these to $\nMissMvnHalf$ and $\nMissWyHalf$; zeroing all pairs (pure independence) yielded $\nMissMvnFull$ and $\nMissWyFull$ under moderate LD and $\nMissMvnStrFull$ and $\nMissWyStrFull$ under strong LD.
+
+Scaled by each procedure’s own nominal level (the only fair comparison between per-pathway and per-family rates), the marginal calibration was $\nMissRatioMvnHalf\times$ nominal at $50\%$ missingness and the family-wise procedure $\nMissRatioWyHalf\times$. Westfall–Young is thus more sensitive to an incomplete correlation file than its marginal basis: taking the minimum over $K$ pathways is a tail statistic, so it depends on the null extreme—where correlation errors hurt most—whereas marginal $p$-values depend mainly on the bulk. This does not negate family-wise control, because the relevant comparison is to the correction it replaces. Bonferroni’s family-wise rate in the same runs was $\nMissBonfMod$ and $\nMissBonfStr$ and is unaffected by the correlation file (it uses analytic $p$-values). Westfall–Young remained better up to $\nMissCrossover\%$ missingness, failing only when correlation information was nearly absent, so its null no longer matched the data.
+
+It does affect reporting. A Westfall–Young $p$-value is only as reliable as the correlation file, whose completeness can be measured. The check is specific: MAGMA correlation matrices are expected to be sparse because only nearby gene pairs sharing LD are correlated, so zeros for distant genes are appropriate. What matters is the fraction of within-pathway gene pairs that are on the same chromosome and close enough to be correlated for which a value is actually reported. We provide \texttt{10\_pair\_coverage.R} to compute this and recommend reporting its result alongside any family-wise $p$-value.
+
+As in Section~3.4, $\lambda$ flagged none of this. Across the missingness sweep it ranged from $\nMissLamLo$ to $\nMissLamHi$ and drifted \emph{below} one as correlation information was removed, even as the marginal type~I error more than doubled. This is the second independent case where $\lambda \le 1$ coincides with an inflated tail, showing that $\lambda$ should not be the only calibration diagnostic in pathway analysis.
+%TOCHECK:(i)soft TFisher truncation grid is now referenced nowhere in Results (ii) The λ closing says “second independent setting.” That was correct when §3.3 and §3.7 were the two. After your merge the settings are §3.4 and this one — still two, so the count holds. Just don’t let it drift if you add another.
+
+
+% \subsection*{3.2 Independence-based calibration is anti-conservative;
+% per-pathway and Westfall--Young calibration are not}
+
+% Under the global null, the analytic omnibus $p$-value is valid only if the genes
+% within a pathway are independent. Table~\ref{tab:null_calibration} and
+% Figure~\ref{fig:type1} show what happens when they are not. At $\rho=0$ and
+% $m=5$ the analytic type~I error was $\nTAnInd$ against a nominal $0.05$, which
+% is the behaviour one expects when the generating assumption holds. As either the
+% within-pathway correlation or the pathway size increases, the analytic
+% calibration departs from nominal, reaching $\nTAnStr$ at $\rho=0.6$, $m=50$,
+% the largest value in the grid. The direction is the expected one:
+% correlated genes carry less independent information than the analytic reference
+% distribution assumes, so the statistic looks more extreme than it is.
+
+% Per-pathway calibration against the correlated null removed most of this.
+% Empirical type~I error was $\nTMvnInd$ at $\rho=0$, $m=5$ and $\nTMvnStr$ at
+% $\rho=0.6$, $m=50$, remaining within $[\nTMvnMin,\nTMvnMax]$ across the whole
+% grid. At the stricter level $\alpha=0.01$, the analytic calibration reached
+% $\nTAnMaxOne$ against the calibrated statistic's $\nTMvnMaxOne$, indicating that the
+% discrepancy grows rather than shrinks in the tail, which is where pathway
+% analysis operates.
+
+% The family-wise columns test the Westfall--Young construction, and here they are
+% a genuine test rather than a check of arithmetic: the null distribution of the
+% family minimum is estimated on half of the simulated families and applied to the
+% other half. Empirical family-wise error ranged from $\nTWyMin$ to $\nTWyMax$
+% across the grid, within the Monte Carlo error of $250$ held-out families, for
+% which the standard error at the nominal level is about $0.014$. Bonferroni, applied to the analytic $p$-value, inherits that
+% value's miscalibration: its family-wise error was $\nTBonfInd$ in the
+% independent configuration with $m=5$, where the analytic $p$-value is valid, but
+% $\nTBonfMod$ at $\rho=0.3$, $m=20$ and $\nTBonfStr$ at $\rho=0.6$, $m=50$. The
+% pathways in this design are independent of one another, so none of that
+% inflation comes from between-pathway dependence; all of it is the per-test
+% statistic being wrong, compounded across the family.
+
+% Reaching these numbers required two corrections worth recording, because both
+% failures were silent. In an earlier version the family-wise error at
+% $\rho=0.6$, $m=50$ was $1.00$. The cause was not the Westfall--Young logic but a
+% loss of resolution in the omnibus. Soft TFisher's tail underflowed for about
+% $3.5\%$ of null pathways in that configuration, each such pathway was assigned
+% the same floor value, and with $200$ pathways per family nearly every family's
+% minimum was that one shared number; a quantile of a distribution concentrated on
+% a single value, applied with an inclusive comparison, rejects every family.
+% Capping soft TFisher at the precision it actually has (Section~2.1) and
+% computing the adjusted $p$-value in its counting form (Section~2.3) restored the
+% family minimum to a continuous statistic: even in the worst configuration it
+% takes $\nWyDistinctMin$ distinct values across the $500$ simulated families.
 
 \begin{table*}[!t]
 \centering
@@ -848,21 +880,21 @@ Westfall--Young family-wise error rate, both track the nominal
 level.}{fig:type1}
 \end{figure*}
 
-\subsection*{3.3 Genomic-control inflation tracks the same failure}
+% \subsection*{3.3 Genomic-control inflation tracks the same failure}
 
-The genomic-control inflation factor $\lambda$ summarises the same null in a
-form familiar from GWAS practice (Figure~\ref{fig:lambda}), and it points the
-wrong way. For the analytic omnibus, $\lambda$ was $\nLamAnInd$ at $\rho=0$,
-$m=50$ and fell to $\nLamAnStr$ at $\rho=0.6$, $m=50$---far \emph{below}
-one---in exactly the configuration where the analytic type~I error was largest.
-The two summaries are not in conflict. $\lambda$ is computed from the median of
-the null $p$-values and type~I error from their lower tail, and under strong
-within-pathway correlation the analytic null distribution is not shifted but
-reshaped: excess mass in the lower tail together with a median above one half.
-An analyst reading $\lambda$ alone would conclude the test was conservative.
-After per-pathway calibration $\lambda$ lay in $[\nLamMvnMin,\nLamMvnMax]$. A
-pathway analysis reporting $\lambda$ near or below one is therefore not evidence
-that its tail is calibrated.
+% The genomic-control inflation factor $\lambda$ summarises the same null in a
+% form familiar from GWAS practice (Figure~\ref{fig:lambda}), and it points the
+% wrong way. For the analytic omnibus, $\lambda$ was $\nLamAnInd$ at $\rho=0$,
+% $m=50$ and fell to $\nLamAnStr$ at $\rho=0.6$, $m=50$---far \emph{below}
+% one---in exactly the configuration where the analytic type~I error was largest.
+% The two summaries are not in conflict. $\lambda$ is computed from the median of
+% the null $p$-values and type~I error from their lower tail, and under strong
+% within-pathway correlation the analytic null distribution is not shifted but
+% reshaped: excess mass in the lower tail together with a median above one half.
+% An analyst reading $\lambda$ alone would conclude the test was conservative.
+% After per-pathway calibration $\lambda$ lay in $[\nLamMvnMin,\nLamMvnMax]$. A
+% pathway analysis reporting $\lambda$ near or below one is therefore not evidence
+% that its tail is calibrated.
 
 \begin{figure}[!t]
 \centering
@@ -871,45 +903,45 @@ $\lambda$ for the analytic and per-pathway calibrated omnibus under the global n
 LD level and pathway size. The horizontal line marks $\lambda=1$.}{fig:lambda}
 \end{figure}
 
-\subsection*{3.4 The omnibus degrades gracefully when its components are broken}
+% \subsection*{3.4 The omnibus degrades gracefully when its components are broken}
 
-A multi-test omnibus is only useful if a single misbehaving component cannot
-dominate it, and a family-wise procedure is only useful if that robustness
-survives at the family level too. We tested both by corrupting components on
-purpose, replacing the $p$-value of each of $k$ selected components with
-$p^{\gamma}$ and running the conservative ($\gamma=0.7$) and the
-anti-conservative ($\gamma=1.4$) direction over the overlapping pathway universe
-of Section~2.6, in which each gene belongs to $\nBrkMembership$ pathways on
-average (Table~\ref{tab:breakage}, Figure~\ref{fig:breakage}).
+% A multi-test omnibus is only useful if a single misbehaving component cannot
+% dominate it, and a family-wise procedure is only useful if that robustness
+% survives at the family level too. We tested both by corrupting components on
+% purpose, replacing the $p$-value of each of $k$ selected components with
+% $p^{\gamma}$ and running the conservative ($\gamma=0.7$) and the
+% anti-conservative ($\gamma=1.4$) direction over the overlapping pathway universe
+% of Section~2.6, in which each gene belongs to $\nBrkMembership$ pathways on
+% average (Table~\ref{tab:breakage}, Figure~\ref{fig:breakage}).
 
-With no components corrupted ($k=0$), the analytic omnibus had mean marginal
-type~I error $\nBrkAnKzero$ and the calibrated omnibus $\nBrkMvnKzero$; at the
-family level the Westfall--Young rate was $\nBrkWyKzero$ and Bonferroni
-$\nBrkBonfKzero$. Under anti-conservative corruption of four of the five
-components ($k=4$, $\gamma=1.4$) the analytic omnibus degraded to
-$\nBrkAnKfour$, while the calibrated marginal rate held at $\nBrkMvnKfour$ and
-the Westfall--Young family-wise rate at $\nBrkWyKfour$ against Bonferroni's
-$\nBrkBonfKfour$. Under conservative corruption the analytic omnibus moved the
-other way, to $\nBrkConsAnKfour$, losing power rather than control, while the
-calibrated marginal and family-wise rates held at $\nBrkConsMvnKfour$ and
-$\nBrkConsWyKfour$. Across both directions and every configuration the
-family-wise rate stayed within $[\nBrkWyRangeLo,\nBrkWyRangeHi]$ and the
-marginal rate within $[\nBrkMvnRangeLo,\nBrkMvnRangeHi]$. Genomic-control
-inflation for the same runs (Figure~\ref{fig:breakage_lambda}) tracks the
-analytic statistic's drift in both directions while staying near one for the
-calibrated statistic.
+% With no components corrupted ($k=0$), the analytic omnibus had mean marginal
+% type~I error $\nBrkAnKzero$ and the calibrated omnibus $\nBrkMvnKzero$; at the
+% family level the Westfall--Young rate was $\nBrkWyKzero$ and Bonferroni
+% $\nBrkBonfKzero$. Under anti-conservative corruption of four of the five
+% components ($k=4$, $\gamma=1.4$) the analytic omnibus degraded to
+% $\nBrkAnKfour$, while the calibrated marginal rate held at $\nBrkMvnKfour$ and
+% the Westfall--Young family-wise rate at $\nBrkWyKfour$ against Bonferroni's
+% $\nBrkBonfKfour$. Under conservative corruption the analytic omnibus moved the
+% other way, to $\nBrkConsAnKfour$, losing power rather than control, while the
+% calibrated marginal and family-wise rates held at $\nBrkConsMvnKfour$ and
+% $\nBrkConsWyKfour$. Across both directions and every configuration the
+% family-wise rate stayed within $[\nBrkWyRangeLo,\nBrkWyRangeHi]$ and the
+% marginal rate within $[\nBrkMvnRangeLo,\nBrkMvnRangeHi]$. Genomic-control
+% inflation for the same runs (Figure~\ref{fig:breakage_lambda}) tracks the
+% analytic statistic's drift in both directions while staying near one for the
+% calibrated statistic.
 
-The interpretation is specific and worth stating carefully. Resampling
-calibration is robust to component miscalibration because the \emph{same}
-corruption is applied to the null replicates as to the observed data, so a
-component that is uniformly miscalibrated shifts the null and the observation
-together and largely cancels; the family-wise threshold, being a quantile of
-the same corrupted null, moves with them. This is a real and useful property,
-but it protects against systematic miscalibration, not against a component that
-is wrong in a way that correlates with the signal of interest. A component whose
-error depended on the data would not cancel, and we have not tested that case.
-The analytic calibration has no such protection and inherits the corruption
-directly, in whichever direction it was applied.
+% The interpretation is specific and worth stating carefully. Resampling
+% calibration is robust to component miscalibration because the \emph{same}
+% corruption is applied to the null replicates as to the observed data, so a
+% component that is uniformly miscalibrated shifts the null and the observation
+% together and largely cancels; the family-wise threshold, being a quantile of
+% the same corrupted null, moves with them. This is a real and useful property,
+% but it protects against systematic miscalibration, not against a component that
+% is wrong in a way that correlates with the signal of interest. A component whose
+% error depended on the data would not cancel, and we have not tested that case.
+% The analytic calibration has no such protection and inherits the corruption
+% directly, in whichever direction it was applied.
 
 \maybeinput{auto/tab_breakage.tex}
 
@@ -937,54 +969,54 @@ direction the components were corrupted; the calibrated statistic stays near
 one.}{fig:breakage_lambda}
 \end{figure}
 
-\subsection*{3.5 No single component is load-bearing}
+% \subsection*{3.5 No single component is load-bearing}
 
-Removing each component in turn and rebuilding the null bank, the marginal
-calibration and the family-wise threshold from scratch
-(Table~\ref{tab:loo}, Figure~\ref{fig:loo}) left the marginal type~I error
-within $[\nLooMvnMin,\nLooMvnMax]$ against $\nLooFullMvn$ for the full
-five-component omnibus, and the Westfall--Young family-wise rate within
-$[\nLooWyMin,\nLooWyMax]$ against $\nLooFullWy$. The largest departure from
-nominal followed removal of \texttt{\nLooWorst} ($\nLooWorstVal$).
+% Removing each component in turn and rebuilding the null bank, the marginal
+% calibration and the family-wise threshold from scratch
+% (Table~\ref{tab:loo}, Figure~\ref{fig:loo}) left the marginal type~I error
+% within $[\nLooMvnMin,\nLooMvnMax]$ against $\nLooFullMvn$ for the full
+% five-component omnibus, and the Westfall--Young family-wise rate within
+% $[\nLooWyMin,\nLooWyMax]$ against $\nLooFullWy$. The largest departure from
+% nominal followed removal of \texttt{\nLooWorst} ($\nLooWorstVal$).
 
-The same table carries the sharpest contrast in the paper between the two
-family-wise procedures. Averaged over pathway sizes and leave-one-out variants,
-the Westfall--Young rate was $\nLooWyInd$, $\nLooWyMod$ and $\nLooWyStr$ in the
-independent, moderate and strong LD regimes---flat at nominal---while the
-Bonferroni rate moved from $\nLooBonfInd$ to $\nLooBonfMod$ to $\nLooBonfStr$,
-reaching $\nLooBonfMax$ at worst. We are careful about what this does and does
-not show. Bonferroni is applied here to the analytic omnibus $p$-value, which is
-itself anti-conservative under LD (Section~3.2), so the inflation is the
-compounding of an uncalibrated per-test statistic with a correction that cannot
-repair it, which is what a pipeline that skips calibration actually does.
-In the independent rows, where the analytic $p$-value is valid, Bonferroni was
-close to nominal: overlap at an average of $\nBrkMembership$ pathways per gene
-is not enough to make it noticeably conservative. The lesson is that a family-wise correction inherits
-whatever miscalibration the per-test statistic carries, whereas the
-Westfall--Young threshold, being a quantile of the same null the statistic came
-from, does not.
+% The same table carries the sharpest contrast in the paper between the two
+% family-wise procedures. Averaged over pathway sizes and leave-one-out variants,
+% the Westfall--Young rate was $\nLooWyInd$, $\nLooWyMod$ and $\nLooWyStr$ in the
+% independent, moderate and strong LD regimes---flat at nominal---while the
+% Bonferroni rate moved from $\nLooBonfInd$ to $\nLooBonfMod$ to $\nLooBonfStr$,
+% reaching $\nLooBonfMax$ at worst. We are careful about what this does and does
+% not show. Bonferroni is applied here to the analytic omnibus $p$-value, which is
+% itself anti-conservative under LD (Section~3.2), so the inflation is the
+% compounding of an uncalibrated per-test statistic with a correction that cannot
+% repair it, which is what a pipeline that skips calibration actually does.
+% In the independent rows, where the analytic $p$-value is valid, Bonferroni was
+% close to nominal: overlap at an average of $\nBrkMembership$ pathways per gene
+% is not enough to make it noticeably conservative. The lesson is that a family-wise correction inherits
+% whatever miscalibration the per-test statistic carries, whereas the
+% Westfall--Young threshold, being a quantile of the same null the statistic came
+% from, does not.
 
-Within that pattern, removing Stouffer, Fisher or soft TFisher lowered the
-Bonferroni rate, while removing ACAT or minP raised it. Stouffer and Fisher are
-the aggregation statistics that within-pathway correlation inflates
-(Section~3.6), and soft TFisher's uncalibrated value is a minimum over thresholds
-and therefore stochastically small; ACAT and minP stay close to nominal, so
-removing them leaves the omnibus more dominated by the inflated components.
+% Within that pattern, removing Stouffer, Fisher or soft TFisher lowered the
+% Bonferroni rate, while removing ACAT or minP raised it. Stouffer and Fisher are
+% the aggregation statistics that within-pathway correlation inflates
+% (Section~3.6), and soft TFisher's uncalibrated value is a minimum over thresholds
+% and therefore stochastically small; ACAT and minP stay close to nominal, so
+% removing them leaves the omnibus more dominated by the inflated components.
 
-No single deletion broke error control at either level, which is the expected
-consequence of calibrating empirically: the null bank is recomputed for
-whichever components remain, so both the marginal $p$-value and the family-wise
-threshold remain valid for any subset. What changes with the subset is
-sensitivity, not validity. The practical implication is that users may drop a
-component they distrust for a particular dataset---for example minP when
-gene-level $p$-values have been floored at a reporting limit---without
-invalidating the inference, at some cost in power against the architectures that
-component is best at.
+% No single deletion broke error control at either level, which is the expected
+% consequence of calibrating empirically: the null bank is recomputed for
+% whichever components remain, so both the marginal $p$-value and the family-wise
+% threshold remain valid for any subset. What changes with the subset is
+% sensitivity, not validity. The practical implication is that users may drop a
+% component they distrust for a particular dataset---for example minP when
+% gene-level $p$-values have been floored at a reporting limit---without
+% invalidating the inference, at some cost in power against the architectures that
+% component is best at.
 
-Genomic-control inflation behaves the same way: the fourth panel of
-Figure~\ref{fig:loo} shows $\lambda$ for the calibrated marginal statistic
-staying near one for every deletion, so no component is load-bearing for the
-inflation diagnostic either.
+% Genomic-control inflation behaves the same way: the fourth panel of
+% Figure~\ref{fig:loo} shows $\lambda$ for the calibrated marginal statistic
+% staying near one for every deletion, so no component is load-bearing for the
+% inflation diagnostic either.
 
 \maybeinput{auto/tab_loo.tex}
 
@@ -1000,56 +1032,56 @@ or $\lambda=1$). Note the y-scale of the third panel, which is the point of the
 comparison.}{fig:loo}
 \end{figure*}
 
-\subsection*{3.6 Linkage disequilibrium breaks the aggregation tests, not the
-extreme-value tests}
+% \subsection*{3.6 Linkage disequilibrium breaks the aggregation tests, not the
+% extreme-value tests}
 
-The omnibus hides which of its inputs is failing. Calibrating each component
-separately (Table~\ref{tab:components_cal}, Figure~\ref{fig:components}) shows
-that the damage LD does is concentrated in two of the five, and that the
-identity of those two is predictable from what the statistics measure.
+% The omnibus hides which of its inputs is failing. Calibrating each component
+% separately (Table~\ref{tab:components_cal}, Figure~\ref{fig:components}) shows
+% that the damage LD does is concentrated in two of the five, and that the
+% identity of those two is predictable from what the statistics measure.
 
-Under the independent null every component was correctly sized (for example
-ACAT at $\nCmpACATInd$ and Stouffer at $\nCmpStoufferInd$), which is the
-expected behaviour when the generating assumption holds. Under strong LD the
-two aggregation statistics---Fisher, which sums $-2\log p$ across the pathway,
-and Stouffer, which sums $Z$-scores---inflated to $\nCmpFisherStr$ and
-$\nCmpStoufferStr$ against the nominal $0.05$. The two extreme-value
-statistics barely moved: ACAT went to $\nCmpACATStr$ and minP to
-$\nCmpminPStr$. The mechanism is transparent. An aggregation statistic adds one
-term per gene and implicitly treats each as independent evidence, so correlated
-genes are counted repeatedly and the statistic grows; a statistic that depends
-on the most extreme gene is insensitive to how many near-duplicates of it the
-pathway contains. The omnibus inherited the inflation of its worst inputs,
-reaching $\nCmpOmnibusStr$.
+% Under the independent null every component was correctly sized (for example
+% ACAT at $\nCmpACATInd$ and Stouffer at $\nCmpStoufferInd$), which is the
+% expected behaviour when the generating assumption holds. Under strong LD the
+% two aggregation statistics---Fisher, which sums $-2\log p$ across the pathway,
+% and Stouffer, which sums $Z$-scores---inflated to $\nCmpFisherStr$ and
+% $\nCmpStoufferStr$ against the nominal $0.05$. The two extreme-value
+% statistics barely moved: ACAT went to $\nCmpACATStr$ and minP to
+% $\nCmpminPStr$. The mechanism is transparent. An aggregation statistic adds one
+% term per gene and implicitly treats each as independent evidence, so correlated
+% genes are counted repeatedly and the statistic grows; a statistic that depends
+% on the most extreme gene is insensitive to how many near-duplicates of it the
+% pathway contains. The omnibus inherited the inflation of its worst inputs,
+% reaching $\nCmpOmnibusStr$.
 
-Calibration against the correlated null removed this for every component,
-bringing Fisher to $\nCmpFisherCal$, Stouffer to $\nCmpStoufferCal$ and the
-omnibus to $\nCmpOmnibusCal$. The practical consequence is that a user who knows a pathway's signal
-architecture may use a single calibrated component in place of the omnibus
-without losing error control, which is what makes the architecture-specific
-testing described in Section~2.3 usable.
+% Calibration against the correlated null removed this for every component,
+% bringing Fisher to $\nCmpFisherCal$, Stouffer to $\nCmpStoufferCal$ and the
+% omnibus to $\nCmpOmnibusCal$. The practical consequence is that a user who knows a pathway's signal
+% architecture may use a single calibrated component in place of the omnibus
+% without losing error control, which is what makes the architecture-specific
+% testing described in Section~2.3 usable.
 
-This result also explains an observation in Section~3.5: removing an
-aggregation component lowered the Bonferroni family-wise rate while removing
-ACAT or minP raised it. The aggregation components are the ones that were
-inflated in the first place.
+% This result also explains an observation in Section~3.5: removing an
+% aggregation component lowered the Bonferroni family-wise rate while removing
+% ACAT or minP raised it. The aggregation components are the ones that were
+% inflated in the first place.
 
-Three implementation notes belong here, all about soft TFisher. First, the
-statistic is undefined on a pathway in which no gene falls below any truncation
-threshold. Under the grid of Section~2.1 this did not occur at $m\ge20$ in any
-configuration, but it is frequent in small pathways under grids confined to
-small $\tau$, and a single undefined draw in a calibration bank makes that
-pathway's calibrated $p$-value undefined unless non-finite draws are filtered
-before the tail count, which the implementation does. Second, an undefined
-component must be excluded from the omnibus rather than entered at $p=1$
-(Section~2.1). Because ACAT weights by $\tan\{(1/2-p)\pi\}$, entering the
-boundary value makes a test that could not be computed act as evidence against
-the pathway; under the null it pushes the median omnibus $p$-value above one
-half, so that $\lambda$ falls below one while the tail is simultaneously
-inflated. Third, soft TFisher's uncalibrated value is a minimum over thresholds
-rather than a $p$-value, so its analytic columns in
-Table~\ref{tab:components_cal} are not interpretable as calibration; only its
-calibrated and family-wise columns are.
+% Three implementation notes belong here, all about soft TFisher. First, the
+% statistic is undefined on a pathway in which no gene falls below any truncation
+% threshold. Under the grid of Section~2.1 this did not occur at $m\ge20$ in any
+% configuration, but it is frequent in small pathways under grids confined to
+% small $\tau$, and a single undefined draw in a calibration bank makes that
+% pathway's calibrated $p$-value undefined unless non-finite draws are filtered
+% before the tail count, which the implementation does. Second, an undefined
+% component must be excluded from the omnibus rather than entered at $p=1$
+% (Section~2.1). Because ACAT weights by $\tan\{(1/2-p)\pi\}$, entering the
+% boundary value makes a test that could not be computed act as evidence against
+% the pathway; under the null it pushes the median omnibus $p$-value above one
+% half, so that $\lambda$ falls below one while the tail is simultaneously
+% inflated. Third, soft TFisher's uncalibrated value is a minimum over thresholds
+% rather than a $p$-value, so its analytic columns in
+% Table~\ref{tab:components_cal} are not interpretable as calibration; only its
+% calibrated and family-wise columns are.
 
 \maybeinput{auto/tab_components_cal.tex}
 
@@ -1064,64 +1096,64 @@ inflates; the extreme-value components, ACAT and minP, are nearly
 unaffected. Calibration restores all five.}{fig:components}
 \end{figure*}
 
-\subsection*{3.7 Both calibrations degrade when the correlation file is
-incomplete, and the family-wise one degrades faster}
+% \subsection*{3.7 Both calibrations degrade when the correlation file is
+% incomplete, and the family-wise one degrades faster}
 
-Every result above assumes the gene--gene correlation matrix is the one the
-data were generated from. In practice it is assembled by filling MAGMA's
-reported gene pairs into an identity matrix, so a pair MAGMA does not report is
-silently treated as independent. We measured the cost directly by generating
-data from the true correlation structure while calibrating from a matrix with a
-known fraction of its off-diagonal entries zeroed
-(Table~\ref{tab:missing}, Figure~\ref{fig:missing}).
+% Every result above assumes the gene--gene correlation matrix is the one the
+% data were generated from. In practice it is assembled by filling MAGMA's
+% reported gene pairs into an identity matrix, so a pair MAGMA does not report is
+% silently treated as independent. We measured the cost directly by generating
+% data from the true correlation structure while calibrating from a matrix with a
+% known fraction of its off-diagonal entries zeroed
+% (Table~\ref{tab:missing}, Figure~\ref{fig:missing}).
 
-With a complete matrix the marginal type~I error was $\nMissMvnZero$ and the
-Westfall--Young family-wise rate $\nMissWyZero$, both at nominal. Dropping half
-the pairs raised them to $\nMissMvnHalf$ and $\nMissWyHalf$; dropping all of
-them, which is the independence assumption in its pure form, gave
-$\nMissMvnFull$ and $\nMissWyFull$ under moderate LD and $\nMissMvnStrFull$ and
-$\nMissWyStrFull$ under strong LD.
+% With a complete matrix the marginal type~I error was $\nMissMvnZero$ and the
+% Westfall--Young family-wise rate $\nMissWyZero$, both at nominal. Dropping half
+% the pairs raised them to $\nMissMvnHalf$ and $\nMissWyHalf$; dropping all of
+% them, which is the independence assumption in its pure form, gave
+% $\nMissMvnFull$ and $\nMissWyFull$ under moderate LD and $\nMissMvnStrFull$ and
+% $\nMissWyStrFull$ under strong LD.
 
-Expressed as multiples of each procedure's own nominal level---the only fair
-comparison between a per-pathway rate and a per-family one---the marginal
-calibration was $\nMissRatioMvnHalf\times$ nominal at $50\%$ missingness and
-the family-wise procedure $\nMissRatioWyHalf\times$. Westfall--Young is
-therefore more sensitive to an incomplete correlation file than the marginal
-calibration it is built from. The reason is structural rather than
-incidental: the family minimum over $K$ pathways is a tail statistic, so it
-depends on the extreme of the null distribution, which is precisely where an
-error in the correlation structure does the most damage. The marginal
-$p$-value depends only on the bulk.
+% Expressed as multiples of each procedure's own nominal level---the only fair
+% comparison between a per-pathway rate and a per-family one---the marginal
+% calibration was $\nMissRatioMvnHalf\times$ nominal at $50\%$ missingness and
+% the family-wise procedure $\nMissRatioWyHalf\times$. Westfall--Young is
+% therefore more sensitive to an incomplete correlation file than the marginal
+% calibration it is built from. The reason is structural rather than
+% incidental: the family minimum over $K$ pathways is a tail statistic, so it
+% depends on the extreme of the null distribution, which is precisely where an
+% error in the correlation structure does the most damage. The marginal
+% $p$-value depends only on the bulk.
 
-This does not overturn the case for family-wise control, because the comparison
-that matters is against the correction it replaces rather than against the
-marginal rate it is not competing with. Bonferroni's family-wise rate in the
-same runs was $\nMissBonfMod$ and $\nMissBonfStr$ and does not depend on the
-correlation file at all, since it is computed from the analytic $p$-value.
-Westfall--Young remained the better family-wise procedure up to $\nMissCrossover\%$
-missingness, and lost only when essentially no correlation information
-remained---at which point it is calibrating against a null that does not
-resemble the data.
+% This does not overturn the case for family-wise control, because the comparison
+% that matters is against the correction it replaces rather than against the
+% marginal rate it is not competing with. Bonferroni's family-wise rate in the
+% same runs was $\nMissBonfMod$ and $\nMissBonfStr$ and does not depend on the
+% correlation file at all, since it is computed from the analytic $p$-value.
+% Westfall--Young remained the better family-wise procedure up to $\nMissCrossover\%$
+% missingness, and lost only when essentially no correlation information
+% remained---at which point it is calibrating against a null that does not
+% resemble the data.
 
-It does, however, change how the procedure should be reported. A
-Westfall--Young $p$-value is only as trustworthy as the correlation file behind
-it, and the completeness of that file is measurable rather than assumed. The
-quantity to check is narrow: a correlation matrix from MAGMA is \emph{supposed}
-to be sparse, because correlations are computed only for gene pairs close
-enough to share LD, so a zero between distant genes is correct rather than
-missing. What matters is the fraction of within-pathway gene pairs that are on
-the same chromosome and close enough to be correlated for which a value is
-actually reported. We provide \texttt{10\_pair\_coverage.R} for this, and
-recommend that it be run and its result stated alongside any family-wise
-$p$-value.
+% It does, however, change how the procedure should be reported. A
+% Westfall--Young $p$-value is only as trustworthy as the correlation file behind
+% it, and the completeness of that file is measurable rather than assumed. The
+% quantity to check is narrow: a correlation matrix from MAGMA is \emph{supposed}
+% to be sparse, because correlations are computed only for gene pairs close
+% enough to share LD, so a zero between distant genes is correct rather than
+% missing. What matters is the fraction of within-pathway gene pairs that are on
+% the same chromosome and close enough to be correlated for which a value is
+% actually reported. We provide \texttt{10\_pair\_coverage.R} for this, and
+% recommend that it be run and its result stated alongside any family-wise
+% $p$-value.
 
-Finally, and consistently with Section~3.3, $\lambda$ did not flag any of this.
-Across the missingness sweep it ranged from $\nMissLamLo$ to $\nMissLamHi$,
-drifting \emph{below} one as correlation information was removed, while the
-marginal type~I error more than doubled. This is the second independent setting
-in which $\lambda$ at or below one coexists with an inflated tail, and it is the
-clearest argument we can make that $\lambda$ should not be used as the sole
-calibration diagnostic in pathway analysis.
+% Finally, and consistently with Section~3.3, $\lambda$ did not flag any of this.
+% Across the missingness sweep it ranged from $\nMissLamLo$ to $\nMissLamHi$,
+% drifting \emph{below} one as correlation information was removed, while the
+% marginal type~I error more than doubled. This is the second independent setting
+% in which $\lambda$ at or below one coexists with an inflated tail, and it is the
+% clearest argument we can make that $\lambda$ should not be used as the sole
+% calibration diagnostic in pathway analysis.
 
 \maybeinput{auto/tab_missing.tex}
 
@@ -1136,42 +1168,42 @@ the marginal calibration, which falls below one rather than rising as the
 type~I error more than doubles.}{fig:missing}
 \end{figure*}
 
-\subsection*{3.8 Maize grain nitrogen: Westfall--Young recovers the known
-pathway and gene}
+% \subsection*{3.8 Maize grain nitrogen: Westfall--Young recovers the known
+% pathway and gene}
 
-We applied the full pipeline to a mixed-linear-model GWAS of maize grain
-nitrogen content, testing $172$ CornCyc pathways. The leading pathway under the
-size-standardized Westfall--Young ordering was \texttt{HOMOSERSYN-PWY},
-L-homoserine biosynthesis (13 genes; omnibus $p=1.58\times10^{-3}$;
-size-standardized family-wise $p=0.070$), followed by \texttt{PWY-5097},
-L-lysine biosynthesis VI (25 genes; omnibus $p=3.04\times10^{-3}$;
-size-standardized family-wise $p=0.338$).
+% We applied the full pipeline to a mixed-linear-model GWAS of maize grain
+% nitrogen content, testing $172$ CornCyc pathways. The leading pathway under the
+% size-standardized Westfall--Young ordering was \texttt{HOMOSERSYN-PWY},
+% L-homoserine biosynthesis (13 genes; omnibus $p=1.58\times10^{-3}$;
+% size-standardized family-wise $p=0.070$), followed by \texttt{PWY-5097},
+% L-lysine biosynthesis VI (25 genes; omnibus $p=3.04\times10^{-3}$;
+% size-standardized family-wise $p=0.338$).
 
-This ordering reproduces, independently and from a different statistical
-framework, the result of a previously reported analysis of the same trait
-\citep{Tandukar2025Nitrogen}, in which L-homoserine biosynthesis was the only
-pathway enriched across all populations examined and L-lysine biosynthesis VI
-was the runner-up for reasons that analysis sets out. Recovering the same two
-pathways in the same order out of $172$ candidates, using a method that shares
-no calibration machinery with the original, is the strongest external check we
-can presently make on the pipeline.
+% This ordering reproduces, independently and from a different statistical
+% framework, the result of a previously reported analysis of the same trait
+% \citep{Tandukar2025Nitrogen}, in which L-homoserine biosynthesis was the only
+% pathway enriched across all populations examined and L-lysine biosynthesis VI
+% was the runner-up for reasons that analysis sets out. Recovering the same two
+% pathways in the same order out of $172$ candidates, using a method that shares
+% no calibration machinery with the original, is the strongest external check we
+% can presently make on the pipeline.
 
-The three-layer candidate score of Section~2.5, computed over all $34{,}873$
-annotated maize genes with pathway evidence taken from the Westfall--Young
-adjusted $p$-values, placed \texttt{Zm00001eb220040} first. This gene is the
-aspartate kinase isozyme named in the earlier analysis, and L-homoserine
-biosynthesis was its highest-scoring pathway, so the gene- and pathway-level
-layers agree rather than merely coexisting.
+% The three-layer candidate score of Section~2.5, computed over all $34{,}873$
+% annotated maize genes with pathway evidence taken from the Westfall--Young
+% adjusted $p$-values, placed \texttt{Zm00001eb220040} first. This gene is the
+% aspartate kinase isozyme named in the earlier analysis, and L-homoserine
+% biosynthesis was its highest-scoring pathway, so the gene- and pathway-level
+% layers agree rather than merely coexisting.
 
-Two caveats are essential. First, nothing in this analysis is significant: the
-leading pathway's size-standardized family-wise $p$-value is $0.070$, and under
-the unstandardized Westfall--Young ordering it is $0.284$ against a Bonferroni
-value of $0.272$. The result is a ranking that agrees with prior biology, not a
-discovery. Second, grain nitrogen is highly polygenic and the MLM GWAS contained
-no genome-wide significant genes at all (Table~\ref{tab:density}), which is
-precisely the regime in which a ranking is the only available output. We regard
-the agreement as encouraging evidence that the ordering is meaningful in the
-low-signal regime, and we do not claim more than that.
+% Two caveats are essential. First, nothing in this analysis is significant: the
+% leading pathway's size-standardized family-wise $p$-value is $0.070$, and under
+% the unstandardized Westfall--Young ordering it is $0.284$ against a Bonferroni
+% value of $0.272$. The result is a ranking that agrees with prior biology, not a
+% discovery. Second, grain nitrogen is highly polygenic and the MLM GWAS contained
+% no genome-wide significant genes at all (Table~\ref{tab:density}), which is
+% precisely the regime in which a ranking is the only available output. We regard
+% the agreement as encouraging evidence that the ordering is meaningful in the
+% low-signal regime, and we do not claim more than that.
 
 \subsection*{3.9 Human blood lipids: every pathway is significant, but the
 ranking and the gene list recover lipoprotein biology}
