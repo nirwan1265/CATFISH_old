@@ -740,6 +740,31 @@ sizes and effect scales; crosses mark the worst single cell. The dashed line
 marks a regret of $0.05$.}{fig:archregret}
 \end{figure}
 
+
+\subsection*{3.3 What the omnibus gives up by not choosing a component}
+
+Since no component dominates and the true pathway archetype is unknown, users must either preselect a component and risk choosing poorly or combine them. CATFISH combines all five component $p$-values using the ACAT-type cross-method operator (Section~2.1) to form a single omnibus statistic, calibrated under the same correlated null. Figure~\ref{fig:archpower} shows the trade-off across the Section~3.2 cells. The omnibus generally tracks the best component, lagging mainly for single-gene signals.
+
+In practice, the question is not which component wins, but how much is lost when we do not know which would be the best. We measure this loss as \emph{regret} defined as the gap between the best component and the omnibus within a cell. Mean regret ranges from $\nArchRegretBest$ for $\nArchRegretBestA$ to $\nArchRegretWorst$ for $\nArchRegretWorstA$ (Table~\ref{tab:archregret}), while the best--worst component gap in the same cells is often $>0.5$ in power. Pre-committing to one component risks the entire gap, while the omnibus risks only regret.
+
+An exception is the single-gene case, where the omnibus can lose up to $\nArchMaxRegret$ in one cell. The minP and ACAT detect the pathway, Fisher and Stouffer are near null, and averaging dilutes a signal seen by only two components. Thus, this points to a combination effect rather than a defect in any single component and suggests a setting in which a gene-level, not pathway-level, test is the right approach.
+
+
+\subsection*{3.4 Independence-based calibration is anti-conservative; calibration against the correlated null is not}
+
+Here, we examine the type I error. With no signal, how often does each statistic reject? We adopt the exchangeable setup in Section~2.6, item~1 to separate dependence. The pathways are mutually independent, whereas the $m$ genes within a pathway share a common correlation $\rho$ with higher than standard block LD and therefore serving as a stress test. We vary $\rho\in\{0,0.3,0.6\}$ and $m\in\{5,20,50\}$, simulate $500$ families per setting, and compare four rules: the analytic independence-based $p$-value; per-pathway calibration under the correlated null; Bonferroni on the analytic $p$-value; and the Westfall--Young adjusted $p$-value (Section~2.3, Step~4). The first two are per-pathway (evaluated by marginal type I error); the last two are family-wise (evaluated by the probability any pathway is rejected) (Table~\ref{tab:null_calibration}; Figure~\ref{fig:type1}).
+
+The analytic $p$-value is valid only under within-pathway independence, and the grid shows the impact of violating this. At $\rho=0$, $m=5$, the analytic type~I error is $\nTAnInd$ (nominal $0.05$). As $\rho$ or $m$ increases, it becomes increasingly anti-conservative, reaching $\nTAnStr$ at $\rho=0.6$, $m=50$. This is expected as correlation reduces effective information, so the statistic appears more extreme than the independence-based reference implies.
+
+Per-pathway calibration to the correlated null eliminated most error. Empirical type I error was $\nTMvnInd$ at $\rho=0$, $m=5$ and $\nTMvnStr$ at $\rho=0.6$, $m=50$, staying within $[\nTMvnMin,\nTMvnMax]$ over the grid. The analytic calibration deviated more in the tail. At $\alpha=0.01$ it reached $\nTAnMaxOne$ versus $\nTMvnMaxOne$ for the calibrated statistic.
+
+The family-wise columns evaluate the Westfall--Young procedure using sample splitting: the family-minimum null is estimated on half the simulated families and tested on the other half, so results are not correct by construction. Empirical FWER ranged from $\nTWyMin$ to $\nTWyMax$, within Monte Carlo error for 250 held-out families (SE $\approx 0.014$ at the nominal level). Bonferroni on the analytic $p$-value inherits its miscalibration: FWER was $\nTBonfInd$ under independence with $m=5$ (where the analytic $p$-value is valid) but increased to $\nTBonfMod$ at $\rho=0.3$, $m=20$ and $\nTBonfStr$ at $\rho=0.6$, $m=50$. With independent pathways, this inflation is entirely due to per-test miscalibration compounded across the family.
+
+One correction matters because the failure was silent. In an earlier version, the family-wise error at $\rho=0.6$, $m=50$ was $1.00$. The issue was not Westfall--Young, but loss of resolution in the omnibus: soft TFisher’s tail underflowed for about $3.5\%$ of null pathways, giving them a shared floor value; with $200$ pathways per family, almost every family’s minimum became that same value. A quantile for a distribution concentrated at one value, combined with an inclusive comparison, then rejected every family. After capping soft TFisher at its effective precision (Section~2.1) and computing adjusted $p$-values via the counting form (Section~2.3), the family minimum became continuous again; even in the worst case it takes $\nWyDistinctMin$ distinct values across the $500$ simulated families.
+
+This problem is not apparent in the genomic-control factor $\lambda$, which is misleading (Figure~\ref{fig:lambda}). For the analytic omnibus, $\lambda$ was $\nLamAnInd$ at $\rho=0$, $m=50$ and dropped to $\nLamAnStr$ at $\rho=0.6$, $m=50$—well below one—in the same setting where analytic type~I error was largest. There is no contradiction: $\lambda$ reflects the median null $p$-value, whereas type~I error depends on the lower tail. Under strong within-pathway correlation, the analytic null is reshaped rather than shifted, with extra mass in the lower tail and a median above one half, so $\lambda$ can suggest conservatism while the tail is anti-conservative. After per-pathway calibration, $\lambda$ lay in $[\nLamMvnMin,\nLamMvnMax]$. Thus, $\lambda$ near or below one is not evidence that the tail is calibrated.
+
+
 \subsection*{3.2 Independence-based calibration is anti-conservative;
 per-pathway and Westfall--Young calibration are not}
 
@@ -788,7 +813,27 @@ computing the adjusted $p$-value in its counting form (Section~2.3) restored the
 family minimum to a continuous statistic: even in the worst configuration it
 takes $\nWyDistinctMin$ distinct values across the $500$ simulated families.
 
-\maybeinput{auto/tab_null.tex}
+\begin{table*}[!t]
+\centering
+\caption{Empirical type~I error and genomic-control inflation for the CATFISH omnibus under the global null, by within-pathway LD level and pathway size. Analytic: independence-based omnibus. Calibrated: per-pathway calibration against the correlated null. Bonferroni and Westfall--Young (WY): family-wise error rates, the probability of at least one rejection among the pathways of one simulated family. Nominal level $\alpha=0.05$.}
+\label{tab:null_calibration}
+\small
+\begin{tabular}{llrrrrrrr}
+\hline
+\textbf{LD} & $\rho$ & $m$ & \textbf{Analytic} & \textbf{Calibrated} & \textbf{Bonferroni} & \textbf{WY} & $\lambda_{\mathrm{an}}$ & $\lambda_{\mathrm{cal}}$ \\
+\hline
+independent & 0.0 & 5 & 0.0571 & 0.0396 & 0.0526 & 0.0320 & 0.909 & 0.947 \\
+independent & 0.0 & 20 & 0.0626 & 0.0534 & 0.0620 & 0.0400 & 0.992 & 0.943 \\
+independent & 0.0 & 50 & 0.0651 & 0.0481 & 0.0658 & 0.0120 & 1.046 & 0.961 \\
+moderate & 0.3 & 5 & 0.1026 & 0.0653 & 0.6806 & 0.0360 & 0.701 & 1.055 \\
+moderate & 0.3 & 20 & 0.2115 & 0.0569 & 1.0000 & 0.0320 & 0.477 & 1.031 \\
+moderate & 0.3 & 50 & 0.2895 & 0.0469 & 1.0000 & 0.0640 & 0.261 & 0.970 \\
+strong & 0.6 & 5 & 0.1354 & 0.0403 & 0.9806 & 0.0600 & 0.486 & 1.124 \\
+strong & 0.6 & 20 & 0.2622 & 0.0386 & 1.0000 & 0.0440 & 0.068 & 1.031 \\
+strong & 0.6 & 50 & 0.3332 & 0.0484 & 1.0000 & 0.0680 & 0.002 & 1.016 \\
+\hline
+\end{tabular}
+\end{table*}
 
 \begin{figure*}[!t]
 \centering
