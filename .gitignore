@@ -113,3 +113,8 @@ catfish2/tex/*.synctex.gz
 *.gz
 # script backups made before edits
 *.bak_pre_*
+
+# ---- added 2026-11-03: DGRP body weight / triglyceride work (local only) ----
+dgrp_bw_tg/
+# full Reactome download (~500 MB); the fly subset dme_reactome_all_levels.tsv is kept
+inst/extdata/pathway/Ensembl2Reactome_All_Levels.txt
