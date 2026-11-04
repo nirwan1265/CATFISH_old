@@ -604,72 +604,65 @@ MDS is expected when pathway output depends on many interacting components rathe
 % The five components interpret the ranked profile differently (Table~\ref{tab:components}). minP uses only the top gene. ACAT averages Cauchy-transformed $p$-values; its heavy tail makes the smallest few dominate, so it is head-driven like minP but also rewards a second or third strong gene. Fisher sums $-2\log p_g$ across genes; because contributions grow only logarithmically, it favors many moderately small $p$-values over a few extreme ones. Stouffer averages $Z_g$ with equal weights; since $Z_g$ grows even more slowly, small shared shifts accumulate with pathway size, while a single extreme gene is diluted by $1/\sqrt{m}$. Soft TFisher drops genes with $p>\tau$ and sums the remaining excess evidence, shifting from minP-like at small $\tau$ toward Fisher as $\tau\to1$; adapting over $\tau$ lets it track the profile up to its shoulder. These properties predict which components are sensitive to each archetype (Table~\ref{tab:archetype_summary}, fourth column).
 
 
+\subsection*{3.2 Each component detects the archetype predicted for it}
 
-\emph{The predicted correspondence holds under the family-wise rule.} The
-correspondence between archetype and component is a prediction, and it is
-testable only under simulation, because the archetype of a real pathway is
-unknown. We generated pathways carrying each archetype's ranked signal shape
-(Table~\ref{tab:archetype_summary}, last column; Section~2.6, item~6), embedded
-each in a family of $149$ null pathways drawn from the same correlated gene
-universe, and measured the probability that the signal pathway clears the
-family-wise Westfall--Young threshold. Effect sizes were scaled over a grid so
-that every archetype passes from undetectable to saturated, and the component
-set, the universe and the resampling are exactly those used elsewhere in this
-paper.
+We next ran a simulation to check whether each component test detects the archetype predicted for it. The archetype--component mapping in Table~\ref{tab:archetype_summary} is a prediction testable only by simulation, since real pathway archetypes are unknown. We embedded one pathway per archetype, carrying its ranked signal shape, in $149$ null pathways from the same correlated gene set, scaled effects from undetectable to saturated, and recorded how often it exceeded the family-wise Westfall--Young threshold (Section~2.6, item~6).
 
-The predictions hold. In $\nArchCellsIn$ of $\nArchCellsTot$ archetype-by-size
-cells the component that most often achieved the highest family-wise power was
-inside the set predicted in Table~\ref{tab:archetype_summary}
-(Table~\ref{tab:archverify}). The separation is sharp and in the expected
-direction: diffuse enrichment is recovered by Stouffer, with the extreme-tail
-tests near their null; single-gene and strongly sparse signals are recovered by
-minP and ACAT, with Fisher and Stouffer close to powerless; and dense or mixed
-architectures by Fisher, with soft TFisher close behind. No component is best
-everywhere, which is the premise the omnibus rests on.
+The predictions are well supported. In $\nArchCellsIn$ of $\nArchCellsTot$ archetype-by-size cells, the component most often attaining the highest family-wise power lay in the predicted set (Table~\ref{tab:archverify}, Figure~\ref{fig:archpower}). The pattern is clear and directional. The diffuse enrichment favors Stouffer, with extreme-tail tests near null. The sparse or single-gene signals favor minP and ACAT, with Fisher and Stouffer nearly powerless. Finally, dense or mixed architectures favor Fisher, with soft TFisher close behind. No component dominates across settings.
 
-The ranks below first place matter as much as the winners. Across the
-$\nArchInfCells$ informative cells, Fisher finished first $\nFisherFirst$ times
-but fourth or lower in $\nFisherFourthPlus$, and minP finished last in
-$\nMinPLast$. Soft TFisher finished first only $\nTFFirst$ time, but second in
-$\nTFSecond$ and third in $\nTFThird$, and never lower than third: it is the
-only component never among the weakest. Inside an omnibus that averages its
-inputs, that is the more useful property. A component that is never best but
-never near its null protects the combination precisely in the cells where the
-specialists disagree. It also qualifies Table~\ref{tab:archetype_summary}: soft
-TFisher belongs among the tests sensitive to dense and mixed signal, where it
-ran close behind Fisher, but it was not the most sensitive test for any
-archetype.
+The lower placings are also informative. Across the $\nArchInfCells$ informative cells, Fisher placed first $\nFisherFirst$ times but fourth or worse in $\nFisherFourthPlus$. The minP finished last $\nMinPLast$ times. Soft TFisher won only $\nTFFirst$ cell but never placed below third. It is the only component never among the weakest, and it supports Table~\ref{tab:archetype_summary}. Soft TFisher is sensitive to dense and mixed signals but is not the top test for any archetype. Thus, CATFISH reports every component separately, its archetypes help interpret real pathways.
 
-What matters in practice is not which component wins but how much the omnibus
-gives up by not knowing in advance which one would. We measure that as
-\emph{regret}: the difference between the best single component in a cell and
-the omnibus in the same cell. Regret is small for most architectures
-(Table~\ref{tab:archregret}, Figure~\ref{fig:archregret}), from
-$\nArchRegretBest$ for $\nArchRegretBestA$ to $\nArchRegretWorstA$ at
-$\nArchRegretWorst$. Against the alternative of choosing one component in
-advance, which risks the full gap between the best and worst component in a
-cell---frequently more than $0.5$ in power---that is a favourable trade.
+\begin{table*}[!t]
+\centering
+\caption{Archetype verification under the family-wise decision rule. For each archetype and pathway size, the component achieving the highest family-wise power most often across effect scales, against the set predicted in Table~\ref{tab:archetype_summary}. Cells in which no component or every component fires are excluded as uninformative. Worst regret is the largest gap in a single cell between the best component and the omnibus.}
+\label{tab:archverify}
+\small
+\begin{tabular}{llllcr}
+\hline
+\textbf{Archetype} & \textbf{$m$} & \textbf{Predicted} & \textbf{Observed winner} & \textbf{In set} & \textbf{Worst regret} \\
+\hline
+SSS & 5 & ACAT, minP & minP & \checkmark & 0.108 \\
+SSS & 20 & ACAT, minP & ACAT & \checkmark & 0.131 \\
+SSS & 50 & ACAT, minP & minP & \checkmark & 0.039 \\
+MDS & 5 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.050 \\
+MDS & 20 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.012 \\
+MDS & 50 & Fisher, Stouffer, TFisher & Fisher & \checkmark & 0.029 \\
+WDE & 5 & Stouffer, Fisher & Fisher & \checkmark & 0.032 \\
+WDE & 20 & Stouffer, Fisher & Stouffer & \checkmark & 0.020 \\
+WDE & 50 & Stouffer, Fisher & Stouffer & \checkmark & 0.021 \\
+MSA & 5 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.042 \\
+MSA & 20 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.009 \\
+MSA & 50 & TFisher, Fisher, ACAT & Fisher & \checkmark & 0.021 \\
+SGP & 5 & minP, ACAT & ACAT & \checkmark & 0.137 \\
+SGP & 20 & minP, ACAT & minP & \checkmark & 0.355 \\
+SGP & 50 & minP, ACAT & minP & \checkmark & 0.476 \\
+\hline
+\end{tabular}
+\end{table*}
 
-The exception is worth stating plainly. In the single-gene case the omnibus can
-give up as much as $\nArchMaxRegret$ in a single cell, because minP and ACAT
-detect the pathway while Fisher and Stouffer are near their null, and averaging
-across components dilutes a signal that only two of them can see. This is a
-property of combination rather than a defect of any component, and it is the
-price of not having to choose. It also marks the regime in which a gene-level
-test, rather than a pathway-level one, is the appropriate instrument.
 
-\emph{The component pattern is part of the result.} Because CATFISH reports
-every component alongside the omnibus, the archetypes also give a way to read a
-real pathway. A pathway carried by minP and ACAT, with Fisher and Stouffer near
-their null, is sparse or single-gene driven, and should be checked against its
-leading gene before it is interpreted as coordinated pathway enrichment. A
-pathway carried by Stouffer and Fisher, with the extreme-tail tests
-unremarkable, is diffuse, and its leading genes may individually be far from
-significance. The omnibus answers whether a pathway is associated; the
-component pattern indicates how.
+%\maybeinput{auto/tab_archetype_verification.tex}
+%\maybeinput{auto/tab_archetype_regret.tex}
 
-\maybeinput{auto/tab_archetype_verification.tex}
-\maybeinput{auto/tab_archetype_regret.tex}
+
+\begin{table*}[!t]
+\centering
+\caption{Power regret of the ACAT-O omnibus by archetype. Regret is the difference between the best single component and the omnibus in the same cell, over all pathway sizes and effect scales. The final two columns give the fraction of cells in which the omnibus is within $0.05$ and $0.10$ of the best component.}
+\label{tab:archregret}
+\small
+\begin{tabular}{llrrrrr}
+\hline
+\textbf{Code} & \textbf{Archetype} & \textbf{Mean} & \textbf{Median} & \textbf{Worst} & \textbf{$\le0.05$} & \textbf{$\le0.10$} \\
+\hline
+MSA & Mixed Signal Architecture & 0.006 & 0.001 & 0.042 & 100\% & 100\% \\
+MDS & Moderate Dense Signal & 0.010 & 0.003 & 0.050 & 94\% & 100\% \\
+WDE & Weak Diffuse Enrichment & 0.010 & 0.010 & 0.032 & 100\% & 100\% \\
+SSS & Strong Sparse Signal & 0.025 & 0.003 & 0.131 & 83\% & 89\% \\
+SGP & Single-Gene Proxy & 0.066 & 0.005 & 0.476 & 72\% & 83\% \\
+\hline
+\end{tabular}
+\end{table*}
+
 
 \begin{figure*}[!t]
 \centering
