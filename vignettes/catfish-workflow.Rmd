@@ -95,12 +95,24 @@ head(cand[, c("rank", "gene", "score", "magma_rank", "pathway_rank",
 
 A typical CATFISH workflow consists of:
 
-1. **Prepare gene location file** from GFF3 annotations
-2. **Run MAGMA annotation** to map SNPs to genes
-3. **Run MAGMA gene analysis** to get gene-level p-values
-4. **Combine chromosome results** into a single file
+1. **Prepare gene location file** from GFF3 annotations (`gff3_to_geneloc()`)
+2. **Run MAGMA annotation** to map SNPs to genes (`magma_annotate()`)
+3. **Run MAGMA gene analysis**, usually one chromosome at a time (`magma_gene()`)
+4. **Read the gene results and gene-gene correlations** of all chromosomes
+   (`magma_read_genes()`, `magma_genesraw_to_cor_pairs_banded()`)
 5. **Optional: adjust gene p-values** for gene length/SNP density (not needed for MAGMA output)
-6. **Run pathway tests** (individual or omnibus)
+6. **Optional: individual component tests** (ACAT, Fisher, Stouffer, minP, soft TFisher)
+7. **Test pathways with Westfall--Young calibration** (`catfish_wy_pathways()`;
+   `catfish_omni2_pathways()` also reports the component tests)
+8. **Prioritise candidate genes** (`gene_prioritize()`)
+
+Pathways are built in for several species (`species = "maize"`, `"sorghum"`,
+`"arabidopsis"`, `"plant"`, `"fly"`, `"human"`, `"human_reactome"`), or loaded
+from your own files with `catfish_load_pathways(file = )` (PMN format),
+`catfish_load_gmt()` or `catfish_load_biocyc()`; see *Using Custom Pathways*.
+
+The GWAS itself (GEMMA, GAPIT, PLINK, ...) is run outside CATFISH; CATFISH
+starts from its SNP-level summary statistics.
 
 ## Step 1: Create Gene Location File
 
@@ -143,44 +155,54 @@ ann <- magma_annotate(
 
 ## Step 3: MAGMA Gene Analysis
 
-Run MAGMA to compute gene-level statistics:
+Run MAGMA to compute gene-level statistics. `chroms` runs one MAGMA analysis
+per chromosome, written as `<out_prefix>_chr<k>`: in parallel with
+`n_threads > 1`, otherwise one after another. On a cluster, run one chromosome
+per array job by giving that job's chromosome, e.g. `chroms = 5`.
 
 ```{r magma-gene}
-# Run MAGMA gene analysis per chromosome
 magma_gene(
-  bfile      = "path/to/genotype_file",
+  bfile      = "path/to/genotype_file",      # PLINK reference for LD
   gene_annot = ann$gene_annot,
   stats_file = "path/to/gwas_results.csv",
   sep        = ",",
-  n_total    = 500,  # sample size
+  n_total    = 500,                          # sample size
   rename_columns = c(CHR = "CHR", SNP = "SNP", PVALUE = "P-Value"),
   out_prefix = "my_analysis",
   out_dir    = "magma_genes_by_chr",
-  gene_model = "multi=snp-wise",
+  gene_model = "snp-wise=mean",
   chroms     = 1:10,
   n_threads  = 10
 )
 ```
 
-## Step 4: Combine Chromosome Results
+**Which gene model.** Westfall--Young calibration assumes that gene
+p-values are uniform where there is no association. MAGMA's SNP-wise mean
+model meets this when the GWAS is well calibrated. The SNP-wise top model, and
+the `multi=snp-wise` model that combines the two, are often inflated in panels
+with long-range LD (in a sorghum panel their median gene p was 0.11 and 0.18,
+against 0.45 for the mean model), and the inflation is then read as pathway
+signal. `magma_read_genes()` below prints the median of every gene p-value
+column so this can be checked.
+
+## Step 4: Read All Chromosomes
 
 ```{r combine-results}
-# List all chromosome result files
-files <- list.files(
-  path = "magma_genes_by_chr",
-  pattern = "^my_analysis_chr.*\\.genes\\.out$",
-  full.names = TRUE
+# gene results of every chromosome, as one table
+genes_all <- magma_read_genes(
+  dir     = "magma_genes_by_chr",
+  pattern = "^my_analysis_chr.*\\.genes\\.out$"
 )
 
-# Read and combine
-gene_list <- lapply(files, function(f) {
-  utils::read.table(f, header = TRUE, stringsAsFactors = FALSE)
-})
-genes_all <- do.call(rbind, gene_list)
-
-# Deduplicate: keep smallest P per gene
-genes_all <- genes_all[order(genes_all$GENE, genes_all$P), ]
-genes_all <- genes_all[!duplicated(genes_all$GENE), ]
+# gene-gene correlations from the matching .genes.raw files, in one file.
+# MAGMA computes them only within a chromosome, so all files are needed.
+raw <- list.files("magma_genes_by_chr", "^my_analysis_chr.*\\.genes\\.raw$",
+                  full.names = TRUE)
+magma_genesraw_to_cor_pairs_banded(
+  genes_raw_file = raw,
+  out_pairs_file = "gene_correlations.txt",
+  gene_regex     = "^Zm"   # pattern of your gene IDs: "^SORBI", "^AT", "^FBgn", "^[0-9]+$" (Entrez)
+)
 ```
 
 ## Step 5 (Optional): Gene-size Adjustment
@@ -341,7 +363,7 @@ omni_res <- catfish_omni2_pathways(
   # Westfall-Young calibration
   B_perm       = 10000L,
   perm_mode    = "wy",           # "none", "global", "wy" or "both"
-  magma_cor_file = "path/to/gene_correlations.txt",
+  magma_cor_file = "gene_correlations.txt",   # from Step 4
   wy_tau_grid  = c(0.01, 0.05, 0.5),
 
   seed         = 123,
@@ -362,7 +384,7 @@ wy_res <- catfish_wy_pathways(
   gene_col     = "GENE",
   p_col        = "P",
   chr_col      = "CHR",
-  cor_file     = "path/to/gene_correlations.txt",
+  cor_file     = "gene_correlations.txt",     # from Step 4
   B            = 10000L,
   min_genes    = 10L,
   max_genes    = 200L,

@@ -52,11 +52,13 @@ The package implements a multi-method pathway testing framework:
 
 2. **Omnibus Integration** (`R/OMNIBUS_test.R`): Combines component tests
    - `catfish_omni2_pathways()` - Main entry point
-   - Supports analytic, global resampling, and MVN resampling calibration
+   - Supports analytic, global resampling, and Westfall--Young calibration
+   - `catfish_wy_pathways()` (`R/westfall_young.R`) - stand-alone Westfall--Young pathway test (the paper's method)
 
-3. **MAGMA Interface** (`R/magma_wrappers.R`, `R/prepare_wrappers.R`):
-   - `magma_gene()` - Run MAGMA gene analysis
-   - `magma_genesraw_to_cor_pairs_banded()` - Extract gene correlations
+3. **MAGMA Interface** (`R/magma_wrappers.R`, `R/magma_read_genes.R`, `R/correlation_genes_wrappers.R`):
+   - `magma_annotate()`, `magma_gene()` - Run MAGMA (per chromosome with `chroms`)
+   - `magma_read_genes()` - Read and combine per-chromosome `.genes.out`
+   - `magma_genesraw_to_cor_pairs_banded()` - Gene correlations from one or many `.genes.raw`
 
 4. **Data Preparation** (`R/gff3_to_geneloc.R`, `R/get_gene_lengths.R`):
    - `gff3_to_geneloc()` - Convert GFF3 to MAGMA format
@@ -84,9 +86,8 @@ Gene-level results require columns: `GENE`, `P`, and optionally `ZSTAT`, `NSNPS`
 
 ## Key Files
 
-- `R/OMNIBUS_test.R` - Core omnibus logic (~1,850 lines)
-- `R/magma_wrappers.R` - MAGMA interface (~1,200 lines)
-- `R/prepare_wrappers.R` - Data validation/preparation (~1,600 lines)
+- `R/OMNIBUS_test.R` - Core omnibus logic (~1,600 lines)
+- `R/magma_wrappers.R` - MAGMA interface (~750 lines)
 - `workflow_code.md` - Step-by-step usage guide
 - `README.md` - Comprehensive documentation with methodology
 

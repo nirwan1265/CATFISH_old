@@ -5,10 +5,16 @@
 #' This file supplies the gene-gene correlations for Westfall--Young calibration in
 #' \code{\link{catfish_omni2_pathways}} and \code{\link{catfish_wy_pathways}}.
 #'
-#' @param genes_raw_file Path to MAGMA .genes.raw file (one chromosome).
+#' @param genes_raw_file Path(s) to MAGMA \code{.genes.raw} files. Give one file
+#'   per chromosome when MAGMA was run chromosome by chromosome; all are written
+#'   to one output file. MAGMA computes gene--gene correlations only within a
+#'   chromosome, so the files together hold the full correlation structure.
 #' @param out_pairs_file Output path for the correlation pairs file.
-#' @param fixed_fields Integer. Number of fixed fields before correlation values
-#'   in MAGMA output (default 9 for multi=snp-wise model).
+#' @param fixed_fields Integer, or \code{NULL} (default) to read it from each
+#'   file's \code{# COVAR} header line: the seven fixed MAGMA fields (GENE, CHR,
+#'   START, STOP, NSNPS, NPARAM, N) plus one per covariate. For MAGMA 1.10 output
+#'   (\code{# COVAR = NSAMP MAC}) this is 9 for every gene model. Used when a
+#'   file has no \code{# COVAR} line.
 #' @param gene_regex Regular expression to identify gene IDs. Use organism-specific
 #'   patterns:
 #'   \itemize{
@@ -29,8 +35,9 @@
 #' This function parses that format and outputs a simple tab-separated file with
 #' columns: gene1, gene2, r.
 #'
-#' For multi-chromosome analyses, run this function on each chromosome's .raw file
-#' and concatenate the results (dropping headers after the first file).
+#' For per-chromosome MAGMA runs, pass all the chromosome files at once.
+#' The function stops if no gene record matches \code{gene_regex}, which
+#' usually means the pattern does not fit the gene IDs.
 #'
 #' @examples
 #' \dontrun{
@@ -41,19 +48,25 @@
 #'   gene_regex = "^Zm"  # Maize genes
 #' )
 #'
-#' # Combine multiple chromosomes - see usage2.R for full example
+#' # All chromosomes of a per-chromosome run, into one file
+#' raw <- sprintf("trait_chr%02d.genes.raw", 1:10)
+#' magma_genesraw_to_cor_pairs_banded(raw, "trait_gene_cor_pairs.txt",
+#'                                    gene_regex = "^SORBI")
 #' }
 #'
 #' @seealso \code{\link{catfish_omni2_pathways}} for using the correlation file
 #' @export
 magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
                                                out_pairs_file,
-                                               fixed_fields = 9L,
+                                               fixed_fields = NULL,
                                                gene_regex = "^FBgn",
                                                keep_abs_r_ge = 0,
                                                overwrite = TRUE,
                                                verbose = TRUE) {
-  stopifnot(file.exists(genes_raw_file))
+  genes_raw_file <- as.character(genes_raw_file)
+  if (!length(genes_raw_file)) stop("genes_raw_file is empty.", call. = FALSE)
+  miss <- genes_raw_file[!file.exists(genes_raw_file)]
+  if (length(miss)) stop("genes_raw_file not found: ", paste(miss, collapse = ", "), call. = FALSE)
   if (file.exists(out_pairs_file) && !overwrite) {
     stop("out_pairs_file exists and overwrite=FALSE: ", out_pairs_file, call. = FALSE)
   }
@@ -61,8 +74,14 @@ magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
   dir.create(dirname(out_pairs_file), recursive = TRUE, showWarnings = FALSE)
   writeLines("gene1\tgene2\tr", out_pairs_file, useBytes = TRUE)
 
-  con <- file(genes_raw_file, open = "r")
-  on.exit(close(con), add = TRUE)
+  fixed_arg  <- fixed_fields
+  fixed_from_header <- function(f) {
+    hdr <- readLines(f, n = 20L, warn = FALSE)
+    cv  <- grep("^#\\s*COVAR\\s*=", hdr, value = TRUE)
+    if (!length(cv)) return(NA_integer_)
+    v <- trimws(sub("^#\\s*COVAR\\s*=", "", cv[1]))
+    7L + if (nzchar(v)) length(strsplit(v, "\\s+")[[1]]) else 0L
+  }
 
   genes_seen <- character()
   last_chr   <- NA_character_
@@ -122,6 +141,13 @@ magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
     invisible(NULL)
   }
 
+  for (raw_f in genes_raw_file) {
+  fixed_fields <- if (is.null(fixed_arg)) fixed_from_header(raw_f) else as.integer(fixed_arg)
+  if (is.na(fixed_fields)) fixed_fields <- 9L
+  n_rec_before <- n_rec
+  genes_seen <- character()
+  last_chr   <- NA_character_
+  con <- file(raw_f, open = "r")
   repeat {
     lines <- readLines(con, n = 5000L, warn = FALSE)
     if (!length(lines)) break
@@ -158,12 +184,19 @@ magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
     }
 
     if (verbose) {
-      message(sprintf("...%d physical lines; %d gene records; %d pairs", n_phys, n_rec, n_pairs))
+      message(sprintf("...%s: %d physical lines; %d gene records; %d pairs",
+                      basename(raw_f), n_phys, n_rec, n_pairs))
     }
   }
 
-  # flush last record
+  close(con)
+  # flush last record of this file
   flush_cur()
+  if (n_rec == n_rec_before)
+    stop("No gene record in ", raw_f, " matches gene_regex = '", gene_regex,
+         "'. Set gene_regex to fit the gene IDs (e.g. '^SORBI', '^Zm', '^FBgn', '^[0-9]+$').",
+         call. = FALSE)
+  }
 
   if (verbose) {
     message(sprintf("DONE: %d physical lines, %d gene records, %d pairs -> %s",
@@ -172,49 +205,3 @@ magma_genesraw_to_cor_pairs_banded <- function(genes_raw_file,
 
   invisible(out_pairs_file)
 }
-
-# # # Usage
-# # # Directory
-# raw_dir <- "/Users/nirwantandukar/Documents/Research/results/MAGMA/MAGCAT/magma_multi_snp_wise_genes_by_chr_N_maize/"
-# # Fly
-# raw_file="/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_female"
-# chr_files <- list.files(path = "/Users/nirwantandukar/Documents/Research/results/DGRP/MAGMA/Fly_magma_genes_by_chr_female",
-#         pattern = "^Female_starvation_fly_.*\\.genes\\.raw$",
-#         full.names = TRUE)
-
-
-# out_pairs <- file.path(raw_dir, "magma_gene_cor_pairs_MLM_Fly_female.txt")
-# if (file.exists(out_pairs)) file.remove(out_pairs)
-
-# first <- TRUE
-# for (f in chr_files) {
-#   tmp <- paste0(tempfile(), ".txt")
-
-#   magma_genesraw_to_cor_pairs_banded(
-#     genes_raw_file = f,
-#     out_pairs_file = tmp,
-#     keep_abs_r_ge  = 0,
-#     overwrite      = TRUE,
-#     verbose        = FALSE
-#   )
-
-#   x <- readLines(tmp, warn = FALSE)
-#   if (!length(x)) next
-#   if (!first) x <- x[-1]  # drop header
-#   writeLines(x, out_pairs, useBytes = TRUE, sep = "\n", append = !first)
-#   first <- FALSE
-# }
-
-# head(x)
-# out_pairs
-
-# x <- x[nzchar(x)]          # <-- drop blank lines
-
-# if (!first) x <- x[-1]     # drop header after first file
-
-# cat(paste(x, collapse = "\n"), "\n",
-#     file = out_pairs, append = !first)
-# first <- FALSE
-# head(x)
-
-# writeLines(x, out_pairs, useBytes = TRUE, sep = "\n")

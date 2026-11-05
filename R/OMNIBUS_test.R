@@ -14,7 +14,7 @@
 ##  Calibration (omnibus only):
 ##    - global resampling: resample genes from a global pool (fast heuristic)
 ##    - Westfall-Young: one genome-wide null bank of correlated gene z's
-##      (MVN by chromosome from MAGMA gene-gene correlations), read per pathway
+##      (drawn chromosome by chromosome from MAGMA gene-gene correlations), read per pathway
 ##      (calibrated p) and across pathways (family-wise min-P adjusted p).
 ##      Engine in R/westfall_young.R.
 ##
@@ -45,49 +45,6 @@
     return(get(fname, mode = "function"))
   }
   NULL
-}
-
-# ----------------------------
-# MVN: Z -> p helpers (uniform vs empirical marginals)
-# ----------------------------
-.mvn_z_to_p <- function(Z, min_p = 1e-15, sided = c("one", "two")) {
-  sided <- match.arg(sided)
-  if (sided == "two") {
-    U <- stats::pnorm(Z)
-    P <- 2 * pmin(U, 1 - U)
-  } else {
-    # one-sided upper tail: matches MAGMA gene-level p-values (large Z = strong signal)
-    P <- stats::pnorm(Z, lower.tail = FALSE)
-  }
-  P <- pmax(pmin(P, 1 - min_p), min_p)
-  P
-}
-
-.empirical_qfun <- function(pool_p) {
-  pool_p <- suppressWarnings(as.numeric(pool_p))
-  pool_p <- pool_p[is.finite(pool_p) & !is.na(pool_p) & pool_p > 0 & pool_p < 1]
-  pool_p <- sort(pool_p)
-  n <- length(pool_p)
-  if (n < 1000) warning("pool_p is small (n=", n, "); empirical mapping may be noisy.", call. = FALSE)
-
-  stats::approxfun(
-    x = (1:n) / (n + 1),
-    y = pool_p,
-    method = "linear",
-    rule = 2,
-    ties = "ordered"
-  )
-}
-
-.mvn_z_to_empirical_p <- function(Z, pool_p, min_p = 1e-15, sided = c("one", "two")) {
-  sided <- match.arg(sided)
-  q0 <- .empirical_qfun(pool_p)
-  # one-sided upper tail so large Z maps to small p (consistent with MAGMA);
-  # two-sided folds the copula uniform as before.
-  U  <- if (sided == "two") stats::pnorm(Z) else stats::pnorm(Z, lower.tail = FALSE)
-  P  <- matrix(q0(as.vector(U)), nrow = nrow(Z), ncol = ncol(Z))
-  P  <- pmax(pmin(P, 1 - min_p), min_p)
-  P
 }
 
 # ----------------------------
@@ -311,21 +268,6 @@
 }
 
 
-# NEW VERSION
-.emp_p_null_lower <- function(p_null) {
-  p2 <- as.numeric(p_null)
-  B <- length(p2)
-  if (B < 1L) return(numeric(0))
-  bad <- !is.finite(p2) | is.na(p2)
-  if (any(bad)) p2[bad] <- Inf
-
-  # Leave-one-out plus-one empirical p for each null draw on the same
-  # tail-probability scale used by .emp_p_obs_lower().
-  rank_max <- rank(p2, ties.method = "max")
-  as.numeric(rank_max) / B
-}
-
-
 # ----------------------------
 # GPD tail extrapolation helpers (Knijnenburg et al. 2009)
 # ----------------------------
@@ -436,113 +378,6 @@
 
 
 # ----------------------------
-# MAGMA correlation helpers (MVN)
-# ----------------------------
-.magma_read_gene_cor_pairs <- function(magma_cor_file = NULL, magma_cor_pairs = NULL) {
-  if (!is.null(magma_cor_pairs)) {
-    tab <- magma_cor_pairs
-    if (!is.data.frame(tab) || ncol(tab) < 3) stop("magma_cor_pairs must be a data.frame with >=3 cols.", call. = FALSE)
-    tab <- tab[, 1:3]
-    names(tab) <- c("gene1", "gene2", "r")
-    tab$gene1 <- as.character(tab$gene1)
-    tab$gene2 <- as.character(tab$gene2)
-    tab$r <- suppressWarnings(as.numeric(tab$r))
-    tab <- tab[is.finite(tab$r) & !is.na(tab$r), , drop = FALSE]
-    return(tab)
-  }
-
-  if (is.null(magma_cor_file)) return(NULL)
-  if (!file.exists(magma_cor_file)) stop("magma_cor_file does not exist: ", magma_cor_file, call. = FALSE)
-
-  if (requireNamespace("data.table", quietly = TRUE)) {
-    tab <- data.table::fread(magma_cor_file, header = FALSE, data.table = FALSE, fill = TRUE, showProgress = FALSE)
-  } else {
-    tab <- utils::read.table(magma_cor_file, header = FALSE, stringsAsFactors = FALSE, fill = TRUE)
-  }
-  if (ncol(tab) < 3) stop("magma_cor_file must have 3 columns: gene1 gene2 r", call. = FALSE)
-
-  tab <- tab[, 1:3]
-  names(tab) <- c("gene1", "gene2", "r")
-  tab$gene1 <- as.character(tab$gene1)
-  tab$gene2 <- as.character(tab$gene2)
-  tab$r <- suppressWarnings(as.numeric(tab$r))
-  tab <- tab[is.finite(tab$r) & !is.na(tab$r), , drop = FALSE]
-  tab
-}
-
-
-
-# Function with shinkage
-.magma_build_R_from_pairs <- function(genes, cor_pairs, make_PD = TRUE, eps = 1e-6) {
-  genes <- as.character(genes)
-  genes <- genes[!is.na(genes) & genes != ""]
-  d <- length(genes)
-  if (d < 2L) return(NULL)
-
-  R <- diag(1, d)
-  rownames(R) <- genes
-  colnames(R) <- genes
-
-  if (!is.null(cor_pairs) && nrow(cor_pairs)) {
-    pos <- stats::setNames(seq_len(d), genes)
-
-    g1 <- as.character(cor_pairs$gene1)
-    g2 <- as.character(cor_pairs$gene2)
-    r  <- suppressWarnings(as.numeric(cor_pairs$r))
-
-    keep <- is.finite(r) & !is.na(r) & (g1 %in% genes) & (g2 %in% genes)
-    if (any(keep)) {
-      g1 <- g1[keep]; g2 <- g2[keep]; r <- r[keep]
-      i <- unname(pos[g1]); j <- unname(pos[g2])
-      ok <- is.finite(i) & is.finite(j) & !is.na(i) & !is.na(j) & (i != j)
-      i <- i[ok]; j <- j[ok]; r <- r[ok]
-
-      if (length(i)) {
-        r <- pmax(pmin(r, 0.999), -0.999)
-        R[cbind(i, j)] <- r
-        R[cbind(j, i)] <- r
-      }
-    }
-  }
-
-  if (isTRUE(make_PD)) {
-    if (!requireNamespace("Matrix", quietly = TRUE)) stop("Matrix package required for make_PD=TRUE.", call. = FALSE)
-    npd <- Matrix::nearPD(R, corr = TRUE)
-    R <- as.matrix(npd$mat)
-  }
-
-  # NEW: tiny diagonal shrinkage/jitter so chol() is stable
-  eps <- as.numeric(eps)
-  if (is.finite(eps) && eps > 0) {
-    R <- (1 - eps) * R + eps * diag(1, ncol(R))
-  }
-
-  R
-}
-
-
-.magma_simulate_Z_from_R <- function(R, B) {
-  B <- as.integer(B)
-  d <- ncol(R)
-  if (B < 1L || d < 2L) return(NULL)
-
-  # Safety: ensure R has no NA/Inf
-
-  R[!is.finite(R)] <- 0
-  diag(R) <- 1
-
-  U <- tryCatch(chol(R), error = function(e) NULL)
-  if (is.null(U)) stop("chol(R) failed even after PD-fix. Check correlation input.", call. = FALSE)
-
-  Z0 <- matrix(stats::rnorm(B * d), nrow = B, ncol = d)
-  Z  <- Z0 %*% U
-  # Safety: clamp any Inf Z values
-  Z[!is.finite(Z)] <- 0
-  colnames(Z) <- colnames(R)
-  Z
-}
-
-# ----------------------------
 # Global sampler helper (WITHOUT replacement per permutation)
 # ----------------------------
 .catfish_sample_idx_mat <- function(n_pool, d, B) {
@@ -560,7 +395,7 @@
 }
 
 # ----------------------------
-# Stouffer p from Z matrix helper (for global/mvn_global resampling)
+# Stouffer p from Z matrix helper (for global resampling)
 # ----------------------------
 .stouffer_p_from_Zmat_helper <- function(Zmat, w = NULL, alternative = "greater",
                                          min_abs_w = 1e-8) {
@@ -608,82 +443,6 @@
 }
 
 # ----------------------------
-# Single-pathway global resampling helper (for mvn_global fallback)
-# ----------------------------
-.do_global_resampling_pathway <- function(d, B, pool_p, pool_z, pool_w,
-                                          omni_obs, tau_grid, min_p, do_fix,
-                                          omnibus, stouffer_alternative,
-                                          stouffer_min_abs_w, include_magma,
-                                          magma_pval = NA_real_,
-                                          tail_mode = "empirical",
-                                          tail_switch_exceed = 10L,
-                                          tail_gpd_k = 250L,
-                                          tail_min_B = 10000L,
-                                          tail_min_tail = 50L) {
-  n_pool <- length(pool_p)
-  idx_mat <- .catfish_sample_idx_mat(n_pool = n_pool, d = d, B = B)
-  if (is.null(idx_mat)) return(NA_real_)
-
-  P <- matrix(pool_p[idx_mat], nrow = B, ncol = d)
-
-  # ACAT across genes
-  pA <- vapply(seq_len(B), function(b) {
-    .catfish_acat_combine(P[b, ], min_p = min_p, do_fix = do_fix)
-  }, numeric(1))
-
-  # Fisher across genes
-  pF <- stats::pchisq(-2 * rowSums(log(P)), df = 2 * d, lower.tail = FALSE)
-
-  # TFisher adaptive
-  pT <- rep(NA_real_, B)
-  if (requireNamespace("TFisher", quietly = TRUE)) {
-    for (b in seq_len(B)) {
-      pT[b] <- .catfish_tfisher_adaptive_p(
-        P[b, ],
-        tau_grid = tau_grid,
-        min_p = min_p,
-        do_fix = do_fix
-      )
-    }
-  }
-
-  # minP Sidak
-  pM <- {
-    pmin_vec <- apply(P, 1, min)
-    1 - (1 - pmin_vec)^d
-  }
-
-  # Stouffer
-  pS <- rep(NA_real_, B)
-  if (!is.null(pool_z)) {
-    Zmat <- matrix(pool_z[idx_mat], nrow = B, ncol = d)
-    Wmat <- NULL
-    if (!is.null(pool_w)) Wmat <- matrix(pool_w[idx_mat], nrow = B, ncol = d)
-    pS <- .stouffer_p_from_Zmat_helper(Zmat, w = Wmat,
-                                       alternative = stouffer_alternative,
-                                       min_abs_w = stouffer_min_abs_w)
-  }
-
-  # Build omnibus null
-  omni_null <- vapply(seq_len(B), function(b) {
-    comps <- c(pA[b], pF[b], pT[b], pM[b], pS[b])
-    if (isTRUE(include_magma) && is.finite(magma_pval)) comps <- c(comps, magma_pval)
-    .catfish_omni_methods(comps, omnibus = omnibus, min_p = min_p, do_fix = do_fix)
-  }, numeric(1))
-
-  # Empirical or GPD-extrapolated p-value
-  .emp_or_gpd_p_lower(
-    p_null = omni_null,
-    p_obs  = omni_obs,
-    method = tail_mode,
-    switch_exceed = tail_switch_exceed,
-    gpd_k = tail_gpd_k,
-    min_B = tail_min_B,
-    min_tail = tail_min_tail
-  )
-}
-
-# ----------------------------
 # Data-driven (auto) tau grid for adaptive soft TFisher
 # ----------------------------
 # Picks soft-TFisher thresholds from the empirical quantiles of the pooled
@@ -691,7 +450,7 @@
 # classic c(0.2, 0.1, 0.05, 0.02, 0.01, 0.005, 0.001) grid; under strong signal
 # the quantiles shrink toward the extreme tail, giving a strict-like grid with no
 # manual toggle. The grid is estimated ONCE from the global pool and then held
-# fixed, so it acts as a fixed transform for the MVN null calibration.
+# fixed, so it acts as a fixed transform for the null calibration.
 .catfish_auto_tau_grid <- function(p_pool,
                                    probs = c(0.20, 0.10, 0.05, 0.02, 0.01, 0.005, 0.001),
                                    tau_floor = 1e-8,

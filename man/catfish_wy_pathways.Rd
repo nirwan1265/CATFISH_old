@@ -73,6 +73,8 @@ in \code{gene_results}.}
 A data.frame, one row per pathway, sorted by \code{z_std}:
 \describe{
 \item{pathway_id}{Pathway identifier}
+\item{pathway_name}{Pathway name (the \code{pathway_name} column of a
+data.frame \code{pathways}, or the built-in set; the ID otherwise)}
 \item{z_std}{Observed omnibus standardised against the pathway's own null
 (more negative = more extreme)}
 \item{p_fwer_std}{Westfall--Young family-wise \eqn{p}-value on the

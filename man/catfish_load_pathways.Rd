@@ -8,7 +8,8 @@ catfish_load_pathways(
   species = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
     "human_reactome"),
   gene_col = NULL,
-  drop_unknown = TRUE
+  drop_unknown = TRUE,
+  file = NULL
 )
 }
 \arguments{
@@ -25,6 +26,11 @@ If NULL (default), the function will:
 
 \item{drop_unknown}{Logical. If TRUE (default), drop rows where gene_id
 is NA, empty, or "unknown".}
+
+\item{file}{Optional path to your own pathway file in PMN / Pathway Tools
+tab-separated format (columns \code{Pathway-id}, \code{Pathway-name} and
+the gene column), e.g. a newer PMN release or another species from
+\url{https://plantcyc.org}. When given, \code{species} is ignored.}
 }
 \value{
 A data.frame with columns:
@@ -66,6 +72,9 @@ arab_pathways <- catfish_load_pathways(
   species = "arabidopsis",
   gene_col = "Gene-id"
 )
+
+# Your own PMN-format file (e.g. a newer release)
+pw <- catfish_load_pathways(file = "sorghumbicolorcyc_pathways.20250101")
 
 # Load fly pathways (FlyCyc)
 fly_pathways <- catfish_load_pathways(species = "fly")

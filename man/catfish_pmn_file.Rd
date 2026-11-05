@@ -13,7 +13,8 @@ catfish_pmn_file(
 \item{species}{Which built-in database to use:
 \describe{
 \item{"maize"}{CornCyc pathways (corncyc_pathways.20230103)}
-\item{"sorghum"}{SorghumBicolorCyc pathways (sorghumbicolorcyc_pathways.20230103)}
+\item{"sorghum"}{SorghumBicolorCyc pathways with SORBI_ gene IDs, the IDs of the
+built-in sorghum.genes.loc (sorghumbicolorcyc_pathways.20230103.SORBI)}
 \item{"arabidopsis"}{AraCyc pathways (aracyc_pathways.20230103)}
 \item{"plant"}{PlantCyc general plant pathways (plantcyc_pathways.20230103)}
 \item{"fly"}{FlyCyc Drosophila pathways (Fly_Cyc.tsv)}

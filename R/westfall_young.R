@@ -1,7 +1,7 @@
 # =============================================================================
 # Westfall--Young family-wise calibration for CATFISH
 #
-# Replaces the per-pathway MVN calibration. One genome-wide correlated null
+# One genome-wide correlated null
 # draw is scored through EVERY pathway, so pathways that share genes are
 # perturbed jointly. The resulting B x K matrix of null omnibus statistics is
 # read two ways:
@@ -291,6 +291,8 @@
 #' @return A data.frame, one row per pathway, sorted by \code{z_std}:
 #' \describe{
 #'   \item{pathway_id}{Pathway identifier}
+#'   \item{pathway_name}{Pathway name (the \code{pathway_name} column of a
+#'     data.frame \code{pathways}, or the built-in set; the ID otherwise)}
 #'   \item{z_std}{Observed omnibus standardised against the pathway's own null
 #'     (more negative = more extreme)}
 #'   \item{p_fwer_std}{Westfall--Young family-wise \eqn{p}-value on the
@@ -422,6 +424,7 @@ catfish_wy_pathways <- function(gene_results,
 
   res <- data.frame(
     pathway_id      = names(paths),
+    pathway_name    = unname(as.character(pw$p_names[names(paths)])),
     z_std           = eng$z_std,
     p_fwer_std      = eng$p_fwer_wy_std,
     n_genes         = vapply(paths, length, integer(1)),

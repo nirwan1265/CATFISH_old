@@ -16,7 +16,8 @@
 #' @param species Which built-in database to use:
 #' \describe{
 #'   \item{"maize"}{CornCyc pathways (corncyc_pathways.20230103)}
-#'   \item{"sorghum"}{SorghumBicolorCyc pathways (sorghumbicolorcyc_pathways.20230103)}
+#'   \item{"sorghum"}{SorghumBicolorCyc pathways with SORBI_ gene IDs, the IDs of the
+#'     built-in sorghum.genes.loc (sorghumbicolorcyc_pathways.20230103.SORBI)}
 #'   \item{"arabidopsis"}{AraCyc pathways (aracyc_pathways.20230103)}
 #'   \item{"plant"}{PlantCyc general plant pathways (plantcyc_pathways.20230103)}
 #'   \item{"fly"}{FlyCyc Drosophila pathways (Fly_Cyc.tsv)}
@@ -53,7 +54,7 @@ catfish_pmn_file <- function(
   fname <- switch(
     species,
     maize       = "corncyc_pathways.20230103",
-    sorghum     = "sorghumbicolorcyc_pathways.20230103",
+    sorghum     = "sorghumbicolorcyc_pathways.20230103.SORBI",  # SORBI_ IDs, as in sorghum.genes.loc
     arabidopsis = "aracyc_pathways.20230103",
     plant       = "plantcyc_pathways.20230103",
     fly         = "Fly_Cyc.tsv",
@@ -89,6 +90,10 @@ catfish_pmn_file <- function(
 #'   }
 #' @param drop_unknown Logical. If TRUE (default), drop rows where gene_id
 #'   is NA, empty, or "unknown".
+#' @param file Optional path to your own pathway file in PMN / Pathway Tools
+#'   tab-separated format (columns \code{Pathway-id}, \code{Pathway-name} and
+#'   the gene column), e.g. a newer PMN release or another species from
+#'   \url{https://plantcyc.org}. When given, \code{species} is ignored.
 #'
 #' @return A data.frame with columns:
 #' \describe{
@@ -125,6 +130,9 @@ catfish_pmn_file <- function(
 #'   gene_col = "Gene-id"
 #' )
 #'
+#' # Your own PMN-format file (e.g. a newer release)
+#' pw <- catfish_load_pathways(file = "sorghumbicolorcyc_pathways.20250101")
+#'
 #' # Load fly pathways (FlyCyc)
 #' fly_pathways <- catfish_load_pathways(species = "fly")
 #' head(fly_pathways)
@@ -144,9 +152,15 @@ catfish_load_pathways <- function(
     species      = c("maize", "sorghum", "arabidopsis", "plant", "fly", "human",
                      "human_reactome"),
     gene_col     = NULL,
-    drop_unknown = TRUE
+    drop_unknown = TRUE,
+    file         = NULL
 ) {
-  species <- match.arg(species)
+  if (!is.null(file)) {
+    if (!file.exists(file)) stop("Pathway file not found: ", file, call. = FALSE)
+    species <- "pmn_file"
+  } else {
+    species <- match.arg(species)
+  }
 
   # Reactome (MSigDB) ships as a MAGMA-style set file: one pathway per line,
   # the pathway ID followed by its member Entrez gene IDs (tab separated).
@@ -174,7 +188,7 @@ catfish_load_pathways <- function(
   # HumanCyc ships both symbols (Gene-name) and Entrez (Gene-id). MAGMA human
   # gene location files are Entrez-keyed, so default to Gene-id there.
   if (identical(species, "human") && is.null(gene_col)) gene_col <- "Gene-id"
-  fpath <- catfish_pmn_file(species)
+  fpath <- if (is.null(file)) catfish_pmn_file(species) else file
 
   x <- suppressWarnings(
     utils::read.delim(

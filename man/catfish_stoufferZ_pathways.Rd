@@ -88,8 +88,8 @@ in \code{gene_results} are dropped from that pathway.
 
 NOTE: The analytic p-value assumes (approximately) independent \eqn{Z_g} within a pathway.
 If genes are correlated (e.g., LD-induced correlation in MAGMA gene statistics), then this
-analytic p-value may be anti-conservative. In CATFISH/CATFISH, correlation-aware calibration
-should be handled in your MVN/Omni layer (not inside this wrapper).
+analytic p-value may be anti-conservative. Correlation-aware calibration is done by
+\code{\link{catfish_wy_pathways}} (Westfall--Young), not inside this wrapper.
 }
 \examples{
 \dontrun{

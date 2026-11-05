@@ -63,8 +63,10 @@ file is also written into this directory.}
 e.g. "snp-wise=top", "snp-wise=mean", "multi".}
 
 \item{chroms}{Optional vector of chromosomes to analyse separately
-(e.g. 1:10). Only used in \code{stats_file} mode. If non-NULL and
-\code{n_threads > 1}, analysis is run in parallel, one job per chromosome.}
+(e.g. 1:10), each written as \verb{<out_prefix>_chr<k>}. Only used in
+\code{stats_file} mode. With \code{n_threads > 1} the chromosomes run in parallel,
+otherwise one after another. In a cluster array job give the job's single
+chromosome, e.g. \code{chroms = 5}.}
 
 \item{n_threads}{Number of parallel workers to use when \code{chroms}
 is provided. Defaults to 1 (no parallelism). Will be clamped to

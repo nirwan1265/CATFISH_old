@@ -7,7 +7,7 @@
 magma_genesraw_to_cor_pairs_banded(
   genes_raw_file,
   out_pairs_file,
-  fixed_fields = 9L,
+  fixed_fields = NULL,
   gene_regex = "^FBgn",
   keep_abs_r_ge = 0,
   overwrite = TRUE,
@@ -15,12 +15,18 @@ magma_genesraw_to_cor_pairs_banded(
 )
 }
 \arguments{
-\item{genes_raw_file}{Path to MAGMA .genes.raw file (one chromosome).}
+\item{genes_raw_file}{Path(s) to MAGMA \code{.genes.raw} files. Give one file
+per chromosome when MAGMA was run chromosome by chromosome; all are written
+to one output file. MAGMA computes gene--gene correlations only within a
+chromosome, so the files together hold the full correlation structure.}
 
 \item{out_pairs_file}{Output path for the correlation pairs file.}
 
-\item{fixed_fields}{Integer. Number of fixed fields before correlation values
-in MAGMA output (default 9 for multi=snp-wise model).}
+\item{fixed_fields}{Integer, or \code{NULL} (default) to read it from each
+file's \code{# COVAR} header line: the seven fixed MAGMA fields (GENE, CHR,
+START, STOP, NSNPS, NPARAM, N) plus one per covariate. For MAGMA 1.10 output
+(\code{# COVAR = NSAMP MAC}) this is 9 for every gene model. Used when a
+file has no \code{# COVAR} line.}
 
 \item{gene_regex}{Regular expression to identify gene IDs. Use organism-specific
 patterns:
@@ -52,8 +58,9 @@ MAGMA stores gene-gene correlations in a banded format within .genes.raw files.
 This function parses that format and outputs a simple tab-separated file with
 columns: gene1, gene2, r.
 
-For multi-chromosome analyses, run this function on each chromosome's .raw file
-and concatenate the results (dropping headers after the first file).
+For per-chromosome MAGMA runs, pass all the chromosome files at once.
+The function stops if no gene record matches \code{gene_regex}, which
+usually means the pattern does not fit the gene IDs.
 }
 \examples{
 \dontrun{
@@ -64,7 +71,10 @@ magma_genesraw_to_cor_pairs_banded(
   gene_regex = "^Zm"  # Maize genes
 )
 
-# Combine multiple chromosomes - see usage2.R for full example
+# All chromosomes of a per-chromosome run, into one file
+raw <- sprintf("trait_chr\%02d.genes.raw", 1:10)
+magma_genesraw_to_cor_pairs_banded(raw, "trait_gene_cor_pairs.txt",
+                                   gene_regex = "^SORBI")
 }
 
 }

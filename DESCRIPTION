@@ -19,23 +19,18 @@ Roxygen: list(markdown = TRUE)
 Imports:
     stats,
     utils,
-    Matrix,
     ACAT,
     TFisher
 Suggests:
     GenomicRanges,
-    MASS,
     S4Vectors,
     pkgload,
     metap,
-    metapro,
     data.table,
     evir,
     qvalue,
     IHW,
-    mvtnorm,
     rtracklayer,
-    ggplot2,
     testthat (>= 3.0.0),
     knitr,
     rmarkdown

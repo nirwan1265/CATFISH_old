@@ -20,3 +20,17 @@
 ^drosophila_starvation_results\.tex$
 ^.*\.log$
 ^1\. Omnibus P-Value Combination Strategy\.pdf$
+^Claude outputs$
+^CATFISH_manuscript\.(tex|pdf)$
+^Chapter5-CATFISH-refs\.bib$
+^build_manuscript_from_thesis\.py$
+^Rplots\.pdf$
+^results$
+^sorghum_catfish_results$
+^arabidopsis_catfish_results$
+^catfish2$
+^dgrp_bw_tg$
+^DGRP_chilipeppers$
+^inst/extdata/pathway/Ensembl2Reactome_All_Levels\.txt$
+^\.gitignore\.bak.*$
+^old_files$
