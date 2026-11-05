@@ -1,0 +1,37 @@
+trait,gene,id,n_genes,combined_rank,gwas_rank,magma_rank,pathway_rank,in_pathway,best_pathway,combined_top_pct,gwas_top_pct,magma_top_pct
+BW_serrano_female_web,InR,FBgn0283499,13602,1451,1568.5,3325,1554,TRUE,Signaling by Insulin receptor,10.7,11.5,24.4
+BW_serrano_female_web,chico,FBgn0024248,13602,838,1385,3370,452.5,TRUE,PI3K Cascade,6.2,10.2,24.8
+BW_serrano_female_web,Pi3K92E,FBgn0015279,13602,1152,3739,2760,452.5,TRUE,PI3K Cascade,8.5,27.5,20.3
+BW_serrano_female_web,Akt,FBgn0010379,13602,689,1987,2394,452.5,TRUE,PI3K Cascade,5.1,14.6,17.6
+BW_serrano_female_web,foxo,FBgn0038197,13602,2501,2238,6956,1500.5,TRUE,Ub-specific processing proteases,18.4,16.5,51.1
+BW_serrano_female_web,S6k,FBgn0283472,13602,3690,3072,6962,2418,TRUE,PIP3 activates AKT signaling,27.1,22.6,51.2
+BW_serrano_female_web,Thor,FBgn0261560,13602,6961,9077,7567,2982.5,TRUE,TOR signaling pathway,51.2,66.7,55.6
+BW_serrano_female_web,Ilp2,FBgn0036046,13602,5938,6135.5,5537,3513.5,TRUE,Insulin receptor mediated signaling,43.7,45.1,40.7
+BW_serrano_female_web,Pten,FBgn0026379,13602,2233,4482.5,4253,866,TRUE,Negative regulation of the PI3K/AKT network,16.4,33,31.3
+BW_serrano_female_web,gig,FBgn0005198,13602,8412,11304.5,11994,2292,TRUE,Macroautophagy,61.8,83.1,88.2
+BW_serrano_female_web,Lnk,FBgn0028717,13602,8868,6762,11074.5,3149.5,TRUE,Factors involved in megakaryocyte development and platelet production,65.2,49.7,81.4
+BW_serrano_female_web,Myc,FBgn0262656,13602,8663,4553,10596,,FALSE,,63.7,33.5,77.9
+BW_serrano_male_web,InR,FBgn0283499,13602,3335,2813,7715.5,1854.5,TRUE,Insulin signaling pathway,24.5,20.7,56.7
+BW_serrano_male_web,chico,FBgn0024248,13602,1456,1860,3397,1854.5,TRUE,Insulin signaling pathway,10.7,13.7,25
+BW_serrano_male_web,Pi3K92E,FBgn0015279,13602,3517,7802,5196,1514.5,TRUE,Tie2 Signaling,25.9,57.4,38.2
+BW_serrano_male_web,Akt,FBgn0010379,13602,1430,4626.5,4298.5,379.5,TRUE,Regulation of TP53 Activity through Acetylation,10.5,34,31.6
+BW_serrano_male_web,foxo,FBgn0038197,13602,991,688,3983.5,1854.5,TRUE,Insulin signaling pathway,7.3,5.1,29.3
+BW_serrano_male_web,S6k,FBgn0283472,13602,2774,2091.5,6596,2041,TRUE,Insulin receptor mediated signaling,20.4,15.4,48.5
+BW_serrano_male_web,Thor,FBgn0261560,13602,6670,8694,8680,2041,TRUE,Insulin receptor mediated signaling,49,63.9,63.8
+BW_serrano_male_web,Ilp2,FBgn0036046,13602,3601,8579,2082,1854.5,TRUE,Insulin signaling pathway,26.5,63.1,15.3
+BW_serrano_male_web,Pten,FBgn0026379,13602,3281,4474,5798,1854.5,TRUE,Insulin signaling pathway,24.1,32.9,42.6
+BW_serrano_male_web,gig,FBgn0005198,13602,4023,9062,6733.5,584.5,TRUE,Transcriptional Regulation by TP53,29.6,66.6,49.5
+BW_serrano_male_web,Lnk,FBgn0028717,13602,10535,10729,8947,4442,TRUE,Factors involved in megakaryocyte development and platelet production,77.5,78.9,65.8
+BW_serrano_male_web,Myc,FBgn0262656,13602,12265,10715,11323,,FALSE,,90.2,78.8,83.2
+TG_serrano_web,bmm,FBgn0036449,13602,3330,2885,6475.5,2004,TRUE,Triglyceride metabolism,24.5,21.2,47.6
+TG_serrano_web,Lsd-1,FBgn0039114,13602,12513,10163,12799,,FALSE,,92,74.7,94.1
+TG_serrano_web,Lsd-2,FBgn0030608,13602,6126,5052,4487,,FALSE,,45,37.1,33
+TG_serrano_web,AkhR,FBgn0025595,13602,4846,3813,7128,2885.5,TRUE,GPCR ligand binding,35.6,28,52.4
+TG_serrano_web,Akh,FBgn0004552,13602,12345,11164,11144,,FALSE,,90.8,82.1,81.9
+TG_serrano_web,mdy,FBgn0004797,13602,8391,7967,12644,2004,TRUE,Triglyceride metabolism,61.7,58.6,93
+TG_serrano_web,Lpin,FBgn0263593,13602,2778,2015.5,7854.5,2004,TRUE,Triglyceride metabolism,20.4,14.8,57.7
+TG_serrano_web,adp,FBgn0000057,13602,11707,11322.5,12671,3594,TRUE,Neddylation,86.1,83.2,93.2
+TG_serrano_web,SREBP,FBgn0261283,13602,10285,11049,10499.5,2664,TRUE,Metabolism of steroids,75.6,81.2,77.2
+TG_serrano_web,InR,FBgn0283499,13602,4678,3558,9724,2553.5,TRUE,Signaling by Receptor Tyrosine Kinases,34.4,26.2,71.5
+TG_serrano_web,chico,FBgn0024248,13602,5311,6914,7777.5,2553.5,TRUE,Signaling by Receptor Tyrosine Kinases,39,50.8,57.2
+TG_serrano_web,foxo,FBgn0038197,13602,1441,985,5953,1550,TRUE,Ub-specific processing proteases,10.6,7.2,43.8

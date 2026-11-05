@@ -1,0 +1,37 @@
+trait,gene,id,n_genes,combined_rank,gwas_rank,magma_rank,pathway_rank,in_pathway,best_pathway,combined_top_pct,gwas_top_pct,magma_top_pct
+BW_control_female,InR,FBgn0283499,13617,1942,846,11936,1317.5,TRUE,Insulin signaling pathway,14.3,6.2,87.7
+BW_control_female,chico,FBgn0024248,13617,3934,7008,6264,1317.5,TRUE,Insulin signaling pathway,28.9,51.5,46
+BW_control_female,Pi3K92E,FBgn0015279,13617,2918,11076.5,10864,94.5,TRUE,Axon guidance,21.4,81.3,79.8
+BW_control_female,Akt,FBgn0010379,13617,3365,5399,10467,986,TRUE,Regulation of mRNA stability by proteins that bind AU-rich elements,24.7,39.6,76.9
+BW_control_female,foxo,FBgn0038197,13617,1825,974,10002.5,1317.5,TRUE,Insulin signaling pathway,13.4,7.2,73.5
+BW_control_female,S6k,FBgn0283472,13617,3975,3888,11517,744,TRUE,mTORC1-mediated signalling,29.2,28.6,84.6
+BW_control_female,Thor,FBgn0261560,13617,6489,9969,11782,744,TRUE,mTORC1-mediated signalling,47.7,73.2,86.5
+BW_control_female,Ilp2,FBgn0036046,13617,5822,7847.5,6756.5,1317.5,TRUE,Insulin signaling pathway,42.8,57.6,49.6
+BW_control_female,Pten,FBgn0026379,13617,4282,6297,8141.5,1317.5,TRUE,Insulin signaling pathway,31.4,46.2,59.8
+BW_control_female,gig,FBgn0005198,13617,3265,6622,5625,778.5,TRUE,Macroautophagy,24,48.6,41.3
+BW_control_female,Lnk,FBgn0028717,13617,8356,4744,11643,4250,TRUE,Factors involved in megakaryocyte development and platelet production,61.4,34.8,85.5
+BW_control_female,Myc,FBgn0262656,13617,5901,1893,11179,,FALSE,,43.3,13.9,82.1
+BW_control_male,InR,FBgn0283499,13617,1863,1348,4911,2554.5,TRUE,ESR-mediated signaling,13.7,9.9,36.1
+BW_control_male,chico,FBgn0024248,13617,2179,3784,4415,1033,TRUE,RAF/MAP kinase cascade,16,27.8,32.4
+BW_control_male,Pi3K92E,FBgn0015279,13617,1585,5153,2918,710.5,TRUE,Nervous system development,11.6,37.8,21.4
+BW_control_male,Akt,FBgn0010379,13617,3598,10480,11309,259.5,TRUE,Signaling by GPCR,26.4,77,83.1
+BW_control_male,foxo,FBgn0038197,13617,1357,1042,6119,1201.5,TRUE,MAPK family signaling cascades,10,7.7,44.9
+BW_control_male,S6k,FBgn0283472,13617,5260,5400,7005,2915.5,TRUE,Intracellular signaling by second messengers,38.6,39.7,51.4
+BW_control_male,Thor,FBgn0261560,13617,3509,5648,6778,640,TRUE,"Activation of the mRNA upon binding of the cap-binding complex and eIFs, and subsequent binding to 43S",25.8,41.5,49.8
+BW_control_male,Ilp2,FBgn0036046,13617,8420,7387.5,8586,4340.5,TRUE,Insulin receptor mediated signaling,61.8,54.3,63.1
+BW_control_male,Pten,FBgn0026379,13617,5937,7781,9809,2000,TRUE,Regulation of PTEN stability and activity,43.6,57.1,72
+BW_control_male,gig,FBgn0005198,13617,2563,8191.5,2060,1481,TRUE,Transcriptional Regulation by TP53,18.8,60.2,15.1
+BW_control_male,Lnk,FBgn0028717,13617,9604,8151.5,9350,4392.5,TRUE,Factors involved in megakaryocyte development and platelet production,70.5,59.9,68.7
+BW_control_male,Myc,FBgn0262656,13617,9090,8003,6661,,FALSE,,66.8,58.8,48.9
+TG_control,bmm,FBgn0036449,13618,8654,9078,10605,3228,TRUE,Regulation of Insulin-like Growth Factor (IGF) transport and uptake by Insulin-like Growth Factor Binding Proteins (IGFBPs),63.5,66.7,77.9
+TG_control,Lsd-1,FBgn0039114,13618,7186,7619,4167,,FALSE,,52.8,55.9,30.6
+TG_control,Lsd-2,FBgn0030608,13618,10038,9620,7095,,FALSE,,73.7,70.6,52.1
+TG_control,AkhR,FBgn0025595,13618,2585,3965,3000.5,1553,TRUE,Signaling by GPCR,19,29.1,22
+TG_control,Akh,FBgn0004552,13618,10272,8642.5,8394,,FALSE,,75.4,63.5,61.6
+TG_control,mdy,FBgn0004797,13618,9259,8649.5,10376.5,3962,TRUE,Phospholipid metabolism,68,63.5,76.2
+TG_control,Lpin,FBgn0263593,13618,2071,3308.5,6464,371.5,TRUE,Nuclear Envelope Breakdown,15.2,24.3,47.5
+TG_control,adp,FBgn0000057,13618,647,1662.5,441,2076,TRUE,Neddylation,4.8,12.2,3.2
+TG_control,SREBP,FBgn0261283,13618,6647,8882,5234,2322.5,TRUE,Metabolism of steroids,48.8,65.2,38.4
+TG_control,InR,FBgn0283499,13618,3141,5930,10033,208,TRUE,Signaling by Insulin receptor,23.1,43.5,73.7
+TG_control,chico,FBgn0024248,13618,446,3331,2391,17,TRUE,PI3K Cascade,3.3,24.5,17.6
+TG_control,foxo,FBgn0038197,13618,4372,5770,13071.5,489.5,TRUE,PIP3 activates AKT signaling,32.1,42.4,96
