@@ -1205,153 +1205,29 @@ type~I error more than doubles.}{fig:missing}
 % the agreement as encouraging evidence that the ordering is meaningful in the
 % low-signal regime, and we do not claim more than that.
 
-\subsection*{3.9 Human blood lipids across five ancestry groups: the same
-leading pathway, and a better list of candidate genes}
+\subsection*{3.7 Human blood lipids across five ancestry groups: the same leading pathway, and a better list of candidate genes}
 
-We analysed LDL-C and HDL-C from the GLGC 2021 meta-analyses
-\citep{Graham2021GLGC} in all five ancestry groups the consortium released:
-European (EUR, $n\approx1.32$ million), African and African American (AFR,
-$n\approx99{,}400$), East Asian (EAS, $n\approx146{,}500$), South Asian (SAS,
-$n\approx41{,}000$) and Hispanic (HIS, $n\approx48{,}100$). Each
-ancestry-specific file is a separate meta-analysis of participants who are not
-in any other, so the five are independent samples. They also differ in allele
-frequencies and in the length and pattern of linkage disequilibrium, and the
-four non-European groups are nine to thirty-two times smaller than the European
-one. All ten trait--ancestry sets went through one pipeline. Linkage
-disequilibrium was taken from the 1000 Genomes Phase~3 panel matching each group
-(the admixed American panel for the Hispanic group); variants were assigned to
-genes with the same $10\,\mathrm{kb}$ window and NCBI37.3 locations, giving
-$18{,}429$ to $18{,}563$ genes per set; and the $1{,}390$ Reactome pathways,
-$B=10{,}000$, the five components, the candidate-gene score and its weights,
-and the lists of established genes (Section~2.7) were fixed before any result
-was seen. Nothing was tuned on any dataset, so the ten sets differ only in
-phenotype and population.
+We analysed LDL-C and HDL-C using GLGC 2021 meta-analyses \citep{Graham2021GLGC} across five ancestry groups. European (EUR, $n\approx1.32$ million), African/African American (AFR, $n\approx99{,}400$), East Asian (EAS, $n\approx146{,}500$), South Asian (SAS, $n\approx41{,}000$) and Hispanic (HIS, $n\approx48{,}100$). Each ancestry file is an independent meta-analysis with distinct allele frequencies and LD. The four non-European samples are 9--32$\times$ smaller than EUR. All ten trait--ancestry sets were processed identically, with LD from 1000 Genomes Phase 3 panels matched to each group (AMR for HIS), variant-to-gene mapping over a $10\,\mathrm{kb}$ window using NCBI37.3 that yielded $18{,}429$--$18{,}563$ genes per set, and pre-specified settings ($1{,}390$ Reactome pathways, $B=10{,}000$, five components, candidate-gene score and weights, and established-gene lists, Section~2.7). No dataset-specific tuning was performed, so sets differ only by phenotype and population.
 
-\emph{In the European data significance no longer discriminates between
-pathways.} At the gene level, $44.1\%$ of genes had $p<0.05$ for LDL-C and
-$11.2\%$ reached genome-wide significance; for HDL-C the figures were $52.7\%$
-and $14.8\%$. A randomly chosen set of fifty genes therefore contains on average
-$5.6$ (LDL-C) and $7.4$ (HDL-C) genome-wide significant genes, so the
-self-contained null is false for almost any set one could assemble. Accordingly
-$\nLipSigLDL$ (LDL-C) and $\nLipSigHDL$ (HDL-C) of the $\nLipNpw$ pathways were
-significant under Westfall--Young family-wise control at $\alpha=0.05$. The
-correction is not at fault: the null really is false for those sets. In such a
-saturated genome large sets accumulate evidence because they are large. The
-twenty highest-ranked pathways had a median of $\nLipTopTwentyMedSizeLDL$
-(LDL-C) and $\nLipTopTwentyMedSizeHDL$ (HDL-C) genes against $\nLipMedSizeAll$
-overall, and the Spearman correlation between set size and $z_{\mathrm{std}}$ was
-$\nLipSizeRhoLDL$ and $\nLipSizeRhoHDL$. Table~\ref{tab:density} places this
-against the other datasets: the size dependence tracks the density of
-gene-level signal.
+In the European data, significance no longer discriminates between pathways. At the gene level, $44.1\%$ of genes had $p<0.05$ for LDL-C and $11.2\%$ were genome-wide significant. For HDL-C the figures were $52.7\%$ and $14.8\%$. Thus, a random set of 50 genes contains on average $5.6$ (LDL-C) and $7.4$ (HDL-C) genome-wide significant genes, so the self-contained null is false for most sets. Accordingly, $\nLipSigLDL$ (LDL-C) and $\nLipSigHDL$ (HDL-C) of the $\nLipNpw$ pathways were significant under Westfall--Young family-wise control at $\alpha=0.05$. The correction, however, is not the issue. In a saturated genome, large sets accumulate evidence simply because they are large. The 20 top-ranked pathways had median sizes of $\nLipTopTwentyMedSizeLDL$ (LDL-C) and $\nLipTopTwentyMedSizeHDL$ (HDL-C) genes versus $\nLipMedSizeAll$ overall, and the Spearman correlation between set size and $z_{\mathrm{std}}$ was $\nLipSizeRhoLDL$ and $\nLipSizeRhoHDL$. Table~\ref{tab:density} shows that this size dependence tracks gene-level signal density.
 
-\emph{Plasma lipoprotein metabolism is the leading pathway in every population.}
-Plasma lipoprotein assembly, remodeling and clearance, the Reactome pathway that
-contains the LDL receptor and the apolipoproteins, ranked first of $1{,}390$ in
-all eight non-European sets for both traits (Figure~\ref{fig:replication}A,B).
-In the European data it is first for LDL-C and third for HDL-C, so it leads
-nine of the ten trait--ancestry sets. Its sub-pathways follow it: of the nine
-pathways in the plasma-lipoprotein subtree, five or six ranked in the top ten of
-every non-European set, among them plasma lipoprotein clearance and remodeling,
-LDL clearance (LDL-C) and HDL and chylomicron remodeling (HDL-C). The two
-LXR-mediated sets that govern \textit{ABCA1} and other lipoprotein genes ranked
-in the top ten in most groups as well. The European ranking differs below the
-top, and the difference is the saturation above. In the European data the
-smaller lipoprotein sets sit at ranks from $51$ to over $500$, behind large
-generic sets such as cellular response to chemical stress and SUMOylation; but
-against pathways of similar size they are extreme (Figure~\ref{fig:lipid_size}).
-Compared with sets within a factor of $1.25$ in gene count, the subtree's median
-size-matched percentile was $\nLipFamPctMedLDL\%$ for LDL-C and
-$\nLipFamPctMedHDL\%$ for HDL-C, against $\nLipAllPctMedLipoFreeLDL\%$ and
-$\nLipAllPctMedLipoFreeHDL\%$ for all other pathways. In the non-European sets,
-with $118$ to $700$ significant pathways, the background is sparse and the
-lipoprotein sets lead without any size adjustment. That the same pathway comes
-first under both conditions, a nearly saturated genome and a sparse one, in five
-populations with different linkage disequilibrium, is the strongest evidence in
-this paper that the ordering reflects biology rather than the properties of a
-particular dataset. Table~\ref{tab:lipid_pathways} lists the ten leading
-European pathways for each trait.
+Plasma lipoprotein metabolism is the top pathway across populations. The Reactome plasma lipoprotein assembly, remodeling and clearance pathway (including the LDL receptor and apolipoproteins) ranked 1 of $1{,}390$ in all eight non-European sets for both traits (Figure~\ref{fig:replication}A,B). In Europeans it ranked 1 for LDL-C and 3 for HDL-C, leading 9 of 10 trait--ancestry sets. Related sub-pathways were also consistently highly ranked. In the plasma-lipoprotein subtree, five or six of nine pathways placed in the top ten in every non-European set, including plasma lipoprotein clearance/remodeling, LDL clearance (LDL-C), and HDL/chylomicron remodeling (HDL-C). Two LXR-mediated pathways regulating \textit{ABCA1} and other lipoprotein genes also ranked in the top ten in most groups.
 
-\emph{LDL-C and HDL-C reach that pathway through different genes.} The two
-traits disagree at the gene level: the Spearman correlation of gene-level $Z$
-statistics was $\nLipGeneRho$, $13$ of the top hundred genes were shared, and
-the Jaccard overlap of genome-wide significant genes was $0.208$
-(Figure~\ref{fig:convergence}A). Within the lipoprotein pathway the LDL-C signal
-comes from the receptor-uptake arm (\textit{LDLR}, \textit{PCSK9},
-\textit{LDLRAP1}, \textit{APOB}, \textit{APOE}) and the HDL-C signal from the
-reverse-transport and lipolysis arm (\textit{ABCA1}, \textit{LIPC},
-\textit{SCARB1}, \textit{LPL}, \textit{CETP}); only four of the twelve leading
-drivers in each trait are shared (Figure~\ref{fig:convergence}B). Two GWAS that
-disagree about which genes matter are aggregated onto the same process because
-the process contains both arms. Across all pathways the two traits' ranks are
-correlated ($\nLipCrossRho$; Figure~\ref{fig:convergence}C), but that
-correlation comes from the size-dependent background they share, which is why
-the driver-level comparison is the evidence for convergence.
+Below the very top, Europeans differed because many pathways were near-saturated. The smaller lipoprotein sets ranked $51$ to $>500$, behind large generic sets (e.g., cellular response to chemical stress, SUMOylation), though they remained extreme relative to size-matched pathways (Figure~\ref{fig:lipid_size}). Among pathways within a factor of $1.25$ in gene count, the subtree’s median size-matched percentile was $\nLipFamPctMedLDL\%$ (LDL-C) and $\nLipFamPctMedHDL\%$ (HDL-C), versus $\nLipAllPctMedLipoFreeLDL\%$ and $\nLipAllPctMedLipoFreeHDL\%$ for all other pathways. In non-European sets, with only $118$--$700$ significant pathways, the background was sparse and lipoprotein pathways led without size adjustment. The same pathway ranking first under both saturated and sparse conditions, across five populations with different LD, supports a biological rather than dataset-driven ordering. Table~\ref{tab:lipid_pathways} lists the ten leading European pathways for each trait.
 
-\emph{Gene prioritization places the established genes higher than GWAS
-association alone, in every population.} In the European data the three-layer
-score of Section~2.5 ranked \textit{LDLR} first for LDL-C and \textit{ABCA1}
-first for HDL-C (Table~\ref{tab:lipid_candidates}). Over the established genes
-named before the analysis, the combined score gave the best median rank in both
-traits: $\nLipRecLDLScoreMed$ against $\nLipRecLDLGwasMed$ for the GWAS layer
-and $\nLipRecLDLMagmaMed$ for MAGMA in LDL-C, and $\nLipRecHDLScoreMed$ against
-$\nLipRecHDLGwasMed$ and $\nLipRecHDLMagmaMed$ in HDL-C, and it placed
-$\nLipRecLDLScoreTopTen$ and $\nLipRecHDLScoreTopTen$ of them in the top ten
-against $\nLipRecLDLGwasTopTen$ and $\nLipRecHDLGwasTopTen$ for the GWAS layer
-(Table~\ref{tab:lipid_recovery}, Figure~\ref{fig:lipid_recovery}). The same
-held in all ten trait--ancestry sets (Figure~\ref{fig:replication_established}).
-The combined score gave a better median rank than the GWAS layer in every set,
-by a wide margin in the African sets ($15$ against $76$ for LDL-C, $13.5$
-against $68$ for HDL-C); it placed at least as many established genes in the top
-twenty as the GWAS layer in all ten and more in eight; and the MAGMA layer alone
-was the weakest of the three in seven. The result does not depend on the
-weights: across the grid of Section~2.5 the full ranking kept a Spearman
-correlation of at least $0.89$ with the default, and every setting with a
-pathway weight of at least $0.25$ beat the GWAS layer (Supplementary
-Figure~\ref{fig:weights}C--D).
+Furthermore, LDL-C and HDL-C converge on the same pathway via different genes. At the gene level, the traits disagree. The Spearman correlation of gene-level $Z$ statistics was $\nLipGeneRho$, 13 of the top 100 genes overlapped, and the Jaccard overlap of genome-wide significant genes was 0.208 (Figure~\ref{fig:convergence}A). In the lipoprotein pathway, LDL-C is driven by receptor uptake (\textit{LDLR}, \textit{PCSK9}, \textit{LDLRAP1}, \textit{APOB}, \textit{APOE}), whereas HDL-C is driven by reverse transport and lipolysis (\textit{ABCA1}, \textit{LIPC}, \textit{SCARB1}, \textit{LPL}, \textit{CETP}). Only four of the 12 top drivers per trait are shared (Figure~\ref{fig:convergence}B). Thus, two GWAS with different driver genes map to the same process because it contains both arms. Across pathways, trait ranks are correlated ($\nLipCrossRho$; Figure~\ref{fig:convergence}C). This largely reflects a shared size-dependent background, so the evidence for convergence comes from driver-level overlap instead.
 
-\emph{What replicates is the locus, and the pathway layer picks the gene inside
-it.} Seven genes were in the top twenty in all five groups for each trait
-(Figure~\ref{fig:replication}C,D): for LDL-C, \textit{LDLR}, \textit{APOE},
-\textit{PCSK9} and \textit{APOB}, all established, with \textit{APOC1},
-\textit{PVRL2} and \textit{TOMM40}; for HDL-C, \textit{ABCA1}, \textit{CETP},
-\textit{LPL} and \textit{LIPC}, all established, with \textit{NLRC5},
-\textit{SLC12A3} and \textit{HERPUD1}. The non-established genes are neighbours
-of an established one, in the \textit{APOE} cluster on chromosome~19 and next to
-\textit{CETP} on chromosome~16. Table~\ref{tab:replication_genes} shows how the
-score handles them. No single layer carries the established genes everywhere:
-\textit{CETP} has the strongest variant of any gene in all five groups but a
-MAGMA rank between $3$ and $72$, \textit{ABCA1} is first or second by MAGMA in
-all five but between $4$th and $34$th by its best variant, and \textit{APOB} is
-first by MAGMA in the South Asian set and $185$th in the European one. A weak
-layer in one group was usually offset by a strong one, and all eight established
-genes in the table stayed within the top eleven in every group. The neighbours
-owe their place to a lead variant they share with the established gene:
-\textit{APOE}, \textit{APOC1} and \textit{TOMM40} have tied GWAS ranks in every
-group. The GWAS layer cannot separate genes that share a lead variant; the
-pathway layer can, because \textit{APOE} and \textit{CETP} belong to the leading
-pathway and \textit{TOMM40}, \textit{PVRL2}, \textit{HERPUD1}, \textit{NLRC5}
-and \textit{SLC12A3} do not. \textit{APOE} ranked above \textit{TOMM40} in all
-five groups and above \textit{PVRL2} in four, and \textit{CETP} above
-\textit{HERPUD1} and \textit{SLC12A3} in all five and above \textit{NLRC5} in
-four. The pathway layer has this effect only when it uses the size-standardised
-ordering: on the raw omnibus statistic, which favours large pathways, the
-combined score recovers $3$ (LDL-C) and $5$ (HDL-C) established genes in the
-European top ten instead of $\nLipRecLDLScoreTopTen$ and
-$\nLipRecHDLScoreTopTen$. It cannot separate genes that are equivalent in all
-three layers: \textit{APOC1} shares both the lead variant and the pathway with
-\textit{APOE} and ranked close behind it in every group.
+Gene prioritization consistently ranks established genes higher than GWAS association alone across populations. In Europeans, the three-layer score (Section~2.5) ranked \textit{LDLR} first for LDL-C and \textit{ABCA1} first for HDL-C (Table~\ref{tab:lipid_candidates}). For established genes, the combined score achieved the best median rank for both traits ($\nLipRecLDLScoreMed$ vs.\ $\nLipRecLDLGwasMed$ for GWAS and $\nLipRecLDLMagmaMed$ for MAGMA in LDL-C; $\nLipRecHDLScoreMed$ vs.\ $\nLipRecHDLGwasMed$ and $\nLipRecHDLMagmaMed$ in HDL-C) and placed more of them in the top ten ($\nLipRecLDLScoreTopTen$, $\nLipRecHDLScoreTopTen$) than GWAS alone ($\nLipRecLDLGwasTopTen$, $\nLipRecHDLGwasTopTen$) (Table~\ref{tab:lipid_recovery}, Figure~\ref{fig:lipid_recovery}). This pattern held across all ten trait--ancestry sets (Figure~\ref{fig:replication_established}): the combined score beat the GWAS layer on median rank in every set, with the largest gains in Africans (LDL-C $15$ vs.\ $76$; HDL-C $13.5$ vs.\ $68$), matched or exceeded GWAS for the number of established genes in the top twenty in all sets (exceeding it in eight), and MAGMA alone was weakest in seven. These results were robust to weighting: across the grid in Section~2.5, rankings correlated at $\ge 0.89$ with the default, and any pathway weight $\ge 0.25$ outperformed the GWAS layer (Supplementary Figure~\ref{fig:weights}C--D).
 
-Taken together, CATFISH returns the same leading pathway and the same leading
-loci across two related phenotypes, five populations, up to thirty-two-fold
-differences in sample size and different linkage disequilibrium, from inputs
-that share no individuals. For follow-up work the useful output is the gene
-list: within each replicated locus, the combined score usually puts the gene
-with a known role in the trait first, which is the choice a study with limited
-capacity for functional validation has to make. Resolving the causal gene in a
-locus still requires evidence the score does not use, such as colocalisation
-with expression or fine-mapping. And the pathway layer carries prior knowledge,
-since curated pathways contain the genes that have been studied, so part of its
-contribution to recovering established genes is circular (Section~4.3).
+Replication is at the locus level, and the pathway layer selects the gene within it. Seven genes were in the top twenty across all five groups for each trait (Figure~\ref{fig:replication}C,D). For LDL-C: established \textit{LDLR}, \textit{APOE}, \textit{PCSK9}, \textit{APOB}, plus \textit{APOC1}, \textit{PVRL2}, \textit{TOMM40}. For HDL-C: established \textit{ABCA1}, \textit{CETP}, \textit{LPL}, \textit{LIPC}, plus \textit{NLRC5}, \textit{SLC12A3}, \textit{HERPUD1}. The non-established genes are neighbours of established ones: the chromosome~19 \textit{APOE} cluster and near \textit{CETP} on chromosome~16. Table~\ref{tab:replication_genes} illustrates this.
+
+No single layer consistently captures established genes: \textit{CETP} has the strongest variant in all groups but MAGMA rank $3$--$72$; \textit{ABCA1} is MAGMA 1st/2nd but $4$th--$34$th by best variant; \textit{APOB} is MAGMA 1st in South Asians but $185$th in Europeans. Weakness in one layer is usually offset by strength in another, keeping all eight established genes in the table within the top eleven in every group.
+
+Neighbour genes rank highly because they share the lead variant with the established gene (e.g., \textit{APOE}, \textit{APOC1}, \textit{TOMM40} have tied GWAS ranks). GWAS cannot separate genes sharing a lead variant, but the pathway layer can: \textit{APOE} and \textit{CETP} are in the leading pathway, whereas \textit{TOMM40}, \textit{PVRL2}, \textit{HERPUD1}, \textit{NLRC5}, \textit{SLC12A3} are not. Accordingly, \textit{APOE} ranks above \textit{TOMM40} in all groups and above \textit{PVRL2} in four; \textit{CETP} ranks above \textit{HERPUD1} and \textit{SLC12A3} in all groups and above \textit{NLRC5} in four.
+
+This separation requires size-standardised pathway ordering; using the raw omnibus statistic (biased toward large pathways), the European top ten contains only $3$ (LDL-C) and $5$ (HDL-C) established genes, rather than $\nLipRecLDLScoreTopTen$ and $\nLipRecHDLScoreTopTen$. Genes equivalent across all three layers cannot be separated: \textit{APOC1} shares both lead variant and pathway with \textit{APOE} and therefore ranks just behind it in every group.
+
+Overall, CATFISH identifies the same top pathway and loci across two related phenotypes and five populations, despite up to 32-fold sample-size differences and varying linkage disequilibrium, using inputs with no shared individuals. For follow-up, the key output is the gene list: within replicated loci, the combined score usually ranks the known trait gene first, which suits studies with limited functional validation. However, pinpointing the causal gene still needs evidence not captured by the score, such as expression colocalisation or fine-mapping. The pathway layer also embeds prior knowledge—curated pathways overrepresent studied genes—so some recovery of established genes is partly circular (Section~4.3).
 
 \maybeinput{auto/tab_lipid_pathways.tex}
 \maybeinput{auto/tab_lipid_candidates.tex}
