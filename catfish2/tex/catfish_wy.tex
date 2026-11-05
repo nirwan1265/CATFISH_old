@@ -1205,7 +1205,7 @@ type~I error more than doubles.}{fig:missing}
 % the agreement as encouraging evidence that the ordering is meaningful in the
 % low-signal regime, and we do not claim more than that.
 
-\subsection*{3.7 Human blood lipids across five ancestry groups: the same leading pathway, and a better list of candidate genes}
+\subsection*{3.7 Across five ancestry groups, human blood lipids yield the same leading pathway and a stronger candidate gene lists}
 
 We analysed LDL-C and HDL-C using GLGC 2021 meta-analyses \citep{Graham2021GLGC} across five ancestry groups. European (EUR, $n\approx1.32$ million), African/African American (AFR, $n\approx99{,}400$), East Asian (EAS, $n\approx146{,}500$), South Asian (SAS, $n\approx41{,}000$) and Hispanic (HIS, $n\approx48{,}100$). Each ancestry file is an independent meta-analysis with distinct allele frequencies and LD. The four non-European samples are 9--32$\times$ smaller than EUR. All ten trait--ancestry sets were processed identically, with LD from 1000 Genomes Phase 3 panels matched to each group (AMR for HIS), variant-to-gene mapping over a $10\,\mathrm{kb}$ window using NCBI37.3 that yielded $18{,}429$--$18{,}563$ genes per set, and pre-specified settings ($1{,}390$ Reactome pathways, $B=10{,}000$, five components, candidate-gene score and weights, and established-gene lists, Section~2.7). No dataset-specific tuning was performed, so sets differ only by phenotype and population.
 
@@ -1846,136 +1846,136 @@ CATFISH score. Lines join the same gene; black bars are medians.}{fig:lipid_reco
 % ==== end of previous Section 3.9 ====
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\subsection*{3.10 Sorghum bioenergy traits: calibration under strong linkage
-disequilibrium}
+% \subsection*{3.10 Sorghum bioenergy traits: calibration under strong linkage
+% disequilibrium}
 
-The lipid analyses test whether CATFISH recovers known biology when signal is
-abundant, and the evidence there is that two related but genetically distinct
-traits converge on the same pathway (Section~3.9). They test calibration only
-weakly: at $n\approx1.3$ million the self-contained null is false almost
-everywhere, and human LD is short-range. The sorghum BAP is the complementary
-case (Table~\ref{tab:sorghum_regimes}). With $330$ lines, gene-level signal is
-sparse. Sorghum is predominantly self-pollinating and its LD extends far: each
-gene has on average $\nSorNeighbours$ other genes with $|r|\ge0.1$ in MAGMA's
-gene--gene correlation, against $\nLipNeighbours$ in the human reference panel,
-and on chromosome~1 the assembled gene correlation matrix was far from positive
-definite before eigenvalue repair (smallest eigenvalue $-35$). This is the
-regime in which an omnibus calibrated as if genes were independent is expected
-to be anti-conservative (Sections~3.2 and 3.6), and in which a correlated null
-has the most to correct. The validation here is therefore calibration rather
-than convergence: whether the procedure avoids declaring pathways significant
-when LD is extreme and power is low, and whether the gene score still lifts the
-established genes.
+% The lipid analyses test whether CATFISH recovers known biology when signal is
+% abundant, and the evidence there is that two related but genetically distinct
+% traits converge on the same pathway (Section~3.9). They test calibration only
+% weakly: at $n\approx1.3$ million the self-contained null is false almost
+% everywhere, and human LD is short-range. The sorghum BAP is the complementary
+% case (Table~\ref{tab:sorghum_regimes}). With $330$ lines, gene-level signal is
+% sparse. Sorghum is predominantly self-pollinating and its LD extends far: each
+% gene has on average $\nSorNeighbours$ other genes with $|r|\ge0.1$ in MAGMA's
+% gene--gene correlation, against $\nLipNeighbours$ in the human reference panel,
+% and on chromosome~1 the assembled gene correlation matrix was far from positive
+% definite before eigenvalue repair (smallest eigenvalue $-35$). This is the
+% regime in which an omnibus calibrated as if genes were independent is expected
+% to be anti-conservative (Sections~3.2 and 3.6), and in which a correlated null
+% has the most to correct. The validation here is therefore calibration rather
+% than convergence: whether the procedure avoids declaring pathways significant
+% when LD is extreme and power is low, and whether the gene score still lifts the
+% established genes.
 
-\maybeinput{auto/tab_sorghum_regimes.tex}
+% \maybeinput{auto/tab_sorghum_regimes.tex}
 
-\subsubsection*{3.10.1 The gene-level inputs are calibrated once the right
-MAGMA model is used}
+% \subsubsection*{3.10.1 The gene-level inputs are calibrated once the right
+% MAGMA model is used}
 
-The mixed-model GWAS was slightly conservative at the variant level
-($\lambda_{\mathrm{GC}}=\nSorDrySnpLambda$ for dry biomass and
-$\nSorLigSnpLambda$ for lignin). At the gene level the MAGMA model mattered.
-Under the SNP-wise mean model the median gene $p$-value was $\nSorDryGeneMed$
-and $\nSorLigGeneMed$ (gene-level $\lambda=\nSorDryGeneLambda$ and
-$\nSorLigGeneLambda$), close to the null, and it did not change with the number
-of variants in the gene. The SNP-wise top model, and MAGMA's multi-model
-$p$-value that combines it with the mean model, were inflated (median $0.112$
-and $0.179$ for dry biomass, $0.263$ and $0.322$ for lignin), and the inflation
-grew with gene size: from the smallest to the largest fifth of genes, the
-median top-model $p$-value for dry biomass fell from $0.18$ to $0.05$ while the
-mean-model value stayed between $0.44$ and $0.45$ (Supplementary
-Figure~\ref{fig:sorghum_pcol}). Inflation that tracks gene size and is absent
-from the mean model points to the correction for selecting the best variant
-in a gene, which does not hold up under this LD, rather than to biology. The
-pathway null assumes gene $p$-values are uniform where there is no signal, so
-an inflated input would be read as pathway signal; we used the mean model.
+% The mixed-model GWAS was slightly conservative at the variant level
+% ($\lambda_{\mathrm{GC}}=\nSorDrySnpLambda$ for dry biomass and
+% $\nSorLigSnpLambda$ for lignin). At the gene level the MAGMA model mattered.
+% Under the SNP-wise mean model the median gene $p$-value was $\nSorDryGeneMed$
+% and $\nSorLigGeneMed$ (gene-level $\lambda=\nSorDryGeneLambda$ and
+% $\nSorLigGeneLambda$), close to the null, and it did not change with the number
+% of variants in the gene. The SNP-wise top model, and MAGMA's multi-model
+% $p$-value that combines it with the mean model, were inflated (median $0.112$
+% and $0.179$ for dry biomass, $0.263$ and $0.322$ for lignin), and the inflation
+% grew with gene size: from the smallest to the largest fifth of genes, the
+% median top-model $p$-value for dry biomass fell from $0.18$ to $0.05$ while the
+% mean-model value stayed between $0.44$ and $0.45$ (Supplementary
+% Figure~\ref{fig:sorghum_pcol}). Inflation that tracks gene size and is absent
+% from the mean model points to the correction for selecting the best variant
+% in a gene, which does not hold up under this LD, rather than to biology. The
+% pathway null assumes gene $p$-values are uniform where there is no signal, so
+% an inflated input would be read as pathway signal; we used the mean model.
 
-\subsubsection*{3.10.2 No pathway is significant, and the correlated null
-removes much of the LD-driven excess}
+% \subsubsection*{3.10.2 No pathway is significant, and the correlated null
+% removes much of the LD-driven excess}
 
-Of the $\nSorDryNpw$ SorghumBicolorCyc pathways, none was significant under
-Westfall--Young family-wise control for either trait. The smallest
-size-standardised family-wise $p$-values were $\nSorTopFwerDry$ for dry
-biomass (proanthocyanidin biosynthesis from flavanols) and $\nSorTopFwerLig$
-for lignin (glycolysis~I). The uncalibrated analytic omnibus, which treats the
-genes in a pathway as independent, placed $\nSorDryOmniFive\%$ and
-$\nSorLigOmniFive\%$ of pathways below $0.05$, well above the nominal $5\%$.
-Calibrating each pathway against the correlated null reduced this to
-$\nSorDryCalFive\%$ and $\nSorLigCalFive\%$. The excess that remains is
-consistent with the mild gene-level departure from the null above, which a
-self-contained test counts as signal and which accumulates over pathways of
-tens of genes, the same mechanism that saturates the lipid analyses at much
-larger scale. The simulations of Sections~3.2 and 3.6 predicted this ordering:
-independence-based calibration over-rejects under LD, and the correlated null
-corrects much of it.
+% Of the $\nSorDryNpw$ SorghumBicolorCyc pathways, none was significant under
+% Westfall--Young family-wise control for either trait. The smallest
+% size-standardised family-wise $p$-values were $\nSorTopFwerDry$ for dry
+% biomass (proanthocyanidin biosynthesis from flavanols) and $\nSorTopFwerLig$
+% for lignin (glycolysis~I). The uncalibrated analytic omnibus, which treats the
+% genes in a pathway as independent, placed $\nSorDryOmniFive\%$ and
+% $\nSorLigOmniFive\%$ of pathways below $0.05$, well above the nominal $5\%$.
+% Calibrating each pathway against the correlated null reduced this to
+% $\nSorDryCalFive\%$ and $\nSorLigCalFive\%$. The excess that remains is
+% consistent with the mild gene-level departure from the null above, which a
+% self-contained test counts as signal and which accumulates over pathways of
+% tens of genes, the same mechanism that saturates the lipid analyses at much
+% larger scale. The simulations of Sections~3.2 and 3.6 predicted this ordering:
+% independence-based calibration over-rejects under LD, and the correlated null
+% corrects much of it.
 
-The lignin ordering is weakly consistent with biology. Phenylpropanoid
-biosynthesis, which supplies the monolignols, ranked $\nSorPhenylRank$ of
-$\nSorLigNpw$, and flavonoid biosynthesis, which branches from the same
-early steps, ranked $\nSorFlavRank$. With $330$ lines we do not read more into
-the pathway ordering than this, and the point of the analysis is the negative
-one: the procedure did not produce discoveries that the data cannot support.
+% The lignin ordering is weakly consistent with biology. Phenylpropanoid
+% biosynthesis, which supplies the monolignols, ranked $\nSorPhenylRank$ of
+% $\nSorLigNpw$, and flavonoid biosynthesis, which branches from the same
+% early steps, ranked $\nSorFlavRank$. With $330$ lines we do not read more into
+% the pathway ordering than this, and the point of the analysis is the negative
+% one: the procedure did not produce discoveries that the data cannot support.
 
-\subsubsection*{3.10.3 The pathway layer lifts the lignin genes}
+% \subsubsection*{3.10.3 The pathway layer lifts the lignin genes}
 
-Table~\ref{tab:sorghum_genes}A gives the ranks of the eleven established genes
-among $\nSorDryNgenes$, under the combined score, under the same score with
-the pathway layer removed, and under each single layer. For lignin, the
-combined score ranked all three \textit{bmr} genes above their rank without the
-pathway layer: \textit{bmr2}/4CL from $1{,}055$ to $286$, \textit{bmr6}/CAD
-from $12{,}542$ to $7{,}761$ and \textit{bmr12}/COMT from $2{,}184$ to
-$1{,}148$. Against GWAS alone, $\nSorLigBetter$ of the $\nSorLigNctrl$ improved
-(median rank $\nSorLigCtrlMedScore$ against $\nSorLigCtrlMedGwas$);
-\textit{bmr12}, which has the strongest variant-level evidence of the three,
-fell from $639$ to $1{,}148$ because its gene-level MAGMA evidence is weak. All
-three genes are in SorghumBicolorCyc lignin-related pathways, so this is the
-case in which the pathway layer can contribute, and it did.
+% Table~\ref{tab:sorghum_genes}A gives the ranks of the eleven established genes
+% among $\nSorDryNgenes$, under the combined score, under the same score with
+% the pathway layer removed, and under each single layer. For lignin, the
+% combined score ranked all three \textit{bmr} genes above their rank without the
+% pathway layer: \textit{bmr2}/4CL from $1{,}055$ to $286$, \textit{bmr6}/CAD
+% from $12{,}542$ to $7{,}761$ and \textit{bmr12}/COMT from $2{,}184$ to
+% $1{,}148$. Against GWAS alone, $\nSorLigBetter$ of the $\nSorLigNctrl$ improved
+% (median rank $\nSorLigCtrlMedScore$ against $\nSorLigCtrlMedGwas$);
+% \textit{bmr12}, which has the strongest variant-level evidence of the three,
+% fell from $639$ to $1{,}148$ because its gene-level MAGMA evidence is weak. All
+% three genes are in SorghumBicolorCyc lignin-related pathways, so this is the
+% case in which the pathway layer can contribute, and it did.
 
-For dry biomass, the flowering-time and height genes are in no tested pathway,
-so the score can only reorder them through the GWAS and MAGMA layers. Two of
-the eight carry detectable signal in this panel, \textit{Ma1}/\textit{PRR37}
-(rank $874$; $929$ by GWAS alone) and \textit{Dw1} ($2{,}960$; $6{,}028$), and
-both rose. The other six have little evidence at either layer and no ranking
-recovers them, so the median rank of the eight ($\nSorDryCtrlMedScore$) is
-uninformative. Dry biomass tests the gene score only weakly, and we report it
-for completeness.
+% For dry biomass, the flowering-time and height genes are in no tested pathway,
+% so the score can only reorder them through the GWAS and MAGMA layers. Two of
+% the eight carry detectable signal in this panel, \textit{Ma1}/\textit{PRR37}
+% (rank $874$; $929$ by GWAS alone) and \textit{Dw1} ($2{,}960$; $6{,}028$), and
+% both rose. The other six have little evidence at either layer and no ranking
+% recovers them, so the median rank of the eight ($\nSorDryCtrlMedScore$) is
+% uninformative. Dry biomass tests the gene score only weakly, and we report it
+% for completeness.
 
-\maybeinput{auto/tab_sorghum_genes.tex}
+% \maybeinput{auto/tab_sorghum_genes.tex}
 
-\subsubsection*{3.10.4 Candidate genes}
+% \subsubsection*{3.10.4 Candidate genes}
 
-The top of each ranking is organised by locus
-(Table~\ref{tab:sorghum_genes}B). For lignin, the first $\nSorLigTopN$ genes
-lie within about $\nSorLigTopSpanKb\,\mathrm{kb}$ on chromosome~$\nSorLigTopChr$
-($\nSorLigTopMb\,\mathrm{Mb}$) and share their strongest variant; none is in a
-SorghumBicolorCyc pathway, and nothing in the data separates them.
+% The top of each ranking is organised by locus
+% (Table~\ref{tab:sorghum_genes}B). For lignin, the first $\nSorLigTopN$ genes
+% lie within about $\nSorLigTopSpanKb\,\mathrm{kb}$ on chromosome~$\nSorLigTopChr$
+% ($\nSorLigTopMb\,\mathrm{Mb}$) and share their strongest variant; none is in a
+% SorghumBicolorCyc pathway, and nothing in the data separates them.
 
-For dry biomass, the second-ranked gene, Sobic.004G014400 on chromosome~4,
-encodes cycloartenol synthase, the first committed step of plant sterol
-biosynthesis. Its strongest variant has $p=\nSorCasGwasP$, its MAGMA $p$-value
-is $\nSorCasMagmaP$ (rank $\nSorCasMagmaRank$), and cycloartenol biosynthesis
-ranked $\nSorCycloRank$ of $\nSorDryNpw$ pathways. Without the pathway layer it
-ranks $\nSorCasRankNp$, level with two neighbours that share its lead variant,
-so the pathway layer is what selects it within the locus. We found no earlier
-report linking this gene or region to biomass in sorghum. In
-\textit{Arabidopsis}, loss of cycloartenol synthase is lethal and weak alleles
-disrupt plastid development \citep{Babiychuk2008}, and sterol-deficient mutants
-are impaired in cellulose synthesis \citep{Schrick2012}, which offers a route
-from sterol supply to biomass that remains to be tested.
+% For dry biomass, the second-ranked gene, Sobic.004G014400 on chromosome~4,
+% encodes cycloartenol synthase, the first committed step of plant sterol
+% biosynthesis. Its strongest variant has $p=\nSorCasGwasP$, its MAGMA $p$-value
+% is $\nSorCasMagmaP$ (rank $\nSorCasMagmaRank$), and cycloartenol biosynthesis
+% ranked $\nSorCycloRank$ of $\nSorDryNpw$ pathways. Without the pathway layer it
+% ranks $\nSorCasRankNp$, level with two neighbours that share its lead variant,
+% so the pathway layer is what selects it within the locus. We found no earlier
+% report linking this gene or region to biomass in sorghum. In
+% \textit{Arabidopsis}, loss of cycloartenol synthase is lethal and weak alleles
+% disrupt plastid development \citep{Babiychuk2008}, and sterol-deficient mutants
+% are impaired in cellulose synthesis \citep{Schrick2012}, which offers a route
+% from sterol supply to biomass that remains to be tested.
 
-The fourth-ranked gene, Sobic.008G029200 on chromosome~8, carries a WRKY
-DNA-binding domain. In rice, overexpression of the WRKY gene
-\textit{OsWRKY89} shortened internodes and increased lignification of the culm
-\citep{Wang2007}. %% TODO: confirm that OsWRKY89 is the closest rice relative (gene tree)
-Its pathway evidence, however, comes from a SorghumBicolorCyc entry that
-assigns it acyl-ACP thioesterase activity, which a WRKY transcription factor
-does not have: here the pathway layer rewards an annotation error. Without it
-the gene ranks $\nSorWrkyRankNp$, carried by a strong variant-level signal
-(GWAS rank $\nSorWrkyGwasRank$) that it shares with its neighbour
-Sobic.008G028900. Neither candidate ranks highly for lignin
-($\nSorCasLigRank$ and $\nSorWrkyLigRank$), so the WRKY gene is a biomass
-candidate whose rice relative affects stem growth and lignification, not a
-lignin association.
+% The fourth-ranked gene, Sobic.008G029200 on chromosome~8, carries a WRKY
+% DNA-binding domain. In rice, overexpression of the WRKY gene
+% \textit{OsWRKY89} shortened internodes and increased lignification of the culm
+% \citep{Wang2007}. %% TODO: confirm that OsWRKY89 is the closest rice relative (gene tree)
+% Its pathway evidence, however, comes from a SorghumBicolorCyc entry that
+% assigns it acyl-ACP thioesterase activity, which a WRKY transcription factor
+% does not have: here the pathway layer rewards an annotation error. Without it
+% the gene ranks $\nSorWrkyRankNp$, carried by a strong variant-level signal
+% (GWAS rank $\nSorWrkyGwasRank$) that it shares with its neighbour
+% Sobic.008G028900. Neither candidate ranks highly for lignin
+% ($\nSorCasLigRank$ and $\nSorWrkyLigRank$), so the WRKY gene is a biomass
+% candidate whose rice relative affects stem growth and lignification, not a
+% lignin association.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{4 Discussion}
